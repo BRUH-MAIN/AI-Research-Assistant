@@ -1,4 +1,4 @@
-
+import os
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -10,10 +10,10 @@ load_dotenv()
 
 
 
-async def load_pdf(file_path)->list[Document]:
+def load_pdf(file_path)->list[Document]:
     loader = PyPDFLoader(file_path)
     pages = []
-    async for page in loader.alazy_load():
+    for page in loader.load():
         pages.append(page)
     return pages
 
@@ -26,11 +26,12 @@ def split_Document(document: list[Document],type = 'agentic'):
 def get_embedding_function(mod = 1):
     if mod == 0:
         embeddings = OllamaEmbeddings(model="nomic-embed-text")
-        
-    if mod ==1:
+    elif mod == 1:
         embeddings = GoogleGenerativeAIEmbeddings(
             model="models/embedding-001",
             max_retries=3,
-            timeout=60,
+            timeout=120,  # Increased timeout to handle potential delays
         )
+    else:
+        raise ValueError("Invalid embedding mode specified.")
     return embeddings
