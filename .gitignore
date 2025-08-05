@@ -1,8 +1,9 @@
+<<<<<<< HEAD
 # Virtual environment
 venv/
 .venv/
 env/
-
+Docker.pdf
 # Python cache and build files
 __pycache__/
 *.py[cod]
@@ -15,6 +16,7 @@ build/
 # IDE-specific files (optional)
 .vscode/
 .idea/
+Docker.pdf
 
 # Environment variables (never commit secrets!)
 .env
@@ -23,3 +25,4 @@ build/
 # Other OS/editor files (optional)
 .DS_Store       # macOS
 Thumbs.db       # Windows
+
