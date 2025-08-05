@@ -23,7 +23,7 @@ def split_Document(document: list[Document],type = 'agentic'):
         return chunker_agentic(document)
     if type == 'recursive':
         return chunker_recursive(document)
-def get_embedding_function(mod = 0):
+def get_embedding_function(mod = 1):
     if mod == 0:
         embeddings = OllamaEmbeddings(model="nomic-embed-text")
         
