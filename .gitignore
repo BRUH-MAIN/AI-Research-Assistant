@@ -16,6 +16,7 @@ build/
 # IDE-specific files (optional)
 .vscode/
 .idea/
+Docker.pdf
 
 # Environment variables (never commit secrets!)
 .env
