@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting Chatbot API with Redis History..."
+echo "🚀 Starting AI Research Assistant API..."
 echo "📍 Make sure you have:"
 echo "   1. Created .env file with your GROQ_API_KEY"
 echo "   2. Installed dependencies: pip install -r requirements.txt"
@@ -17,8 +17,8 @@ fi
 echo "🌐 Starting server on http://localhost:8000"
 echo "📚 API docs available at http://localhost:8000/docs"
 echo "🔍 Debug endpoints:"
-echo "   - Redis status: http://localhost:8000/api/debug/redis"
-echo "   - Active sessions: http://localhost:8000/api/debug/sessions"
+echo "   - Redis status: http://localhost:8000/api/v1/debug/redis"
+echo "   - Active sessions: http://localhost:8000/api/v1/debug/sessions"
 echo ""
 
-python main.py
+python run.py
