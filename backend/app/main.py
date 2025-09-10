@@ -4,9 +4,9 @@ FastAPI application factory and configuration
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.api import api_router
-from app.core.config import settings
-from app.services.background_tasks import lifespan
+from .api.v1.api import api_router
+from .core.config import settings
+from .services.background_tasks import lifespan
 
 
 def create_application() -> FastAPI:

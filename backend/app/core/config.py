@@ -1,55 +1,38 @@
 """
-Application configuration and settings
+Application configuration settings
 """
 import os
 from typing import List
-from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
+from pathlib import Path
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from .env file
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 
-class Settings(BaseSettings):
+class Settings:
     """Application settings"""
     
-    # Project info
-    PROJECT_NAME: str = "AI Research Assistant API"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "AI Research Assistant API")
+    VERSION: str = os.getenv("VERSION", "1.0.0")
+    API_V1_STR: str = os.getenv("API_V1_STR", "/api/v1")
     
-    # CORS
-    ALLOWED_HOSTS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:3002",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3002",
-        "http://127.0.0.1:5173"
-    ]
+    # CORS settings
+    ALLOWED_HOSTS: List[str] = os.getenv(
+        "ALLOWED_HOSTS", 
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000"
+    ).split(",")
     
-    # Groq API
-    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL_NAME: str = "llama-3.1-8b-instant"
+    # Database settings
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:YOUR-PASSWORD@127.0.0.1:5432/postgres")
     
-    # Redis Configuration
-    REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
-    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
-    REDIS_USERNAME: str = os.getenv("REDIS_USERNAME", "default")
-    REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "")
-    REDIS_SESSION_TTL_HOURS: int = int(os.getenv("REDIS_SESSION_TTL_HOURS", "24"))
-
-    # Chat settings
-    MAX_CONVERSATION_HISTORY: int = 10
+    # Redis settings (for future use)
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
     
-    # Data directory for storing papers
-    DATA_DIR: str = os.getenv("DATA_DIR", "/home/bharath/Documents/DBMS/data")
-    
-    # Redis sync settings
-    ENABLE_REDIS_SYNC: bool = os.getenv("ENABLE_REDIS_SYNC", "false").lower() == "true"
-    
-    class Config:
-        case_sensitive = True
+    # Environment
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
 
 
 settings = Settings()
