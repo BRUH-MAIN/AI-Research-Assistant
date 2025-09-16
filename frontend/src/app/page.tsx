@@ -1,7 +1,23 @@
+"use client"
+
 import React from 'react'
 import Link from 'next/link'
+import { createClient } from "@supabase/supabase-js"
 
-function page() {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+const handleLogin = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+    })
+    if (error) console.error(error)
+    console.log(data)
+  }
+
+function Page() {
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Top navigation with sign up and login buttons */}
@@ -12,7 +28,7 @@ function page() {
           </Link>
         </div>
         <div className="space-x-4">
-          <button className="px-6 py-2 text-white bg-transparent border-2 border-white">
+          <button className="px-6 py-2 text-white bg-transparent border-2 border-white" onClick={handleLogin}>
             Sign Up
           </button>
           <button className="px-6 py-2 text-black bg-white border-2 border-white">
@@ -42,4 +58,4 @@ function page() {
   )
 }
 
-export default page
+export default Page
