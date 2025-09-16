@@ -25,7 +25,7 @@ class Settings:
     ).split(",")
     
     # Database settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:YOUR-PASSWORD@127.0.0.1:5432/postgres")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres")
     
     # Redis settings (for future use)
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")

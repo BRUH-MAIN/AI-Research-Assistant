@@ -1,21 +1,4 @@
 services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: ai_research_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5433:5432"  # Using port 5433 externally to avoid conflict
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/app/db/postgres_manager/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: .
@@ -27,12 +10,10 @@ services:
       - ./data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/ai_research_db
       - ENABLE_REDIS_SYNC=false
       - DATA_DIR=/app/data
-    depends_on:
-      postgres:
-        condition: service_healthy
+    env_file:
+      - ./backend/.env
 
   frontend:
     build:
@@ -47,6 +28,3 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - backend
-
-volumes:
-  postgres_data:

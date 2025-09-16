@@ -31,14 +31,6 @@ docker-compose up --build -d
 
 echo "⏳ Waiting for services to be ready..."
 
-# Wait for PostgreSQL to be ready
-echo "📊 Waiting for PostgreSQL..."
-timeout 60 bash -c 'until docker-compose exec postgres pg_isready -U postgres; do sleep 2; done' || {
-    echo "❌ PostgreSQL failed to start within 60 seconds"
-    docker-compose logs postgres
-    exit 1
-}
-
 # Wait for backend to be ready
 echo "🔧 Waiting for backend API..."
 timeout 60 bash -c 'until curl -f http://localhost:8000/docs &>/dev/null; do sleep 2; done' || {
@@ -62,7 +54,7 @@ echo "📊 Services:"
 echo "   • Frontend:  http://localhost:3000"
 echo "   • Backend:   http://localhost:8000"
 echo "   • API Docs:  http://localhost:8000/docs"
-echo "   • Database:  PostgreSQL on localhost:5433"
+echo "   • Database:  External PostgreSQL on 127.0.0.1:54322"
 echo ""
 echo "📁 Data directory: ./data"
 echo ""
@@ -74,6 +66,5 @@ echo ""
 echo "🎯 Redis is DISABLED (using PostgreSQL directly)"
 echo "   To enable Redis, set ENABLE_REDIS_SYNC=true in docker-compose.yml"
 echo ""
-echo "ℹ️  Note: Docker PostgreSQL runs on port 5433 to avoid conflicts"
-echo "   with local PostgreSQL on port 5432"
+echo "ℹ️  Note: Using external PostgreSQL database on port 54322"
 echo ""
