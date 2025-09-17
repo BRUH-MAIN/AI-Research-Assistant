@@ -33,7 +33,7 @@ echo "⏳ Waiting for services to be ready..."
 
 # Wait for backend to be ready
 echo "🔧 Waiting for backend API..."
-timeout 60 bash -c 'until curl -f http://localhost:8000/docs &>/dev/null; do sleep 2; done' || {
+timeout 600 bash -c 'until curl -f http://localhost:8000/docs &>/dev/null; do sleep 2; done' || {
     echo "❌ Backend failed to start within 60 seconds"
     docker-compose logs backend
     exit 1
@@ -41,7 +41,7 @@ timeout 60 bash -c 'until curl -f http://localhost:8000/docs &>/dev/null; do sle
 
 # Wait for frontend to be ready
 echo "🌐 Waiting for frontend..."
-timeout 60 bash -c 'until curl -f http://localhost:3000 &>/dev/null; do sleep 2; done' || {
+timeout 600 bash -c 'until curl -f http://localhost:3000 &>/dev/null; do sleep 2; done' || {
     echo "❌ Frontend failed to start within 60 seconds"
     docker-compose logs frontend
     exit 1

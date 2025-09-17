@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@supabase/supabase-js';
 import type { User } from '@supabase/supabase-js';
 import { apiService } from '@/app/services/apiService';
 import { 
@@ -14,6 +14,13 @@ import {
   ExclamationCircleIcon,
   CameraIcon
 } from '@heroicons/react/24/outline';
+
+// Supabase Configuration
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Create Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface UserProfile {
   user_id: number;

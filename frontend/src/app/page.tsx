@@ -1,11 +1,18 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { supabase } from "@/lib/supabase";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
 import type { User } from '@supabase/supabase-js';
 
-function Page() {
+// Supabase Configuration
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Create Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -107,7 +114,5 @@ function Page() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
-export default Page
