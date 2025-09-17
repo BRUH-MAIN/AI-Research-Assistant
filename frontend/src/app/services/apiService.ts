@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Message } from '../types/types';
+import { supabase } from '@/lib/supabase';
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -15,9 +16,22 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor for logging
+// Helper function to get auth header
+const getAuthHeader = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+  return {};
+};
+
+// Request interceptor for logging and auth
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // Add auth header if available
+    const authHeader = await getAuthHeader();
+    Object.assign(config.headers, authHeader);
+    
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
@@ -62,6 +76,34 @@ export interface SessionHistoryResponse {
 
 export interface SuccessResponse {
   message: string;
+}
+
+// Profile-related interfaces
+export interface UserProfile {
+  user_id: number;
+  auth_user_id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  profile_picture_url?: string;
+  bio?: string;
+  phone_number?: string;
+  availability: 'available' | 'busy' | 'offline';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ProfileUpdateData {
+  first_name?: string;
+  last_name?: string;
+  bio?: string;
+  phone_number?: string;
+  availability?: 'available' | 'busy' | 'offline';
+}
+
+export interface ProfileSyncResponse {
+  message: string;
+  profile: UserProfile;
 }
 
 // API Service Class
@@ -126,6 +168,47 @@ class ApiService {
     } catch (error) {
       console.error('Failed to send prompt:', error);
       throw new Error('Failed to process prompt');
+    }
+  }
+
+  // Profile Management
+  async getProfile(): Promise<UserProfile> {
+    try {
+      const response = await apiClient.get<UserProfile>('/auth/me');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get profile:', error);
+      throw new Error('Failed to load profile');
+    }
+  }
+
+  async updateProfile(profileData: ProfileUpdateData): Promise<UserProfile> {
+    try {
+      const response = await apiClient.put<UserProfile>('/auth/me', profileData);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      throw new Error('Failed to update profile');
+    }
+  }
+
+  async syncProfile(): Promise<ProfileSyncResponse> {
+    try {
+      const response = await apiClient.post<ProfileSyncResponse>('/auth/sync-profile');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to sync profile:', error);
+      throw new Error('Failed to sync profile');
+    }
+  }
+
+  async getAuthStatus(): Promise<{ authenticated: boolean; user?: any }> {
+    try {
+      const response = await apiClient.get('/auth/status');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get auth status:', error);
+      return { authenticated: false };
     }
   }
 }
