@@ -11,22 +11,28 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 WORKDIR /app
 
-# Copy dependency definitions
-COPY backend/pyproject.toml backend/uv.lock* ./
+# Create non-root user for security with home directory first
+RUN groupadd -r aiuser && useradd -r -g aiuser -m aiuser
 
-# Install dependencies using uv
+# Create and set permissions for directories
+RUN mkdir -p /app/data /app/models /app/temp /home/aiuser/.cache
+RUN chown -R aiuser:aiuser /app /home/aiuser/.cache
+
+# Switch to non-root user for dependency installation
+USER aiuser
+
+# Set environment variables for uv to use user-owned directories
+ENV UV_CACHE_DIR=/home/aiuser/.cache/uv
+ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+
+# Copy dependency definitions
+COPY --chown=aiuser:aiuser pyproject.toml uv.lock* ./
+
+# Install dependencies using uv as non-root user
 RUN uv sync --frozen --no-dev
 
 # Copy backend source code (AI/ML focused)
-COPY backend .
-
-# Create directories for AI operations
-RUN mkdir -p /app/data /app/models /app/temp
-
-# Create non-root user for security
-RUN groupadd -r aiuser && useradd -r -g aiuser aiuser
-RUN chown -R aiuser:aiuser /app
-USER aiuser
+COPY --chown=aiuser:aiuser . .
 
 # Expose port
 EXPOSE 8000

@@ -16,6 +16,7 @@ const messageRoutes = require('./routes/messages');
 const paperRoutes = require('./routes/papers');
 const feedbackRoutes = require('./routes/feedback');
 const aiMetadataRoutes = require('./routes/ai-metadata');
+const authRoutes = require('./routes/auth');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -111,6 +112,7 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/sessions', sessionRoutes);

@@ -4,7 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import type { User } from '@supabase/supabase-js';
-import { apiService } from '@/app/services/apiService';
+import { profileService } from '@/app/services/profileService';
+import { debugAuth } from '@/app/services/authDebug';
+import type { 
+  UserProfile as ApiUserProfile, 
+  ProfileUpdateData as ApiProfileUpdateData 
+} from '@/app/types/types';
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -78,11 +83,15 @@ const ProfileSettings = () => {
 
   const loadUserProfile = async () => {
     try {
+      // Debug authentication state
+      const authDebugInfo = await debugAuth();
+      console.log('Auth debug info:', authDebugInfo);
+      
       // First sync profile to ensure it exists
-      await apiService.syncProfile();
+      await profileService.syncProfile();
       
       // Then load the profile
-      const profileData = await apiService.getProfile();
+      const profileData = await profileService.getProfile();
       setProfile(profileData);
       
       // Update form data with profile data
@@ -95,6 +104,11 @@ const ProfileSettings = () => {
       });
     } catch (error) {
       console.error('Failed to load profile:', error);
+      
+      // Additional debug info on error
+      const authDebugInfo = await debugAuth();
+      console.log('Auth debug info on error:', authDebugInfo);
+      
       setMessage({ type: 'error', text: 'Failed to load profile data' });
     }
   };
@@ -113,7 +127,7 @@ const ProfileSettings = () => {
     setMessage(null);
 
     try {
-      const updatedProfile = await apiService.updateProfile(formData);
+      const updatedProfile = await profileService.updateProfile(formData);
       setProfile(updatedProfile);
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {

@@ -22,11 +22,11 @@ services:
     volumes:
       - ./express-db-server:/app
       - /app/node_modules
-    depends_on:
-      - postgres
+    # No dependencies - using external Supabase for database
     restart: unless-stopped
     networks:
       - app-network
+      - supabase_network_Ai-Research-Assistant-local
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -58,6 +58,7 @@ services:
       - DATA_DIR=/app/data
     volumes:
       - ./backend:/app
+      - /app/.venv  # Exclude the virtual environment from the mount
       - ./data:/app/data
       - ai-models:/app/models
     depends_on:
@@ -84,7 +85,7 @@ services:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:3001/api
       - NEXT_PUBLIC_FASTAPI_URL=http://localhost:8000
-      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL_PUBLIC}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
     volumes:
       - ./frontend:/app
@@ -95,29 +96,6 @@ services:
     restart: unless-stopped
     networks:
       - app-network
-
-  # PostgreSQL Database (for local development)
-  postgres:
-    image: postgres:15
-    container_name: postgres-db
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-postgres}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./backend/app/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./sql-functions:/docker-entrypoint-initdb.d/sql-functions
-    restart: unless-stopped
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # Nginx Reverse Proxy (optional)
   nginx:
@@ -151,8 +129,6 @@ services:
     command: redis-server --appendonly yes
 
 volumes:
-  postgres-data:
-    driver: local
   redis-data:
     driver: local
   ai-models:
@@ -161,3 +137,5 @@ volumes:
 networks:
   app-network:
     driver: bridge
+  supabase_network_Ai-Research-Assistant-local:
+    external: true

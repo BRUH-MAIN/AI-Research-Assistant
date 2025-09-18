@@ -15,6 +15,3 @@ supabase/.output/
 *.bak
 *.tmp
 .vscode/
-instruction.md
-supabase.md
-SYSTEM_STATUS.md

@@ -7,14 +7,19 @@ const jwt = require('jsonwebtoken');
  */
 const authMiddleware = async (req, res, next) => {
     try {
-        // Skip auth for health check
-        if (req.path === '/health') {
+        // Skip auth for health check and auth status
+        if (req.path === '/health' || req.path === '/auth/status') {
             return next();
         }
 
+        console.log('Auth middleware: Processing request to', req.path);
+
         // Get token from Authorization header
         const authHeader = req.headers.authorization;
+        console.log('Auth middleware: Authorization header:', authHeader ? 'Present' : 'Missing');
+        
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            console.log('Auth middleware: No valid authorization header found');
             return res.status(401).json({
                 error: 'Access token required',
                 code: 401
@@ -22,18 +27,29 @@ const authMiddleware = async (req, res, next) => {
         }
 
         const token = authHeader.split(' ')[1];
+        console.log('Auth middleware: Extracted token:', token.substring(0, 20) + '...');
         
-        // Verify token with Supabase
+        // Verify token with Supabase using admin client
         const supabase = req.app.locals.supabase;
+        
+        // Try to get user with the provided token
         const { data: { user }, error } = await supabase.auth.getUser(token);
         
+        console.log('Auth middleware: Supabase validation result:', {
+            user: user ? 'Present' : 'Missing',
+            error: error ? error.message : 'None'
+        });
+        
         if (error || !user) {
+            console.log('Auth middleware: Token validation failed:', error?.message);
             return res.status(401).json({
                 error: 'Invalid or expired token',
                 code: 401,
                 details: error?.message
             });
         }
+
+        console.log('Auth middleware: Authentication successful for user:', user.email);
 
         // Add user info to request object
         req.user = {

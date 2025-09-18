@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Message, MessageBlock } from '../types/types';
-import { apiService } from '../services/apiService';
+import { chatService } from '../services/chatService';
 
 function useHandleInput() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -33,7 +33,7 @@ function useHandleInput() {
     const initializeSession = async () => {
       try {
         // Check if backend is available
-        const healthCheck = await apiService.healthCheck();
+        const healthCheck = await chatService.healthCheck();
         setIsConnected(healthCheck);
         
         if (!healthCheck) {
@@ -42,11 +42,11 @@ function useHandleInput() {
         }
 
         // Create new session
-        const newSessionId = await apiService.createSession();
+        const newSessionId = await chatService.createSession();
         setSessionId(newSessionId);
         
         // Load existing chat history if any
-        const history = await apiService.getSessionHistory(newSessionId);
+        const history = await chatService.getSessionHistory(newSessionId);
         if (history.length > 0) {
           setMessages(history);
           // Convert to message blocks for UI
@@ -93,7 +93,7 @@ function useHandleInput() {
 
     try {
       // Send message using API service
-      const response = await apiService.sendMessage(sessionId, {
+      const response = await chatService.sendMessage(sessionId, {
         id: userMessage.id,
         sender: userMessage.sender,
         content: userMessage.content,
@@ -144,11 +144,11 @@ function useHandleInput() {
   const clearChatHistory = async () => {
     if (sessionId && isConnected) {
       try {
-        await apiService.deleteSession(sessionId);
+        await chatService.deleteSession(sessionId);
         setMessages([]);
         setMessageBlocks([]);
         // Create new session
-        const newSessionId = await apiService.createSession();
+        const newSessionId = await chatService.createSession();
         setSessionId(newSessionId);
       } catch (error) {
         console.error('Failed to clear chat history:', error);
