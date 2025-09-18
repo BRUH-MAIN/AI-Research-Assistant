@@ -1,30 +1,163 @@
 services:
-  backend:
+  # Express.js Database Server
+  express-db-server:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ./express-db-server
+      dockerfile: Dockerfile
+    container_name: express-db-server
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-1000}
+    volumes:
+      - ./express-db-server:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # FastAPI AI/ML Server (database endpoints removed)
+  fastapi-ai-server:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: fastapi-ai-server
     ports:
       - "8000:8000"
+    environment:
+      # Remove database-related environment variables
+      # Keep only AI/ML related configurations
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - AI_MODEL_PATH=${AI_MODEL_PATH:-/app/models}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
+      - MAX_WORKERS=${MAX_WORKERS:-4}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      # Express server URL for inter-service communication
+      - EXPRESS_DB_URL=http://express-db-server:3001
+      - DATA_DIR=/app/data
     volumes:
       - ./backend:/app
       - ./data:/app/data
-    environment:
-      - PYTHONUNBUFFERED=1
-      - ENABLE_REDIS_SYNC=false
-      - DATA_DIR=/app/data
-    env_file:
-      - ./backend/.env
+      - ai-models:/app/models
+    depends_on:
+      - express-db-server
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # React Frontend
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    container_name: react-frontend
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+      - NEXT_PUBLIC_FASTAPI_URL=http://localhost:8000
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
-      - backend
+      - express-db-server
+      - fastapi-ai-server
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # PostgreSQL Database (for local development)
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/app/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./sql-functions:/docker-entrypoint-initdb.d/sql-functions
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - express-db-server
+      - fastapi-ai-server
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Redis (for caching and session management)
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  ai-models:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

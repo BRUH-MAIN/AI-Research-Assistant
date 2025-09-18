@@ -1,8 +1,9 @@
 FROM python:3.12-slim-trixie
 
-# Install system deps
+# Install system dependencies for AI/ML operations
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl gcc g++ make ca-certificates \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
@@ -16,13 +17,23 @@ COPY backend/pyproject.toml backend/uv.lock* ./
 # Install dependencies using uv
 RUN uv sync --frozen --no-dev
 
-# Copy backend source code
+# Copy backend source code (AI/ML focused)
 COPY backend .
 
-# Create data directory for PDFs
-RUN mkdir -p /app/data
+# Create directories for AI operations
+RUN mkdir -p /app/data /app/models /app/temp
 
+# Create non-root user for security
+RUN groupadd -r aiuser && useradd -r -g aiuser aiuser
+RUN chown -R aiuser:aiuser /app
+USER aiuser
+
+# Expose port
 EXPOSE 8000
 
-# Run FastAPI with uvicorn using uv
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run FastAPI AI server (database endpoints removed)
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
