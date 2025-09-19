@@ -29,6 +29,26 @@ const authMiddleware = async (req, res, next) => {
         const token = authHeader.split(' ')[1];
         console.log('Auth middleware: Extracted token:', token.substring(0, 20) + '...');
         
+        // Check for development mode token
+        if (token.startsWith('dev_mock_token_') && process.env.NODE_ENV === 'development') {
+            console.log('Auth middleware: Using development mode authentication');
+            
+            // Mock user for development
+            req.user = {
+                id: '1',
+                email: 'dev@test.com',
+                user_metadata: {
+                    full_name: 'Development User',
+                    name: 'Dev User'
+                },
+                app_metadata: {}
+            };
+            
+            req.token = token;
+            console.log('Auth middleware: Development authentication successful');
+            return next();
+        }
+        
         // Verify token with Supabase using admin client
         const supabase = req.app.locals.supabase;
         

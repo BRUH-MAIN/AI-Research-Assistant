@@ -3,20 +3,13 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
+import { authService } from '../services/authService';
 import { 
   EyeIcon, 
   EyeSlashIcon, 
   ExclamationCircleIcon,
   CheckCircleIcon 
 } from '@heroicons/react/24/outline';
-
-// Supabase Configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// Create Supabase client
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -32,19 +25,11 @@ const Login = () => {
     setMessage(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setMessage({ type: 'error', text: error.message });
-      } else {
-        setMessage({ type: 'success', text: 'Login successful!' });
-        router.push('/');
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'An unexpected error occurred' });
+      const data = await authService.signIn(email, password);
+      setMessage({ type: 'success', text: 'Login successful!' });
+      router.push('/');
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message || 'An unexpected error occurred' });
     } finally {
       setLoading(false);
     }
@@ -55,6 +40,7 @@ const Login = () => {
     setMessage(null);
 
     try {
+      const supabase = authService.getSupabaseClient();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

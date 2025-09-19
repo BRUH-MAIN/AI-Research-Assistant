@@ -39,10 +39,17 @@ export interface UpdateUserRequest {
 
 export interface Group {
   id: number;
+  group_id?: number;  // For backward compatibility
   name: string;
   description?: string;
+  invite_code?: string;
+  is_public?: boolean;
   created_by: number;
   created_at: string;
+  updated_at?: string;
+  member_count?: number;
+  user_role?: string;
+  creator_name?: string;
 }
 
 export interface CreateGroupRequest {

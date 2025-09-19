@@ -45,7 +45,7 @@ router.get('/', async (req, res, next) => {
  */
 router.post('/', async (req, res, next) => {
     try {
-        const { name, created_by, description } = req.body;
+        const { name, created_by, description, is_public } = req.body;
         
         if (!name) {
             return res.status(400).json({
@@ -54,18 +54,48 @@ router.post('/', async (req, res, next) => {
             });
         }
         
+        // Validate that created_by is provided
+        if (!created_by) {
+            return res.status(400).json({
+                error: 'created_by is required to specify the group owner',
+                code: 400
+            });
+        }
+        
         const supabase = req.app.locals.supabase;
         
-        // Use created_by from request body or default to authenticated user
-        const createdBy = created_by || parseInt(req.user.id) || 1;
+        // Use created_by from request body - no defaults to avoid security issues
+        const createdBy = parseInt(created_by);
+        
+        // Validate that createdBy is a valid number
+        if (isNaN(createdBy) || createdBy <= 0) {
+            return res.status(400).json({
+                error: 'created_by must be a valid positive user ID',
+                code: 400
+            });
+        }
         
         const group = await executeRPC(supabase, 'create_group', {
             p_name: name,
             p_created_by: createdBy,
-            p_description: description || ''
+            p_description: description || '',
+            p_is_public: is_public || false
         });
         
-        res.status(201).json(group[0]);
+        // Transform the response to match frontend expectations
+        const groupData = group[0];
+        const response = {
+            id: groupData.group_id,
+            group_id: groupData.group_id,
+            name: groupData.name,
+            description: groupData.description || '',
+            is_public: groupData.is_public || false,
+            invite_code: groupData.invite_code,
+            member_count: groupData.member_count || 1,
+            created_at: groupData.created_at
+        };
+        
+        res.status(201).json(response);
     } catch (error) {
         next(error);
     }
@@ -335,6 +365,180 @@ router.get('/getid', async (req, res, next) => {
         });
         
         res.json(group[0]);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * GET /api/groups/invite/:code
+ * Get group information by invite code
+ */
+router.get('/invite/:code', async (req, res, next) => {
+    try {
+        const inviteCode = req.params.code;
+        
+        if (!inviteCode || inviteCode.length !== 8) {
+            return res.status(400).json({
+                error: 'Invalid invite code format',
+                code: 400
+            });
+        }
+        
+        const supabase = req.app.locals.supabase;
+        const group = await executeRPC(supabase, 'get_group_by_invite_code', {
+            p_invite_code: inviteCode
+        });
+        
+        if (!group || group.length === 0) {
+            return res.status(404).json({
+                error: 'Invalid invite code',
+                code: 404
+            });
+        }
+        
+        res.json(group[0]);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * POST /api/groups/invite/:code/join
+ * Join a group using invite code
+ */
+router.post('/invite/:code/join', async (req, res, next) => {
+    try {
+        const inviteCode = req.params.code;
+        const { user_id } = req.body;
+        
+        if (!inviteCode || inviteCode.length !== 8) {
+            return res.status(400).json({
+                error: 'Invalid invite code format',
+                code: 400
+            });
+        }
+        
+        const userId = user_id || parseInt(req.user?.id) || 1;
+        
+        const supabase = req.app.locals.supabase;
+        const result = await executeRPC(supabase, 'join_group_by_invite_code', {
+            p_invite_code: inviteCode,
+            p_user_id: userId
+        });
+        
+        const joinResult = result[0];
+        
+        res.status(201).json({
+            message: `Successfully joined group "${joinResult.name}"`,
+            group_id: joinResult.group_id,
+            group_name: joinResult.name
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * GET /api/groups/user/:userId
+ * Get all groups for a specific user
+ */
+router.get('/user/:userId', async (req, res, next) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        
+        if (isNaN(userId)) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                code: 400
+            });
+        }
+        
+        const supabase = req.app.locals.supabase;
+        const groups = await executeRPC(supabase, 'get_user_groups', {
+            p_user_id: userId
+        });
+        
+        res.json(groups);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * PUT /api/groups/:id/members/:userId/role
+ * Update a member's role in the group
+ */
+router.put('/:id/members/:userId/role', async (req, res, next) => {
+    try {
+        const groupId = parseInt(req.params.id);
+        const userId = parseInt(req.params.userId);
+        const { role, updated_by } = req.body;
+        
+        if (isNaN(groupId) || isNaN(userId)) {
+            return res.status(400).json({
+                error: 'Invalid group ID or user ID',
+                code: 400
+            });
+        }
+        
+        if (!role || !['admin', 'member', 'mentor'].includes(role)) {
+            return res.status(400).json({
+                error: 'Invalid role. Must be admin, member, or mentor',
+                code: 400
+            });
+        }
+        
+        const updatedBy = updated_by || parseInt(req.user?.id) || 1;
+        
+        const supabase = req.app.locals.supabase;
+        const result = await executeRPC(supabase, 'update_group_member_role', {
+            p_group_id: groupId,
+            p_target_user_id: userId,
+            p_new_role: role,
+            p_admin_user_id: updatedBy
+        });
+        
+        const updateResult = result[0];
+        
+        res.json({ 
+            message: `User role updated to ${updateResult.role} successfully` 
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * POST /api/groups/:id/regenerate-invite
+ * Regenerate invite code for a group (admin only)
+ */
+router.post('/:id/regenerate-invite', async (req, res, next) => {
+    try {
+        const groupId = parseInt(req.params.id);
+        const { user_id } = req.body;
+        
+        if (isNaN(groupId)) {
+            return res.status(400).json({
+                error: 'Invalid group ID',
+                code: 400
+            });
+        }
+        
+        const userId = user_id || parseInt(req.user?.id) || 1;
+        
+        const supabase = req.app.locals.supabase;
+        const result = await executeRPC(supabase, 'regenerate_invite_code', {
+            p_group_id: groupId,
+            p_user_id: userId
+        });
+        
+        const regenResult = result[0];
+        
+        res.json({
+            message: 'Invite code regenerated successfully',
+            invite_code: regenResult.invite_code
+        });
     } catch (error) {
         next(error);
     }

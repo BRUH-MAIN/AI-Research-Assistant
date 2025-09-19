@@ -8,6 +8,12 @@ const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
+// Set development mode if not already set
+if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'development';
+    console.log('Setting NODE_ENV to development mode');
+}
+
 // Import route modules
 const userRoutes = require('./routes/users');
 const groupRoutes = require('./routes/groups');

@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import type { User } from '@supabase/supabase-js';
+import { authService } from '../services/authService';
 import { 
   UserIcon, 
   Cog6ToothIcon as SettingsIcon, 
   ArrowRightOnRectangleIcon as LogoutIcon,
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,
+  UserGroupIcon,
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -63,7 +65,8 @@ const Navigation = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      // Use authService logout which properly clears tokens and state
+      await authService.signOut();
       setUser(null);
       setDropdownOpen(false);
       router.push('/');
@@ -90,6 +93,7 @@ const Navigation = () => {
 
   const navLinks = [
     { href: '/papers', label: 'Papers', icon: DocumentTextIcon, requireAuth: false },
+    { href: '/groups', label: 'Groups', icon: UserGroupIcon, requireAuth: true },
     { href: '/chat', label: 'Chat', icon: ChatBubbleLeftRightIcon, requireAuth: true },
   ];
 

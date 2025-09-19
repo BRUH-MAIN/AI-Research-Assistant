@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -37,6 +37,8 @@ export class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     
+    console.log('API Client: Making request to:', url);
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -52,10 +54,21 @@ export class ApiClient {
         ...config.headers,
         Authorization: `Bearer ${token}`,
       };
+      console.log('API Client: Added auth header');
+    } else {
+      console.log('API Client: No auth token available');
     }
 
     try {
+      console.log('API Client: Fetch config:', {
+        url,
+        method: config.method || 'GET',
+        headers: config.headers
+      });
+      
       const response = await fetch(url, config);
+      
+      console.log('API Client: Response status:', response.status);
       
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
@@ -64,9 +77,11 @@ export class ApiClient {
         try {
           errorData = await response.json();
           errorMessage = errorData.detail || errorData.message || errorMessage;
+          console.log('API Client: Error data:', errorData);
         } catch (e) {
           // If response is not JSON, use status text
           errorMessage = response.statusText || errorMessage;
+          console.log('API Client: Non-JSON error response');
         }
         
         throw new ApiError(errorMessage, response.status, errorData);
@@ -75,11 +90,15 @@ export class ApiClient {
       // Handle empty responses
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        return await response.json();
+        const data = await response.json();
+        console.log('API Client: Success response data:', data);
+        return data;
       } else {
+        console.log('API Client: Non-JSON response');
         return {} as T;
       }
     } catch (error) {
+      console.error('API Client: Request failed:', error);
       if (error instanceof ApiError) {
         throw error;
       }
@@ -90,7 +109,9 @@ export class ApiClient {
   private getAuthToken(): string | null {
     // Try to get token from localStorage (existing system uses 'access_token')
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token');
+      const token = localStorage.getItem('access_token');
+      console.log('API Client: Getting auth token:', token ? 'Token present' : 'No token');
+      return token;
     }
     return null;
   }
