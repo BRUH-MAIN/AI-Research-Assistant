@@ -93,18 +93,8 @@ export class GroupService {
 
   // Leave group
   async leaveGroup(groupId: number, userId: number): Promise<void> {
-    // For DELETE requests with body, we need to handle it differently
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/groups/${groupId}/leave`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ user_id: userId }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to leave group: ${response.statusText}`);
-    }
+    // Let the server use the authenticated user's ID from the token
+    return apiClient.delete<void>(`/groups/${groupId}/leave`);
   }
 
   // Update member role

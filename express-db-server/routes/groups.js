@@ -263,7 +263,27 @@ router.post('/:id/join', async (req, res, next) => {
             });
         }
         
-        const userId = user_id || parseInt(req.user.id) || 1;
+        let userId = user_id;
+        
+        // If no user_id provided in body, look up the internal user ID from auth_user_id
+        if (!userId) {
+            const supabase = req.app.locals.supabase;
+            const { data: userProfile, error: userError } = await supabase
+                .from('users')
+                .select('user_id')
+                .eq('auth_user_id', req.user.id)
+                .single();
+            
+            if (userError || !userProfile) {
+                return res.status(404).json({
+                    error: 'User profile not found',
+                    code: 404,
+                    details: 'Unable to map authenticated user to internal user ID'
+                });
+            }
+            
+            userId = userProfile.user_id;
+        }
         
         const supabase = req.app.locals.supabase;
         const result = await executeRPC(supabase, 'add_group_member', {
@@ -294,7 +314,27 @@ router.delete('/:id/leave', async (req, res, next) => {
             });
         }
         
-        const userId = user_id || parseInt(req.user.id) || 1;
+        let userId = user_id;
+        
+        // If no user_id provided in body, look up the internal user ID from auth_user_id
+        if (!userId) {
+            const supabase = req.app.locals.supabase;
+            const { data: userProfile, error: userError } = await supabase
+                .from('users')
+                .select('user_id')
+                .eq('auth_user_id', req.user.id)
+                .single();
+            
+            if (userError || !userProfile) {
+                return res.status(404).json({
+                    error: 'User profile not found',
+                    code: 404,
+                    details: 'Unable to map authenticated user to internal user ID'
+                });
+            }
+            
+            userId = userProfile.user_id;
+        }
         
         const supabase = req.app.locals.supabase;
         await executeRPC(supabase, 'remove_group_member', {
