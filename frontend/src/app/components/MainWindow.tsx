@@ -18,7 +18,7 @@ function MainWindow() {
   }, [messages, isChatVisible]);
 
   return (
-    <div className="rounded-0 h-full w-full flex flex-col items-center relative bg-gray-950 border-2 border-l-0 border-white">
+    <div className="rounded-0 h-full w-full flex flex-col items-center relative bg-gray-950 border-1 border-l-0 border-white">
       <TopBar />
       
       {/* Connection Status Indicator */}

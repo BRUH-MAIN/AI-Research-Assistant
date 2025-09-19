@@ -48,6 +48,7 @@ services:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
       - AI_MODEL_PATH=${AI_MODEL_PATH:-/app/models}
+      - GROQ_API_KEY=${GROQ_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
@@ -84,7 +85,7 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:3001/api
-      - NEXT_PUBLIC_FASTAPI_URL=http://localhost:8000
+      - NEXT_PUBLIC_FASTAPI_BACKEND_URL=http://localhost:8000
       - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL_PUBLIC}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
     volumes:

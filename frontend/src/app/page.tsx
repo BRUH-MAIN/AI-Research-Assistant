@@ -45,7 +45,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-gray-950 border-white border-1">
       {/* Center content with app name and catchphrase */}
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-4">
         <div className="text-center border-2 border-white p-12 max-w-4xl">

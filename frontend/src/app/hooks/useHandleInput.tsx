@@ -48,9 +48,15 @@ function useHandleInput() {
         // Load existing chat history if any
         const history = await chatService.getSessionHistory(newSessionId);
         if (history.length > 0) {
-          setMessages(history);
+          // Convert ChatMessage to Message format
+          const convertedMessages: Message[] = history.map(msg => ({
+            id: msg.id,
+            sender: msg.role === 'user' ? 'user' : 'ai',
+            content: msg.content
+          }));
+          setMessages(convertedMessages);
           // Convert to message blocks for UI
-          const blocks = convertMessagesToBlocks(history);
+          const blocks = convertMessagesToBlocks(convertedMessages);
           setMessageBlocks(blocks);
         }
       } catch (error) {
@@ -92,18 +98,13 @@ function useHandleInput() {
     setMessageBlocks((prevBlocks) => [...prevBlocks, block]);
 
     try {
-      // Send message using API service
-      const response = await chatService.sendMessage(sessionId, {
-        id: userMessage.id,
-        sender: userMessage.sender,
-        content: userMessage.content,
-        timestamp: new Date(),
-      });
+      // Send message using API service - fix: pass just the text, not the entire object
+      const response = await chatService.sendMessage(sessionId, text);
 
       const aiMessage: Message = {
-        id: response.aiMessage.id,
+        id: response.message.id,
         sender: 'ai',
-        content: response.aiMessage.content,
+        content: response.message.content,
       };
 
       // Update both messages and blocks

@@ -54,7 +54,7 @@ function InputBar({ onSendMessage, isConnected = true }: InputBarProps) {
 
   return (
     <div 
-      className={`border-2 border-white bg-transparent relative cursor-text max-w-3xl w-full p-[1px] rounded-0 overflow-hidden flex flex-col items-center justify-between ${
+      className={`border-1 border-white bg-transparent relative cursor-text max-w-3xl w-full p-[1px] rounded-0 overflow-hidden flex flex-col items-center justify-between ${
         !isConnected ? 'opacity-50' : ''
       }`}
       onClick={handleClick}

@@ -95,8 +95,8 @@ const Navigation = () => {
 
   if (loading) {
     return (
-      <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="bg-gray-950 backdrop-blur-sm border-b border-white sticky top-0 z-50">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="animate-pulse bg-gray-700 h-8 w-32 rounded"></div>
             <div className="animate-pulse bg-gray-700 h-8 w-24 rounded"></div>
@@ -107,8 +107,8 @@ const Navigation = () => {
   }
 
   return (
-    <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-gray-950 backdrop-blur-sm border-t border-l border-r border-white sticky top-0 z-50">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo and App Name */}
           <div className="flex items-center space-x-4">
@@ -194,7 +194,7 @@ const Navigation = () => {
                       <span>Settings</span>
                     </Link>
                     
-                    <div className="border-t border-gray-700 mt-1 pt-1">
+                    <div className="border-t border-b border-gray-700 mt-1 pt-1">
                       <button
                         onClick={handleLogout}
                         className="flex items-center space-x-3 px-4 py-2 text-red-400 hover:text-red-300 hover:bg-gray-700 transition-colors w-full text-left"
@@ -240,7 +240,7 @@ const Navigation = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-gray-800 border-t border-gray-700">
+        <div className="md:hidden bg-gray-800 border-t border-white">
           <div className="px-4 py-2 space-y-1">
             {navLinks.map((link) => {
               if (link.requireAuth && !user) return null;
