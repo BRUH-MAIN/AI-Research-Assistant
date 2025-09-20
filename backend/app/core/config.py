@@ -27,8 +27,7 @@ class Settings:
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres")
     
-    # Redis settings (for future use)
-    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+    # Redis removed - not needed for this project
     
     # Environment
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")

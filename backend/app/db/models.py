@@ -229,7 +229,7 @@ class Group:
             return group.copy() if group else None
     
     @classmethod
-    def create(cls, name: str, created_by: int, description: str = None, is_public: bool = False) -> Dict[str, Any]:
+    def create(cls, name: str, created_by: int, description: str = None) -> Dict[str, Any]:
         """Create a new group"""
         if not DB_AVAILABLE:
             new_id = max([g["id"] for g in MOCK_GROUPS], default=0) + 1
@@ -237,29 +237,25 @@ class Group:
                 "id": new_id,
                 "name": name,
                 "description": description or "",
-                "invite_code": f"TEST{new_id:04d}",  # Mock invite code
-                "is_public": is_public,
-                "member_count": 1,
+                "member_count": 0,
                 "created_at": datetime.now().isoformat()
             }
             MOCK_GROUPS.append(new_group)
             return new_group
             
         query = """
-            INSERT INTO groups (name, created_by, description, is_public)
-            VALUES (%s, %s, %s, %s)
-            RETURNING group_id as id, name, description, invite_code, is_public,
-                     created_at, 1 as member_count;
+            INSERT INTO groups (name, created_by)
+            VALUES (%s, %s)
+            RETURNING group_id as id, name, created_at;
         """
-        result = run_query(query, (name, created_by, description, is_public), fetch=True)
+        result = run_query(query, (name, created_by), fetch=True)
         if result:
             group = result[0]
-            # Add creator as admin
-            cls.add_member(group['id'], created_by, 'admin')
+            group['member_count'] = 0
+            group['description'] = description or ''
             return group
         else:
-            # Fallback to mock behavior
-            return cls.create(name, created_by, description, is_public)
+            return cls.create(name, created_by, description)
     
     @classmethod
     def get_members(cls, group_id: int) -> List[int]:
@@ -316,177 +312,6 @@ class Group:
             return True
         except Exception:
             return True
-
-    @classmethod
-    def get_by_invite_code(cls, invite_code: str) -> Optional[Dict[str, Any]]:
-        """Get group by invite code"""
-        if not DB_AVAILABLE:
-            # Mock: return a group if invite code matches pattern
-            if invite_code.startswith("TEST"):
-                try:
-                    group_id = int(invite_code[4:])
-                    group = next((g for g in MOCK_GROUPS if g["id"] == group_id), None)
-                    return group.copy() if group else None
-                except ValueError:
-                    return None
-            return None
-            
-        query = """
-            SELECT g.group_id as id, g.name, g.description, g.invite_code, g.is_public,
-                   g.created_at, COUNT(gp.user_id) as member_count
-            FROM groups g
-            LEFT JOIN group_participants gp ON g.group_id = gp.group_id
-            WHERE g.invite_code = %s
-            GROUP BY g.group_id, g.name, g.description, g.invite_code, g.is_public, g.created_at;
-        """
-        result = run_query(query, (invite_code,), fetch=True)
-        if result:
-            return result[0]
-        return None
-
-    @classmethod
-    def join_by_invite_code(cls, invite_code: str, user_id: int) -> Dict[str, Any]:
-        """Join group using invite code"""
-        if not DB_AVAILABLE:
-            return {
-                "success": True,
-                "message": "Successfully joined group (mock)",
-                "group_id": 1,
-                "group_name": "Mock Group"
-            }
-            
-        # Check if group exists and get info
-        group = cls.get_by_invite_code(invite_code)
-        if not group:
-            return {
-                "success": False,
-                "message": "Invalid invite code",
-                "group_id": None,
-                "group_name": None
-            }
-        
-        # Check if user is already a member
-        current_members = cls.get_members(group['id'])
-        if user_id in current_members:
-            return {
-                "success": False,
-                "message": "You are already a member of this group",
-                "group_id": group['id'],
-                "group_name": group['name']
-            }
-        
-        # Add user to group
-        success = cls.add_member(group['id'], user_id, 'member')
-        if success:
-            return {
-                "success": True,
-                "message": "Successfully joined group",
-                "group_id": group['id'],
-                "group_name": group['name']
-            }
-        else:
-            return {
-                "success": False,
-                "message": "Failed to join group",
-                "group_id": group['id'],
-                "group_name": group['name']
-            }
-
-    @classmethod
-    def get_user_groups(cls, user_id: int) -> List[Dict[str, Any]]:
-        """Get all groups for a specific user"""
-        if not DB_AVAILABLE:
-            # Mock: return groups for user 1 and 2
-            if user_id in [1, 2]:
-                return MOCK_GROUPS.copy()
-            return []
-            
-        query = """
-            SELECT g.group_id as id, g.name, g.description, g.invite_code, g.is_public,
-                   g.created_at, COUNT(gp_all.user_id) as member_count, gp_user.role
-            FROM groups g
-            JOIN group_participants gp_user ON g.group_id = gp_user.group_id AND gp_user.user_id = %s
-            LEFT JOIN group_participants gp_all ON g.group_id = gp_all.group_id
-            GROUP BY g.group_id, g.name, g.description, g.invite_code, g.is_public, 
-                     g.created_at, gp_user.role
-            ORDER BY g.created_at DESC;
-        """
-        result = run_query(query, (user_id,), fetch=True)
-        return result if result is not None else []
-
-    @classmethod
-    def update_member_role(cls, group_id: int, user_id: int, new_role: str, updated_by: int) -> Dict[str, Any]:
-        """Update member role (admin/mentor functionality)"""
-        if not DB_AVAILABLE:
-            return {"success": True, "message": "Role updated successfully (mock)"}
-            
-        # Check if updater is admin
-        query_check = """
-            SELECT role FROM group_participants 
-            WHERE group_id = %s AND user_id = %s;
-        """
-        result = run_query(query_check, (group_id, updated_by), fetch=True)
-        
-        if not result or result[0]['role'] != 'admin':
-            return {"success": False, "message": "Only admins can change member roles"}
-        
-        # Check if target user exists in group
-        target_result = run_query(query_check, (group_id, user_id), fetch=True)
-        if not target_result:
-            return {"success": False, "message": "User is not a member of this group"}
-        
-        # Update role
-        update_query = """
-            UPDATE group_participants 
-            SET role = %s 
-            WHERE group_id = %s AND user_id = %s;
-        """
-        try:
-            run_query(update_query, (new_role, group_id, user_id))
-            return {"success": True, "message": "Role updated successfully"}
-        except Exception:
-            return {"success": False, "message": "Failed to update role"}
-
-    @classmethod
-    def regenerate_invite_code(cls, group_id: int, user_id: int) -> Dict[str, Any]:
-        """Regenerate invite code (admin only)"""
-        if not DB_AVAILABLE:
-            return {
-                "success": True, 
-                "message": "Invite code regenerated successfully (mock)",
-                "new_invite_code": f"NEW{group_id:05d}"
-            }
-            
-        # Check if user is admin
-        query_check = """
-            SELECT role FROM group_participants 
-            WHERE group_id = %s AND user_id = %s;
-        """
-        result = run_query(query_check, (group_id, user_id), fetch=True)
-        
-        if not result or result[0]['role'] != 'admin':
-            return {"success": False, "message": "Only admins can regenerate invite codes"}
-        
-        # Generate new invite code (this would trigger the database function)
-        # For now, we'll update the group to trigger the auto-generation
-        update_query = """
-            UPDATE groups 
-            SET updated_at = CURRENT_TIMESTAMP 
-            WHERE group_id = %s
-            RETURNING invite_code;
-        """
-        try:
-            update_result = run_query(update_query, (group_id,), fetch=True)
-            if update_result:
-                return {
-                    "success": True,
-                    "message": "Invite code regenerated successfully",
-                    "new_invite_code": update_result[0]['invite_code']
-                }
-            else:
-                return {"success": False, "message": "Failed to regenerate invite code"}
-        except Exception:
-            return {"success": False, "message": "Failed to regenerate invite code"}
 
 class Session:
     """Session model corresponding to the sessions table"""

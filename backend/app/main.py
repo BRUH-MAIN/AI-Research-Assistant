@@ -14,7 +14,7 @@ def create_application() -> FastAPI:
     app = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.VERSION,
-        description="AI Research Assistant API with Redis-based chat sessions",
+        description="AI Research Assistant API with AI/ML chat functionality",
         openapi_url=f"{settings.API_V1_STR}/openapi.json",
         lifespan=lifespan
     )
@@ -30,6 +30,11 @@ def create_application() -> FastAPI:
 
     # Include API router
     app.include_router(api_router, prefix=settings.API_V1_STR)
+    
+    # Add health endpoint for Docker healthcheck
+    @app.get("/health")
+    async def health():
+        return {"status": "healthy"}
 
     return app
 
