@@ -36,8 +36,8 @@ interface User {
 
 interface GroupMember {
   user_id: number;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
   email: string;
   role: string;
   joined_at: string;

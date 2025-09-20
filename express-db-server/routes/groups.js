@@ -150,11 +150,11 @@ router.get('/:id/members', async (req, res, next) => {
         }
         
         const supabase = req.app.locals.supabase;
-        const members = await executeRPC(supabase, 'get_group_members', {
+        const members = await executeRPC(supabase, 'get_group_members_detailed', {
             p_group_id: groupId
         });
         
-        res.json(members[0]);
+        res.json(members);
     } catch (error) {
         next(error);
     }

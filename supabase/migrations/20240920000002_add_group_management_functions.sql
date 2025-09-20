@@ -324,7 +324,8 @@ RETURNS TABLE (
     first_name TEXT,
     last_name TEXT,
     email TEXT,
-    role TEXT,
+    role VARCHAR(50),
+    availability VARCHAR(50),
     joined_at TIMESTAMP
 ) 
 LANGUAGE plpgsql
@@ -344,6 +345,7 @@ BEGIN
         u.last_name,
         u.email,
         gp.role,
+        u.availability,
         gp.joined_at
     FROM group_participants gp
     JOIN users u ON gp.user_id = u.user_id
@@ -462,5 +464,5 @@ COMMENT ON FUNCTION join_group_by_invite_code(TEXT, INTEGER) IS 'Join a group us
 COMMENT ON FUNCTION update_group_member_role(INTEGER, INTEGER, TEXT, INTEGER) IS 'Update group member role (admin/mentor permissions required)';
 COMMENT ON FUNCTION regenerate_invite_code(INTEGER, INTEGER) IS 'Regenerate invite code for a group (admin only)';
 COMMENT ON FUNCTION leave_group(INTEGER, INTEGER) IS 'Leave a group (prevents only admin from leaving)';
-COMMENT ON FUNCTION get_group_members_detailed(INTEGER) IS 'Get detailed group member list with user information';
+COMMENT ON FUNCTION get_group_members_detailed(INTEGER) IS 'Get detailed group member list with user information including names, roles, and availability';
 COMMENT ON FUNCTION get_user_groups(INTEGER) IS 'Get all groups that a user belongs to with details';

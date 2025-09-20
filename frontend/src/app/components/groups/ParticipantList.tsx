@@ -12,8 +12,8 @@ import {
 
 interface GroupMember {
   user_id: number;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
   email: string;
   role: string;
   joined_at: string;
@@ -43,6 +43,27 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
   onRegenerateInvite,
   isLoading = false
 }) => {
+  // Helper function to get user initials
+  const getUserInitials = (firstName: string | null, lastName: string | null): string => {
+    const firstInitial = firstName?.charAt(0)?.toUpperCase() || '';
+    const lastInitial = lastName?.charAt(0)?.toUpperCase() || '';
+    
+    if (firstInitial && lastInitial) {
+      return firstInitial + lastInitial;
+    } else if (firstInitial) {
+      return firstInitial;
+    } else if (lastInitial) {
+      return lastInitial;
+    } else {
+      return '?'; // Fallback for users with no name
+    }
+  };
+
+  // Helper function to get display name
+  const getDisplayName = (firstName: string | null, lastName: string | null, email: string): string => {
+    const fullName = [firstName, lastName].filter(Boolean).join(' ');
+    return fullName || email; // Fallback to email if no name available
+  };
   const [updatingRoles, setUpdatingRoles] = useState<Set<number>>(new Set());
   const [removingMembers, setRemovingMembers] = useState<Set<number>>(new Set());
   const [regeneratingInvite, setRegeneratingInvite] = useState(false);
@@ -113,7 +134,8 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
     const member = members.find(m => m.user_id === userId);
     if (!member) return;
 
-    if (!confirm(`Are you sure you want to remove ${member.first_name} ${member.last_name} from the group?`)) {
+    const memberName = getDisplayName(member.first_name, member.last_name, member.email);
+    if (!confirm(`Are you sure you want to remove ${memberName} from the group?`)) {
       return;
     }
 
@@ -207,13 +229,13 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
                   <span className="text-white font-medium text-sm">
-                    {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                    {getUserInitials(member.first_name, member.last_name)}
                   </span>
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
                     <h4 className="text-white font-medium">
-                      {member.first_name} {member.last_name}
+                      {getDisplayName(member.first_name, member.last_name, member.email)}
                     </h4>
                     {member.user_id === currentUserId && (
                       <span className="text-xs text-blue-400">(You)</span>
