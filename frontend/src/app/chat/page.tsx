@@ -3,10 +3,8 @@ import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../components/ui/sidebar";
 import MainWindow from "../components/MainWindow";      
 import {
-  IconArrowLeft,
-  IconBrandTabler,
-  IconSettings,
-  IconUserBolt,
+  IconEdit,
+  IconSettings
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -18,45 +16,29 @@ export default function SidebarDemo() {
       label: "Dashboard",
       href: "#",
       icon: (
-        <IconBrandTabler className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+        <IconEdit className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
     },
-    {
-      label: "Profile",
-      href: "#",
-      icon: (
-        <IconUserBolt className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
-      ),
-    },
+
     {
       label: "Settings",
       href: "#",
       icon: (
         <IconSettings className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
-    },
-    {
-      label: "Logout",
-      href: "#",
-      icon: (
-        <IconArrowLeft className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
-      ),
-    },
+    }
   ];
   const [open, setOpen] = useState(false);
   return (
     <div
       className={cn(
-        "mx-auto flex w-screen max- flex-1 flex-col overflow-hidden rounded-0 border border-neutral-200 bg-gray-100 md:flex-row dark:border-neutral-700 dark:bg-neutral-800",
-        "h-screen", // for your use case, use `h-screen` instead of `h-[60vh]`
+        "mx-auto flex w-full max- flex-1 flex-col rounded-0 border border-neutral-200 bg-gray-100 md:flex-row dark:border-neutral-700 dark:bg-neutral-800",
+        "h-full", // using h-full since parent main now has proper height
       )}
     >
       <Sidebar open={open} setOpen={setOpen} animate={true}>
         <SidebarBody className="justify-between gap-2">
-          <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
-            <>
-              <Logo />
-            </>
+          <div className="flex flex-1 flex-col overflow-x-hidden py-2">
             <div className=" flex flex-col gap-0 ml-0">
               {links.map((link, idx) => (
                 <SidebarLink key={idx} link={link} />
@@ -127,7 +109,7 @@ const Dashboard = () => {
   return (
     <div className="flex flex-1">
       <div className="flex h-full w-full flex-1 flex-col gap-2 rounded-tl-2xl border border-neutral-200 bg-white p-2 md:p-2">
-        <div className="h-screen w-full rounded-3xl">
+        <div className="h-full w-full rounded-3xl">
           <MainWindow />
         </div>
       </div>
