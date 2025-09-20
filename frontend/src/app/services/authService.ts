@@ -28,7 +28,7 @@ export class AuthService {
   }
 
   // Get or set internal user ID mapping
-  private async getInternalUserId(supabaseUser: User): Promise<number> {
+  public async getInternalUserId(supabaseUser: User): Promise<number> {
     const storageKey = `internal_user_id_${supabaseUser.id}`;
     
     // Check if we already have a mapping stored

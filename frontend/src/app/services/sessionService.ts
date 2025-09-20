@@ -2,7 +2,9 @@ import { apiClient } from './api';
 import type { 
   Session, 
   CreateSessionRequest, 
-  UpdateSessionRequest
+  UpdateSessionRequest,
+  SessionParticipant,
+  SessionWithParticipants
 } from '../types/types';
 
 export class SessionService {
@@ -39,6 +41,29 @@ export class SessionService {
   // Leave a session
   async leaveSession(sessionId: number): Promise<void> {
     return apiClient.delete<void>(`/sessions/${sessionId}/leave`);
+  }
+
+  // Get session participants
+  async getSessionParticipants(sessionId: number): Promise<SessionParticipant[]> {
+    return apiClient.get<SessionParticipant[]>(`/sessions/${sessionId}/participants`);
+  }
+
+  // Close a session
+  async closeSession(sessionId: number): Promise<Session> {
+    return apiClient.post<Session>(`/sessions/${sessionId}/close`);
+  }
+
+  // Get session with participants (convenience method)
+  async getSessionWithParticipants(sessionId: number): Promise<SessionWithParticipants> {
+    const [session, participants] = await Promise.all([
+      this.getSession(sessionId),
+      this.getSessionParticipants(sessionId)
+    ]);
+
+    return {
+      ...session,
+      participants
+    };
   }
 }
 

@@ -54,7 +54,7 @@ const GroupDetailsPage: React.FC = () => {
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'members' | 'settings'>('overview');
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   // Derive current user's role from the members list
@@ -306,7 +306,7 @@ const GroupDetailsPage: React.FC = () => {
         {/* Tabs */}
         <div className="border-b border-gray-700 mb-6">
           <nav className="-mb-px flex space-x-8">
-            {['overview', 'members', 'settings'].map((tab) => (
+            {['overview', 'sessions', 'members', 'settings'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -397,6 +397,64 @@ const GroupDetailsPage: React.FC = () => {
                     onRegenerate={currentUserRole === 'admin' ? handleRegenerateInvite : undefined}
                   />
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'sessions' && (
+            <div className="space-y-6">
+              <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">Research Sessions</h3>
+                  <button
+                    onClick={() => router.push(`/groups/${groupId}/sessions`)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  >
+                    <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                    <span>View All Sessions</span>
+                  </button>
+                </div>
+                
+                <div className="text-center py-12">
+                  <UserGroupIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+                  <h4 className="text-xl font-medium text-gray-300 mb-2">Manage Research Sessions</h4>
+                  <p className="text-gray-400 mb-6">
+                    Create and participate in collaborative research sessions with your group members.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-400">0</div>
+                      <div className="text-sm text-gray-400">Active Sessions</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-400">0</div>
+                      <div className="text-sm text-gray-400">Waiting Sessions</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-400">0</div>
+                      <div className="text-sm text-gray-400">Completed</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => router.push(`/groups/${groupId}/sessions`)}
+                      className="block w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      View All Sessions
+                    </button>
+                    
+                    {(currentUserRole === 'admin' || currentUserRole === 'mentor') && (
+                      <button
+                        onClick={() => router.push(`/groups/${groupId}/sessions`)}
+                        className="block w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                      >
+                        Create New Session
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}

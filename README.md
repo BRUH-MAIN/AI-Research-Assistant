@@ -7,8 +7,21 @@ A full-stack application for searching, downloading, and managing academic paper
 - 🔍 **Paper Search**: Search academic papers using ArXiv API
 - 📄 **PDF Management**: Download and store papers locally
 - 💬 **Chat Interface**: Discuss papers with AI assistance
-- 🗄️ **Database Integration**: PostgreSQL for data persistence
-- 🚀 **Modern Stack**: FastAPI backend + Next.js frontend
+- � **Group Management**: Collaborative research sessions
+- �🗄️ **Database Integration**: PostgreSQL for data persistence
+- � **Global Authentication**: Centralized user context system
+- �🚀 **Modern Stack**: FastAPI backend + Next.js frontend
+
+## Recent Updates
+
+### 🎯 Global User Context System
+The application now features a **centralized authentication system** that eliminates user state confusion and provides consistent authentication across all components. See [Global User Context Documentation](./docs/GLOBAL_USER_CONTEXT.md) for details.
+
+### Key Improvements:
+- ✅ **Eliminated authentication errors** ("Unable to get user information")
+- ✅ **Simplified component development** with `useUser()` hook
+- ✅ **Automatic ID mapping** between Supabase and internal database
+- ✅ **Consistent user state** across entire application
 
 ## Architecture
 

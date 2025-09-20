@@ -59,7 +59,7 @@ export const useUpdateGroup = () => useMutation(({ groupId, data }: { groupId: n
 );
 export const useDeleteGroup = () => useMutation((groupId: number) => groupService.deleteGroup(groupId));
 export const useAddGroupMember = () => useMutation(({ groupId, userId }: { groupId: number; userId: number }) => 
-  groupService.addGroupMember(groupId, { user_id: userId })
+  groupService.addGroupMember(groupId, userId)
 );
 export const useRemoveGroupMember = () => useMutation(({ groupId, userId }: { groupId: number; userId: number }) => 
   groupService.removeGroupMember(groupId, userId)
@@ -75,6 +75,9 @@ export const useUpdateSession = () => useMutation(({ sessionId, data }: { sessio
 export const useDeleteSession = () => useMutation((sessionId: number) => sessionService.deleteSession(sessionId));
 export const useJoinSession = () => useMutation((sessionId: number) => sessionService.joinSession(sessionId));
 export const useLeaveSession = () => useMutation((sessionId: number) => sessionService.leaveSession(sessionId));
+export const useSessionParticipants = (sessionId: number) => useApi(() => sessionService.getSessionParticipants(sessionId), [sessionId]);
+export const useCloseSession = () => useMutation((sessionId: number) => sessionService.closeSession(sessionId));
+export const useSessionWithParticipants = (sessionId: number) => useApi(() => sessionService.getSessionWithParticipants(sessionId), [sessionId]);
 
 // Message hooks
 export const useMessages = (filters?: { session_id?: number; user_id?: number; message_type?: 'user' | 'ai' | 'system' }) => 

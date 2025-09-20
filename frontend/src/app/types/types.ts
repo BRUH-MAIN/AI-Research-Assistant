@@ -84,7 +84,29 @@ export interface Session {
   created_by: number;
   group_id?: number;
   created_at: string;
-  status: 'active' | 'completed' | 'paused';
+  started_at?: string;
+  ended_at?: string;
+  status: 'offline' | 'active' | 'completed';
+  participant_count?: number;
+}
+
+export interface SessionParticipant {
+  user_id: number;
+  session_id: number;
+  joined_at: string;
+  user: {
+    user_id: number;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    availability: 'available' | 'busy' | 'offline';
+  };
+}
+
+export interface SessionWithParticipants extends Session {
+  participants: SessionParticipant[];
+  current_user_joined?: boolean;
+  can_close?: boolean;
 }
 
 export interface CreateSessionRequest {
@@ -92,13 +114,13 @@ export interface CreateSessionRequest {
   description?: string;
   created_by: number;
   group_id?: number;
-  status?: 'active' | 'completed' | 'paused';
+  status?: 'offline' | 'active' | 'completed';
 }
 
 export interface UpdateSessionRequest {
   title?: string;
   description?: string;
-  status?: 'active' | 'completed' | 'paused';
+  status?: 'offline' | 'active' | 'completed';
 }
 
 export interface ChatMessage {

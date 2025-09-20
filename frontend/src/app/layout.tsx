@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fira_Code } from "next/font/google";
 import "./globals.css";
 import Navigation from "./components/Navigation";
+import { UserProvider } from "./contexts";
 
 const firaCode = Fira_Code({
   variable: "--font-fira-code",
@@ -24,10 +25,12 @@ export default function RootLayout({
       <body
         className={`${firaCode.variable} antialiased font-mono bg-gray-950 min-h-screen`}
       >
-        <Navigation />
-        <main>
-          {children}
-        </main>
+        <UserProvider>
+          <Navigation />
+          <main>
+            {children}
+          </main>
+        </UserProvider>
       </body>
     </html>
   );

@@ -2,6 +2,12 @@
 
 This folder contains all project documentation organized in a centralized location.
 
+## 🆕 Latest Updates
+
+### Global User Context System
+- **[GLOBAL_USER_CONTEXT.md](./GLOBAL_USER_CONTEXT.md)** - 🎯 **NEW** Centralized authentication system documentation
+- **[GLOBAL_USER_CONTEXT_CHANGELOG.md](./GLOBAL_USER_CONTEXT_CHANGELOG.md)** - 🎯 **NEW** Detailed changelog for authentication improvements
+
 ## 📋 Documentation Files
 
 ### API Documentation
@@ -19,6 +25,7 @@ This folder contains all project documentation organized in a centralized locati
 
 ### Security & Authentication
 - **[AUTHENTICATION_SECURITY_PLAN.md](./AUTHENTICATION_SECURITY_PLAN.md)** - Security implementation plan
+- **[GLOBAL_USER_CONTEXT.md](./GLOBAL_USER_CONTEXT.md)** - 🎯 **NEW** Global authentication context system
 
 ### Migration & System Status
 - **[MIGRATION_PLAN.md](./MIGRATION_PLAN.md)** - Database migration strategy
@@ -26,6 +33,7 @@ This folder contains all project documentation organized in a centralized locati
 - **[MIGRATION_COMPLETE.md](./MIGRATION_COMPLETE.md)** - Frontend migration completion status
 - **[SYSTEM_STATUS.md](./SYSTEM_STATUS.md)** - Current system status
 - **[BACKEND_TROUBLESHOOTING.md](./BACKEND_TROUBLESHOOTING.md)** - 🆕 Backend connectivity troubleshooting
+- **[GLOBAL_USER_CONTEXT_CHANGELOG.md](./GLOBAL_USER_CONTEXT_CHANGELOG.md)** - 🎯 **NEW** Authentication system changelog
 
 ### Frontend Documentation
 - **[FRONTEND_README.md](./FRONTEND_README.md)** - Frontend-specific documentation

@@ -3,9 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-import type { User } from '@supabase/supabase-js';
-import { authService } from '../services/authService';
+import { useUser } from '../contexts';
 import { 
   UserIcon, 
   Cog6ToothIcon as SettingsIcon, 
@@ -17,39 +15,21 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
-// Supabase Configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// Create Supabase client
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
 const Navigation = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { 
+    user, 
+    isAuthenticated, 
+    isLoading, 
+    signOut, 
+    getUserDisplayName, 
+    getUserAvatar 
+  } = useUser();
+  
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -65,26 +45,12 @@ const Navigation = () => {
 
   const handleLogout = async () => {
     try {
-      // Use authService logout which properly clears tokens and state
-      await authService.signOut();
-      setUser(null);
+      await signOut();
       setDropdownOpen(false);
       router.push('/');
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
-
-  const getUserDisplayName = () => {
-    if (!user) return '';
-    return user.user_metadata?.full_name || 
-           user.user_metadata?.name || 
-           user.email?.split('@')[0] || 
-           'User';
-  };
-
-  const getUserAvatar = () => {
-    return user?.user_metadata?.avatar_url || null;
   };
 
   const isActivePath = (path: string) => {
@@ -97,7 +63,7 @@ const Navigation = () => {
     { href: '/chat', label: 'Chat', icon: ChatBubbleLeftRightIcon, requireAuth: true },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

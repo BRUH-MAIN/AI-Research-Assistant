@@ -2,9 +2,28 @@
 
 This directory contains all the API services and hooks for the AI Research Assistant frontend application.
 
+## 🎯 New: Global User Context System
+
+The frontend now uses a **centralized user authentication system** that provides consistent user state across all components. See [Global User Context Documentation](./GLOBAL_USER_CONTEXT.md) for complete details.
+
+### Quick Authentication Usage
+
+```typescript
+import { useUser } from '../contexts';
+
+const MyComponent = () => {
+  const { user, internalUserId, isAuthenticated, getUserDisplayName } = useUser();
+  
+  if (!isAuthenticated) return <LoginPrompt />;
+  
+  return <div>Welcome, {getUserDisplayName()}!</div>;
+};
+```
+
 ## Overview
 
 The API services are organized into several layers:
+- **Global User Context** (`contexts/UserContext.tsx`) - Centralized authentication state
 - **Base API Client** (`api.ts`) - Core HTTP client with error handling and authentication
 - **Service Classes** - Individual service classes for each domain (users, papers, sessions, etc.)
 - **React Hooks** - Custom hooks for easy integration with React components
