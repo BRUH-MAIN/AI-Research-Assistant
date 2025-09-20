@@ -137,7 +137,7 @@ BEGIN
     END IF;
     
     -- Check if group exists
-    IF NOT EXISTS (SELECT 1 FROM groups WHERE group_id = p_group_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM groups g WHERE g.group_id = p_group_id) THEN
         RAISE EXCEPTION 'Group with ID % not found', p_group_id USING ERRCODE = 'P0002';
     END IF;
     
@@ -215,7 +215,7 @@ BEGIN
     END IF;
     
     -- Check if group exists
-    IF NOT EXISTS (SELECT 1 FROM groups WHERE group_id = p_group_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM groups g WHERE g.group_id = p_group_id) THEN
         RAISE EXCEPTION 'Group with ID % not found', p_group_id USING ERRCODE = 'P0002';
     END IF;
     
@@ -279,7 +279,7 @@ BEGIN
     END IF;
     
     -- Check if group exists
-    IF NOT EXISTS (SELECT 1 FROM groups WHERE group_id = p_group_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM groups g WHERE g.group_id = p_group_id) THEN
         RAISE EXCEPTION 'Group with ID % not found', p_group_id USING ERRCODE = 'P0002';
     END IF;
     
@@ -332,7 +332,7 @@ SECURITY DEFINER
 AS $$
 BEGIN
     -- Check if group exists
-    IF NOT EXISTS (SELECT 1 FROM groups WHERE group_id = p_group_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM groups g WHERE g.group_id = p_group_id) THEN
         RAISE EXCEPTION 'Group with ID % not found', p_group_id USING ERRCODE = 'P0002';
     END IF;
     

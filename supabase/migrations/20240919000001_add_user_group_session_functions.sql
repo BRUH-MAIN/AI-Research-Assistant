@@ -352,7 +352,7 @@ DECLARE
     v_count BIGINT;
 BEGIN
     -- Check if group exists
-    IF NOT EXISTS (SELECT 1 FROM groups WHERE group_id = p_group_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM groups g WHERE g.group_id = p_group_id) THEN
         RAISE EXCEPTION 'Group with ID % not found', p_group_id USING ERRCODE = 'P0002';
     END IF;
     
@@ -382,12 +382,12 @@ SECURITY DEFINER
 AS $$
 BEGIN
     -- Check if group exists
-    IF NOT EXISTS (SELECT 1 FROM groups WHERE group_id = p_group_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM groups g WHERE g.group_id = p_group_id) THEN
         RAISE EXCEPTION 'Group with ID % not found', p_group_id USING ERRCODE = 'P0002';
     END IF;
     
     -- Check if user exists
-    IF NOT EXISTS (SELECT 1 FROM users WHERE user_id = p_user_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM users u WHERE u.user_id = p_user_id) THEN
         RAISE EXCEPTION 'User with ID % not found', p_user_id USING ERRCODE = 'P0002';
     END IF;
     
@@ -422,7 +422,7 @@ DECLARE
     v_deleted_count INTEGER;
 BEGIN
     -- Check if group exists
-    IF NOT EXISTS (SELECT 1 FROM groups WHERE group_id = p_group_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM groups g WHERE g.group_id = p_group_id) THEN
         RAISE EXCEPTION 'Group with ID % not found', p_group_id USING ERRCODE = 'P0002';
     END IF;
     
@@ -564,12 +564,12 @@ DECLARE
     v_final_title TEXT;
 BEGIN
     -- Validate user exists
-    IF NOT EXISTS (SELECT 1 FROM users WHERE user_id = p_user_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM users u WHERE u.user_id = p_user_id) THEN
         RAISE EXCEPTION 'User with ID % not found', p_user_id USING ERRCODE = 'P0002';
     END IF;
     
     -- Validate group exists
-    IF NOT EXISTS (SELECT 1 FROM groups WHERE group_id = p_group_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM groups g WHERE g.group_id = p_group_id) THEN
         RAISE EXCEPTION 'Group with ID % not found', p_group_id USING ERRCODE = 'P0002';
     END IF;
     

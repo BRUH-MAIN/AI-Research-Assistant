@@ -71,9 +71,9 @@ export class GroupService {
     return apiClient.delete<void>(`/groups/${groupId}`);
   }
 
-  // Get group members
-  async getGroupMembers(groupId: number): Promise<{ member_ids: number[]; member_count: number }> {
-    return apiClient.get<{ member_ids: number[]; member_count: number }>(`/groups/${groupId}/members`);
+  // Get group members with detailed information
+  async getGroupMembers(groupId: number): Promise<GroupMember[]> {
+    return apiClient.get<GroupMember[]>(`/groups/${groupId}/members`);
   }
 
   // Add a member to group

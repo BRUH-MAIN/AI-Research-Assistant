@@ -17,6 +17,7 @@ interface GroupMember {
   email: string;
   role: string;
   joined_at: string;
+  availability?: string;
 }
 
 interface ParticipantListProps {
@@ -47,7 +48,9 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
   const [regeneratingInvite, setRegeneratingInvite] = useState(false);
 
   const isAdmin = currentUserRole === 'admin';
-  const canManageMembers = isAdmin;
+  const isMentor = currentUserRole === 'mentor';
+  const canManageMembers = isAdmin || isMentor;
+  const canRemoveMembers = isAdmin; // Only admins can remove members
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -72,6 +75,18 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
         return 'bg-green-100 text-green-800 border-green-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getAvailabilityStatus = (availability?: string) => {
+    switch (availability) {
+      case 'available':
+        return { color: 'bg-green-500', text: 'Available', textColor: 'text-green-400' };
+      case 'busy':
+        return { color: 'bg-yellow-500', text: 'Busy', textColor: 'text-yellow-400' };
+      case 'offline':
+      default:
+        return { color: 'bg-gray-500', text: 'Offline', textColor: 'text-gray-400' };
     }
   };
 
@@ -203,6 +218,13 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
                     {member.user_id === currentUserId && (
                       <span className="text-xs text-blue-400">(You)</span>
                     )}
+                    {/* Availability Status */}
+                    <div className="flex items-center space-x-1">
+                      <div className={`w-2 h-2 rounded-full ${getAvailabilityStatus(member.availability).color}`}></div>
+                      <span className={`text-xs ${getAvailabilityStatus(member.availability).textColor}`}>
+                        {getAvailabilityStatus(member.availability).text}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-gray-400 text-sm">{member.email}</p>
                   <p className="text-gray-500 text-xs">
@@ -234,7 +256,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
                 </div>
 
                 {/* Remove Member Button */}
-                {canManageMembers && member.user_id !== currentUserId && (
+                {canRemoveMembers && member.user_id !== currentUserId && (
                   <button
                     onClick={() => handleRemoveMember(member.user_id)}
                     disabled={removingMembers.has(member.user_id)}

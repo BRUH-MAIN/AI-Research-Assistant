@@ -41,6 +41,7 @@ interface GroupMember {
   email: string;
   role: string;
   joined_at: string;
+  availability?: string;
 }
 
 const GroupDetailsPage: React.FC = () => {
@@ -100,34 +101,9 @@ const GroupDetailsPage: React.FC = () => {
         const groupData = await groupService.getGroup(groupId);
         setGroup(groupData);
 
-        // Load group members (mock data for now)
-        const mockMembers: GroupMember[] = [
-          {
-            user_id: 1,
-            first_name: 'John',
-            last_name: 'Doe',
-            email: 'john@example.com',
-            role: 'admin',
-            joined_at: '2025-09-01T10:00:00Z'
-          },
-          {
-            user_id: 2,
-            first_name: 'Jane',
-            last_name: 'Smith',
-            email: 'jane@example.com',
-            role: 'mentor',
-            joined_at: '2025-09-02T14:30:00Z'
-          },
-          {
-            user_id: 3,
-            first_name: 'Bob',
-            last_name: 'Johnson',
-            email: 'bob@example.com',
-            role: 'member',
-            joined_at: '2025-09-03T09:15:00Z'
-          }
-        ];
-        setMembers(mockMembers);
+        // Load group members
+        const membersData = await groupService.getGroupMembers(groupId);
+        setMembers(membersData);
 
       } catch (error: any) {
         console.error('Failed to load group data:', error);
