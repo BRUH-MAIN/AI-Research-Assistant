@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -57,7 +57,16 @@ const GroupDetailsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'settings'>('overview');
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
-  const currentUserRole = group?.user_role || 'member';
+  // Derive current user's role from the members list
+  const currentUserRole = useMemo(() => {
+    if (!currentUserId || !members.length) return 'member';
+    const currentMember = members.find(member => member.user_id === currentUserId);
+    console.log('Current User ID:', currentUserId);
+    console.log('Members:', members);
+    console.log('Current Member Found:', currentMember);
+    console.log('Current User Role:', currentMember?.role || 'member');
+    return currentMember?.role || 'member';
+  }, [currentUserId, members]);
 
   // Check authentication
   useEffect(() => {
