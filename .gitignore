@@ -4,7 +4,7 @@ __pycache__/
 *.py[cod]
 data/
 .supabase/
-supabase/
+supabase/client_secret_757330810270-lco994618mj81cbn5tmpsb021mnnf5lj.apps.googleusercontent.com.json
 supabase.env
 supabase/config.toml
 supabase/.temp/
