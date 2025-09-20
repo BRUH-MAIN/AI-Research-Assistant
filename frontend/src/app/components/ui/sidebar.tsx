@@ -167,7 +167,7 @@ export const SidebarLink = ({
     <a
       href={link.href}
       className={cn(
-        "flex items-center gap-2 group/sidebar p-2 border-2 border-t-0 border-l-0 border-r-0 border-white",
+        "flex items-center gap-2 group/sidebar p-2  border-t-0 border-l-0 border-r-0 ",
         animate ? (open ? "justify-start" : "justify-center") : "justify-start",
         className
       )}

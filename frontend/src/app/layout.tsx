@@ -20,12 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full overflow-hidden">
       <body
-        className={`${firaCode.variable} antialiased font-mono bg-gray-950 min-h-screen`}
+        className={`${firaCode.variable} antialiased font-mono bg-gray-950 h-full overflow-hidden`}
       >
         <Navigation />
-        <main>
+        <main className="h-[calc(100vh-4rem)] overflow-hidden">
           {children}
         </main>
       </body>
