@@ -1,14 +1,7 @@
-import { ApiClient } from './api';
-import { createClient } from '@supabase/supabase-js';
 import type { Message } from '../types/types';
 
-// Supabase Configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Create a specialized API client for the Express backend chat functionality
-const EXPRESS_DB_URL = process.env.NEXT_PUBLIC_EXPRESS_DB_URL || 'http://localhost:3001';
+// Create a specialized API client for the FastAPI backend chat functionality
+const FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
 
 export interface ChatMessage {
   id: string;
@@ -26,22 +19,10 @@ export interface SendMessageResponse {
 }
 
 export class ChatService {
-  private async getAuthenticatedApiClient(): Promise<ApiClient> {
-    const apiClient = new ApiClient(`${EXPRESS_DB_URL}/api`);
-    
-    // Get the current Supabase session token
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      apiClient.setAuthToken(session.access_token);
-    }
-    
-    return apiClient;
-  }
-
   // Health check
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(EXPRESS_DB_URL);
+      const response = await fetch(`${FASTAPI_URL}/health`);
       return response.status === 200;
     } catch (error) {
       console.error('Health check failed:', error);
@@ -51,27 +32,82 @@ export class ChatService {
 
   // Create a new chat session
   async createSession(): Promise<string> {
-    const apiClient = await this.getAuthenticatedApiClient();
-    const response = await apiClient.post<{ sessionId: string }>('/sessions/create');
-    return response.sessionId;
+    try {
+      const response = await fetch(`${FASTAPI_URL}/api/v1/chat/sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.session_id;
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      throw error;
+    }
   }
 
   // Get session history
   async getSessionHistory(sessionId: string): Promise<Message[]> {
-    const apiClient = await this.getAuthenticatedApiClient();
-    return apiClient.get<Message[]>(`/sessions/${sessionId}/history`);
+    try {
+      const response = await fetch(`${FASTAPI_URL}/api/v1/chat/${sessionId}/history`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.messages || [];
+    } catch (error) {
+      console.error('Failed to get session history:', error);
+      throw error;
+    }
   }
 
   // Send a message and get AI response
   async sendMessage(sessionId: string, messageData: ChatMessage): Promise<SendMessageResponse> {
-    const apiClient = await this.getAuthenticatedApiClient();
-    return apiClient.post<SendMessageResponse>(`/sessions/${sessionId}/message`, messageData);
+    try {
+      const response = await fetch(`${FASTAPI_URL}/api/v1/chat/${sessionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: messageData.content,
+          user_id: null // For now, not using user authentication
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return {
+        aiMessage: {
+          id: data.message.id,
+          content: data.message.content
+        },
+        sessionId: data.session_id
+      };
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      throw error;
+    }
   }
 
   // Delete a session
   async deleteSession(sessionId: string): Promise<void> {
-    const apiClient = await this.getAuthenticatedApiClient();
-    return apiClient.delete<void>(`/sessions/${sessionId}`);
+    try {
+      const response = await fetch(`${FASTAPI_URL}/api/v1/chat/${sessionId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+      throw error;
+    }
   }
 }
 

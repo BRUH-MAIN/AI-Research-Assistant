@@ -9,6 +9,8 @@ This folder contains all project documentation organized in a centralized locati
 - **[API_ENDPOINTS_COMPLETE.md](./API_ENDPOINTS_COMPLETE.md)** - Original FastAPI endpoints documentation
 - **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - Backend API documentation
 - **[ENDPOINT_MAPPING.md](./ENDPOINT_MAPPING.md)** - FastAPI to Express.js endpoint mapping
+- **[FASTAPI_MIGRATION_GUIDE.md](./FASTAPI_MIGRATION_GUIDE.md)** - 🆕 FastAPI chat backend migration guide
+- **[FASTAPI_QUICK_REFERENCE.md](./FASTAPI_QUICK_REFERENCE.md)** - 🆕 Quick reference for FastAPI changes
 
 ### Setup & Configuration
 - **[how_to_run.md](./how_to_run.md)** - Instructions for running the application
@@ -23,6 +25,7 @@ This folder contains all project documentation organized in a centralized locati
 - **[MIGRATION_SCRIPTS.md](./MIGRATION_SCRIPTS.md)** - Migration script documentation
 - **[MIGRATION_COMPLETE.md](./MIGRATION_COMPLETE.md)** - Frontend migration completion status
 - **[SYSTEM_STATUS.md](./SYSTEM_STATUS.md)** - Current system status
+- **[BACKEND_TROUBLESHOOTING.md](./BACKEND_TROUBLESHOOTING.md)** - 🆕 Backend connectivity troubleshooting
 
 ### Frontend Documentation
 - **[FRONTEND_README.md](./FRONTEND_README.md)** - Frontend-specific documentation
@@ -36,18 +39,21 @@ This folder contains all project documentation organized in a centralized locati
 
 ### For Developers
 1. Start with [how_to_run.md](./how_to_run.md) for setup instructions
-2. Review [API_ENDPOINTS.md](./API_ENDPOINTS.md) for complete API reference
-3. Check [DATABASE_SETUP.md](./DATABASE_SETUP.md) for database configuration
+2. 🆕 Check [FASTAPI_MIGRATION_GUIDE.md](./FASTAPI_MIGRATION_GUIDE.md) for chat backend changes
+3. Review [API_ENDPOINTS.md](./API_ENDPOINTS.md) for complete API reference
+4. Check [DATABASE_SETUP.md](./DATABASE_SETUP.md) for database configuration
 
 ### For API Integration
 1. [API_ENDPOINTS.md](./API_ENDPOINTS.md) - Complete endpoint reference
-2. [AUTHENTICATION_SECURITY_PLAN.md](./AUTHENTICATION_SECURITY_PLAN.md) - Authentication details
-3. [FRONTEND_SERVICES_README.md](./FRONTEND_SERVICES_README.md) - Frontend service usage
+2. 🆕 [FASTAPI_QUICK_REFERENCE.md](./FASTAPI_QUICK_REFERENCE.md) - FastAPI chat service changes
+3. [AUTHENTICATION_SECURITY_PLAN.md](./AUTHENTICATION_SECURITY_PLAN.md) - Authentication details
+4. [FRONTEND_SERVICES_README.md](./FRONTEND_SERVICES_README.md) - Frontend service usage
 
 ### For System Administration
 1. [SYSTEM_STATUS.md](./SYSTEM_STATUS.md) - Current system status
-2. [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) - Migration procedures
-3. [supabase.md](./supabase.md) - Supabase configuration
+2. 🆕 [BACKEND_TROUBLESHOOTING.md](./BACKEND_TROUBLESHOOTING.md) - Backend connectivity issues
+3. [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) - Migration procedures
+4. [supabase.md](./supabase.md) - Supabase configuration
 
 ## 📁 File Organization
 
