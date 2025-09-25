@@ -40,7 +40,7 @@ import type {
 
 // User hooks
 export const useUsers = () => useApi(() => userService.getUsers());
-export const useUser = (userId: number) => useApi(() => userService.getUser(userId), [userId]);
+export const useUserById = (userId: number) => useApi(() => userService.getUser(userId), [userId]);
 export const useCreateUser = () => useMutation((data: CreateUserRequest) => userService.createUser(data));
 export const useUpdateUser = () => useMutation(({ userId, data }: { userId: number; data: UpdateUserRequest }) => 
   userService.updateUser(userId, data)

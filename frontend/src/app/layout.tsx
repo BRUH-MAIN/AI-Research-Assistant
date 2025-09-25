@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Code } from "next/font/google";
 import "./globals.css";
-import Navigation from "./components/Navigation";
-import { UserProvider } from "./contexts";
+import NoSSRLayout from "./components/NoSSRLayout";
 
 const firaCode = Fira_Code({
   variable: "--font-fira-code",
@@ -25,16 +24,9 @@ export default function RootLayout({
       <body
         className={`${firaCode.variable} antialiased font-mono bg-gray-950 h-full overflow-hidden`}
       >
-        <UserProvider>
-          <Navigation />
-          <main>
-            {children}
-          </main>
-        </UserProvider>
-        <Navigation />
-        <main className="h-[calc(100vh-4rem)] overflow-hidden">
+        <NoSSRLayout>
           {children}
-        </main>
+        </NoSSRLayout>
       </body>
     </html>
   );

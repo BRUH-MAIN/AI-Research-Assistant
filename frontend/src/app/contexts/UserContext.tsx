@@ -36,6 +36,8 @@ interface UserProviderProps {
 }
 
 export function UserProvider({ children }: UserProviderProps) {
+  console.log('UserProvider: Initializing...');
+  
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [internalUserId, setInternalUserId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -275,6 +277,7 @@ export function UserProvider({ children }: UserProviderProps) {
 export function useUser(): UserContextType {
   const context = useContext(UserContext);
   if (context === undefined) {
+    console.error('useUser called outside of UserProvider. Make sure components using useUser are wrapped in UserProvider.');
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;
