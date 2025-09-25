@@ -27,14 +27,10 @@ export default function RootLayout({
       >
         <UserProvider>
           <Navigation />
-          <main>
+          <main className="h-[calc(100vh-4rem)] overflow-hidden">
             {children}
           </main>
         </UserProvider>
-        <Navigation />
-        <main className="h-[calc(100vh-4rem)] overflow-hidden">
-          {children}
-        </main>
       </body>
     </html>
   );
