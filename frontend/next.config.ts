@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Allow external connections in Docker
+  serverExternalPackages: [],
+  // Ensure proper hostname binding for Docker
+  experimental: {}
 };
 
 export default nextConfig;

@@ -102,28 +102,58 @@ const GroupsPage: React.FC = () => {
 
   // Load user's groups
   useEffect(() => {
-    if (!user || !currentUserId) return;
+    if (!user) return;
+    
+    // Add timeout for loading
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        setError('Loading is taking longer than expected. Please refresh the page.');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
 
     const loadGroups = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        console.log(`Loading groups for user ID: ${currentUserId}`);
+        // Wait for currentUserId to be set, but with a fallback
+        let userId = currentUserId;
+        let retryCount = 0;
+        const maxRetries = 5;
         
-        const userGroups = await groupService.getUserGroups(currentUserId);
+        while (userId === null && retryCount < maxRetries) {
+          console.log(`Waiting for user ID... attempt ${retryCount + 1}`);
+          await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+          userId = authService.getCurrentInternalUserId();
+          retryCount++;
+        }
+        
+        if (userId === null) {
+          console.warn('Could not get user ID after retries, using guest access');
+          userId = 0; // Use guest user ID as fallback
+        }
+        
+        console.log(`Loading groups for user ID: ${userId}`);
+        
+        const userGroups = await groupService.getUserGroups(userId);
         console.log('Loaded groups:', userGroups);
         setGroups(userGroups);
         setFilteredGroups(userGroups);
+        setCurrentUserId(userId);
+        clearTimeout(loadingTimeout);
       } catch (error: any) {
         console.error('Failed to load groups:', error);
+        clearTimeout(loadingTimeout);
         
         // Handle specific error for user not found
         if (error.message?.includes('User with ID') && error.message?.includes('not found')) {
-          setError(`User not found in system. You may have limited access. (User ID: ${currentUserId})`);
+          setError(`User not found in system. You may have limited access. (User ID: ${currentUserId || 'unknown'})`);
           // Still allow the page to load but with empty groups
           setGroups([]);
           setFilteredGroups([]);
+        } else if (error.message?.includes('Network Error') || error.message?.includes('fetch')) {
+          setError('Unable to connect to server. Please check your connection and try again.');
         } else {
           setError('Failed to load groups. Please try again.');
         }
@@ -133,7 +163,9 @@ const GroupsPage: React.FC = () => {
     };
 
     loadGroups();
-  }, [user, currentUserId]); // Add currentUserId to dependencies
+    
+    return () => clearTimeout(loadingTimeout);
+  }, [user]); // Remove currentUserId from dependencies to prevent infinite loop
 
   // Filter groups based on search and role filter
   useEffect(() => {

@@ -8,7 +8,11 @@ import type {
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    detectSessionInUrl: false // Disable URL session detection
+  }
+});
 
 // Create a specialized API client for the Express backend
 const EXPRESS_DB_URL = process.env.NEXT_PUBLIC_EXPRESS_DB_URL || 'http://localhost:3001';
