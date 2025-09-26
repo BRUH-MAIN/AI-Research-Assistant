@@ -32,8 +32,9 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          // User is authenticated, redirect to home page
-          router.push('/');
+          // User is authenticated, redirect to home page with current origin
+          const redirectUrl = new URL('/', window.location.origin);
+          window.location.href = redirectUrl.toString();
         } else {
           // No session found, redirect to login
           router.push('/login');

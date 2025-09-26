@@ -46,7 +46,8 @@ export default function PaperSearchPage() {
     try {
       const tags = searchTags.split(',').map(tag => tag.trim()).filter(tag => tag)
       
-      const response = await fetch('http://localhost:8000/api/v1/papers/search', {
+      const fastApiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+      const response = await fetch(`${fastApiUrl}/api/v1/papers/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +78,8 @@ export default function PaperSearchPage() {
     try {
       const tags = downloadTags.split(',').map(tag => tag.trim()).filter(tag => tag)
       
-      const response = await fetch('http://localhost:8000/api/v1/papers/download-from-arxiv', {
+      const fastApiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+      const response = await fetch(`${fastApiUrl}/api/v1/papers/download-from-arxiv`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

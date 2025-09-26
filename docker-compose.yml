@@ -7,18 +7,8 @@ services:
     container_name: express-db-server
     ports:
       - "3001:3001"
-    environment:
-      - NODE_ENV=development
-      - PORT=3001
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - JWT_SECRET=${JWT_SECRET}
-      - DATABASE_URL=${DATABASE_URL}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
-      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-1000}
+    env_file:
+      - .env
     volumes:
       - ./express-db-server:/app
       - /app/node_modules
@@ -42,19 +32,12 @@ services:
     container_name: fastapi-ai-server
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      # Remove database-related environment variables
-      # Keep only AI/ML related configurations
+      # Docker-specific configurations
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
-      - AI_MODEL_PATH=${AI_MODEL_PATH:-/app/models}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - MAX_WORKERS=${MAX_WORKERS:-4}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      # Express server URL for inter-service communication
       - EXPRESS_DB_URL=http://express-db-server:3001
       - DATA_DIR=/app/data
     volumes:
@@ -82,12 +65,10 @@ services:
     container_name: react-frontend
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
-      - NEXT_PUBLIC_FASTAPI_URL=http://localhost:8000
-      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL_PUBLIC}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -98,40 +79,7 @@ services:
     networks:
       - app-network
 
-  # Nginx Reverse Proxy (optional)
-  nginx:
-    image: nginx:alpine
-    container_name: nginx-proxy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - frontend
-      - express-db-server
-      - fastapi-ai-server
-    restart: unless-stopped
-    networks:
-      - app-network
-
-  # Redis (for caching and session management)
-  redis:
-    image: redis:7-alpine
-    container_name: redis-cache
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    networks:
-      - app-network
-    command: redis-server --appendonly yes
-
 volumes:
-  redis-data:
-    driver: local
   ai-models:
     driver: local
 

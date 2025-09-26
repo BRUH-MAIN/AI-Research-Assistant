@@ -25,7 +25,8 @@ const AuthTestPage: React.FC = () => {
 
   const testAPI = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/groups/user/1', {
+      const expressUrl = process.env.NEXT_PUBLIC_EXPRESS_DB_URL || 'http://localhost:3001';
+      const response = await fetch(`${expressUrl}/api/groups/user/1`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'

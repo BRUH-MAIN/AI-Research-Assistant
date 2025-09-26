@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # AI Research Assistant - Docker Startup Script
-# This script starecho "🔧 Management commands:"
+# This script stecho "   • Frontend:     http://localhost:3000"
+echo "   • Express DB:   http://localhost:3001 (Database operations)"
+echo "   • FastAPI AI:   http://localhost:8000 (AI/ML operations)"
+echo "   • AI API Docs:  http://localhost:8000/docs"
+echo "   • Supabase:     External (Local: http://127.0.0.1:54321)" "🔧 Management commands:"
 echo "   • View logs:     docker-compose logs -f [service]"
 echo "   • Stop services: docker-compose down"
 echo "   • Restart:       docker-compose restart [service]"
