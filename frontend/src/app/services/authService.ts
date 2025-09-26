@@ -172,29 +172,46 @@ export class AuthService {
   // Get current user from Supabase
   async getCurrentUser(): Promise<User | null> {
     try {
-      // In development mode, return mock user if using dev auth
+      // First, try to get real authenticated user from Supabase
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('Error getting current user:', error);
+        // Only fall back to mock auth if there's an error and we're in development
+        if (devAuth.shouldUseMockAuth() && devAuth.isUsingMockAuth()) {
+          console.log('Supabase auth failed, using development mock user as fallback');
+          const mockUser = devAuth.getMockUser();
+          if (mockUser) {
+            await this.getInternalUserId(mockUser);
+          }
+          return mockUser;
+        }
+        return null;
+      }
+      
+      if (user) {
+        // Clear mock auth mode since we have a real user
+        if (devAuth.isUsingMockAuth()) {
+          console.log('Real user found, clearing mock auth mode');
+          localStorage.removeItem('dev_mode');
+        }
+        
+        // Set the internal user ID mapping
+        await this.getInternalUserId(user);
+        return user;
+      }
+      
+      // No real user found, use mock auth only if explicitly enabled
       if (devAuth.shouldUseMockAuth() && devAuth.isUsingMockAuth()) {
-        console.log('Using development mock user');
+        console.log('No real user found, using development mock user');
         const mockUser = devAuth.getMockUser();
         if (mockUser) {
           await this.getInternalUserId(mockUser);
         }
         return mockUser;
       }
-
-      const { data: { user }, error } = await supabase.auth.getUser();
       
-      if (error) {
-        console.error('Error getting current user:', error);
-        return null;
-      }
-      
-      if (user) {
-        // Set the internal user ID mapping
-        await this.getInternalUserId(user);
-      }
-      
-      return user;
+      return null;
     } catch (error) {
       console.error('Failed to get current user:', error);
       return null;
@@ -239,12 +256,13 @@ export class AuthService {
       
       if (error) throw error;
       
-      // Store tokens
+      // Store tokens and clear mock auth mode
       if (data.session?.access_token) {
         localStorage.setItem('access_token', data.session.access_token);
         if (data.session.refresh_token) {
           localStorage.setItem('refresh_token', data.session.refresh_token);
         }
+        localStorage.removeItem('dev_mode'); // Clear mock auth mode for real sign-in
         apiClient.setAuthToken(data.session.access_token);
       }
       
@@ -290,9 +308,10 @@ export class AuthService {
       
       if (error) throw error;
       
-      // Clear tokens
+      // Clear tokens and development mode
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('dev_mode'); // Clear mock auth mode
       apiClient.clearAuthToken();
       
       // Clear internal user ID mapping
@@ -336,6 +355,7 @@ export class AuthService {
         if (session.refresh_token) {
           localStorage.setItem('refresh_token', session.refresh_token);
         }
+        localStorage.removeItem('dev_mode'); // Clear mock auth mode for real session
         apiClient.setAuthToken(session.access_token);
         
         // Set internal user ID mapping for the new session
@@ -343,9 +363,10 @@ export class AuthService {
           await this.getInternalUserId(session.user);
         }
       } else {
-        // Clear tokens and mappings if no session
+        // Clear tokens, mappings and mock auth mode if no session
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('dev_mode');
         apiClient.clearAuthToken();
         this.currentInternalUserId = null;
       }
