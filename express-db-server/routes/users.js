@@ -80,6 +80,88 @@ router.post('/', async (req, res, next) => {
 });
 
 /**
+ * POST /api/users/create-from-auth
+ * Create a user record from Supabase auth data (public endpoint for OAuth flow)
+ */
+router.post('/create-from-auth', async (req, res, next) => {
+    try {
+        const { auth_user_id, email, first_name, last_name, profile_picture_url } = req.body;
+        
+        if (!auth_user_id || !email) {
+            return res.status(400).json({
+                error: 'auth_user_id and email are required',
+                code: 400
+            });
+        }
+
+        console.log('Creating user from auth data:', { auth_user_id, email });
+        
+        const supabase = req.app.locals.supabase;
+        
+        // Check if user already exists
+        const { data: existingUsers, error: checkError } = await supabase
+            .from('users')
+            .select('id, email, auth_user_id')
+            .or(`auth_user_id.eq.${auth_user_id},email.eq.${email}`)
+            .limit(1);
+            
+        if (checkError) {
+            console.error('Error checking existing user:', checkError);
+            throw checkError;
+        }
+        
+        if (existingUsers && existingUsers.length > 0) {
+            const existingUser = existingUsers[0];
+            console.log('User already exists:', existingUser);
+            
+            // Update auth_user_id if missing
+            if (!existingUser.auth_user_id) {
+                console.log('Updating missing auth_user_id for existing user');
+                const { data: updatedUser, error: updateError } = await supabase
+                    .from('users')
+                    .update({ auth_user_id })
+                    .eq('id', existingUser.id)
+                    .select()
+                    .single();
+                    
+                if (updateError) throw updateError;
+                return res.json(updatedUser);
+            }
+            
+            return res.json(existingUser);
+        }
+        
+        // Create new user
+        const { data: newUser, error: createError } = await supabase
+            .from('users')
+            .insert({
+                auth_user_id,
+                email,
+                first_name: first_name || email.split('@')[0] || 'User',
+                last_name,
+                profile_picture_url,
+                availability: 'available',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+            
+        if (createError) {
+            console.error('Error creating user:', createError);
+            throw createError;
+        }
+        
+        console.log('Successfully created new user:', newUser);
+        res.status(201).json(newUser);
+        
+    } catch (error) {
+        console.error('Error in create-from-auth:', error);
+        next(error);
+    }
+});
+
+/**
  * GET /api/users/:id
  * Get a specific user by ID
  */

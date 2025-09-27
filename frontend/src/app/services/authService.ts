@@ -39,96 +39,154 @@ export class AuthService {
   public async getInternalUserId(supabaseUser: User): Promise<number> {
     const storageKey = `internal_user_id_${supabaseUser.id}`;
     
-    // Check if we already have a mapping stored
+    // Check if we already have a mapping stored and it's not guest (0)
     const storedId = localStorage.getItem(storageKey);
     if (storedId) {
       const id = parseInt(storedId);
-      if (!isNaN(id)) {
+      if (!isNaN(id) && id > 0) { // Don't use cached guest IDs
         this.currentInternalUserId = id;
+        console.log(`Using cached internal user ID: ${id} for ${supabaseUser.email}`);
         return id;
       }
     }
 
-    // Try to find the user in our database by auth_user_id with retry logic
+    // Enhanced retry logic with exponential backoff
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 5; // Increased retries
+    const baseDelay = 1000; // Base delay in milliseconds
     
     while (retryCount < maxRetries) {
       try {
-        console.log(`Attempting to fetch users (attempt ${retryCount + 1}/${maxRetries})`);
-        const users = await apiClient.get<any[]>('/users/');
-        console.log('All users from API:', users);
-        console.log('Looking for user with auth_user_id:', supabaseUser.id);
+        console.log(`Attempting to fetch users (attempt ${retryCount + 1}/${maxRetries}) for ${supabaseUser.email}`);
         
-        const matchingUser = users.find(user => user.auth_user_id === supabaseUser.id);
-        console.log('Matching user found:', matchingUser);
-        
-        if (matchingUser) {
-          // Found the user, store the mapping
-          // The API returns 'id' not 'user_id'
-          const internalId = matchingUser.id;
-          if (internalId != null) {
-            console.log('Setting internal user ID to:', internalId);
-            localStorage.setItem(storageKey, internalId.toString());
-            this.currentInternalUserId = internalId;
-            return internalId;
+        // First, try to ensure the user exists in database by syncing profile
+        if (retryCount === 0) {
+          try {
+            console.log('Attempting profile sync before user lookup...');
+            await apiClient.post('/auth/sync-profile');
+            console.log('Profile sync completed successfully');
+          } catch (syncError) {
+            console.warn('Profile sync failed, continuing with user lookup:', syncError);
           }
-        } else {
-          console.warn('No user found with auth_user_id:', supabaseUser.id);
-          console.log('User details:', supabaseUser);
+        }
+        
+        const users = await apiClient.get<any[]>('/users/');
+        console.log(`Fetched ${users.length} users from database`);
+        
+        // Primary lookup by auth_user_id
+        let matchingUser = users.find(user => user.auth_user_id === supabaseUser.id);
+        console.log('User found by auth_user_id:', matchingUser ? `ID: ${matchingUser.id}` : 'None');
+        
+        // Fallback: lookup by email if auth_user_id lookup failed
+        if (!matchingUser && supabaseUser.email) {
+          console.log('Trying fallback lookup by email...');
+          matchingUser = users.find(user => user.email === supabaseUser.email);
           
-          // Fallback: try to find user by email (for existing users who might not have auth_user_id set)
-          if (supabaseUser.email) {
-            const emailMatchingUser = users.find(user => user.email === supabaseUser.email);
-            console.log('Email matching user found:', emailMatchingUser);
+          if (matchingUser) {
+            console.log(`Found user by email (ID: ${matchingUser.id}), but auth_user_id mismatch. Updating...`);
             
-            if (emailMatchingUser && !emailMatchingUser.auth_user_id) {
-              console.log('Found user by email but auth_user_id is missing. Attempting to sync profile...');
-              
-              // Try to sync the profile to set the auth_user_id
-              try {
-                await apiClient.post('/auth/sync-profile');
-                console.log('Profile sync completed. Retrying user lookup...');
-                
-                // Retry the lookup after sync
-                const updatedUsers = await apiClient.get<any[]>('/users/');
-                const syncedUser = updatedUsers.find(user => user.auth_user_id === supabaseUser.id);
-                
-                if (syncedUser && syncedUser.id != null) {
-                  console.log('Successfully synced user. Setting internal ID to:', syncedUser.id);
-                  localStorage.setItem(storageKey, syncedUser.id.toString());
-                  this.currentInternalUserId = syncedUser.id;
-                  return syncedUser.id;
-                }
-              } catch (syncError) {
-                console.error('Failed to sync profile:', syncError);
-              }
+            // Update the user record to link auth_user_id
+            try {
+              await apiClient.put(`/users/${matchingUser.id}`, {
+                auth_user_id: supabaseUser.id
+              });
+              console.log('Successfully linked auth_user_id to existing user');
+            } catch (updateError) {
+              console.warn('Failed to update auth_user_id:', updateError);
             }
           }
         }
         
-        // Exit retry loop if we got a valid response but no user found
-        break;
+        if (matchingUser && matchingUser.id != null && matchingUser.id > 0) {
+          const internalId = matchingUser.id;
+          console.log(`Successfully found internal user ID: ${internalId} for ${supabaseUser.email}`);
+          localStorage.setItem(storageKey, internalId.toString());
+          this.currentInternalUserId = internalId;
+          return internalId;
+        }
+        
+        // If no user found and this isn't the last attempt, wait and retry
+        if (retryCount < maxRetries - 1) {
+          const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+          console.log(`User not found, waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
         
       } catch (error) {
-        console.error(`Error fetching users from database (attempt ${retryCount + 1}):`, error);
-        retryCount++;
+        console.error(`Error during user lookup (attempt ${retryCount + 1}):`, error);
         
-        if (retryCount < maxRetries) {
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        // If it's an authentication error, try to create the user
+        if (String(error).includes('401') && retryCount === 0) {
+          console.log('Authentication error detected, trying to create user record...');
+          try {
+            // Try to create user via the public endpoint
+            const newUser = await this.createUserRecord(supabaseUser);
+            if (newUser && newUser.id > 0) {
+              console.log(`Successfully created new user record with ID: ${newUser.id}`);
+              localStorage.setItem(storageKey, newUser.id.toString());
+              this.currentInternalUserId = newUser.id;
+              return newUser.id;
+            }
+          } catch (createError) {
+            console.warn('Failed to create user record:', createError);
+          }
+        }
+        
+        if (retryCount < maxRetries - 1) {
+          const delay = baseDelay * Math.pow(2, retryCount);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
+      
+      retryCount++;
     }
 
-    // For users not found in database, use guest user ID (0)
-    // This prevents errors but may limit functionality
-    const guestUserId = 0;
-    localStorage.setItem(storageKey, guestUserId.toString());
-    this.currentInternalUserId = guestUserId;
+    // Only fall back to guest mode after all attempts failed
+    console.error(`CRITICAL: User ${supabaseUser.email} (${supabaseUser.id}) not found in database after ${maxRetries} attempts.`);
+    console.error('This may indicate a database synchronization issue.');
     
-    console.warn(`User ${supabaseUser.email} not found in database after ${maxRetries} attempts, using guest access (ID: ${guestUserId}). Some features may be limited.`);
-    return guestUserId;
+    // Don't cache guest ID - keep trying on subsequent calls
+    this.currentInternalUserId = null;
+    
+    // Throw an error instead of silently defaulting to guest
+    throw new Error(`Unable to find or create database record for user ${supabaseUser.email}. Please try logging out and logging back in.`);
+  }
+
+  // Create user record in database
+  private async createUserRecord(supabaseUser: User): Promise<any> {
+    try {
+      console.log('Creating user record for:', supabaseUser.email);
+      
+      const metadata = supabaseUser.user_metadata as any; // Type assertion for flexibility
+      const fullName = metadata?.full_name || metadata?.name || '';
+      const nameParts = fullName.split(' ').filter(Boolean);
+      
+      const userData = {
+        auth_user_id: supabaseUser.id,
+        email: supabaseUser.email,
+        first_name: nameParts[0] || supabaseUser.email?.split('@')[0] || 'User',
+        last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : null,
+        profile_picture_url: metadata?.avatar_url || metadata?.picture || null,
+        availability: 'available'
+      };
+      
+      // Try creating via the public create-from-auth endpoint first
+      try {
+        const newUser = await apiClient.post('/users/create-from-auth', userData);
+        console.log('Successfully created user record via create-from-auth:', newUser);
+        return newUser;
+      } catch (authEndpointError) {
+        console.log('create-from-auth failed, trying regular users endpoint:', authEndpointError);
+        // Fallback to regular users endpoint
+        const newUser = await apiClient.post('/users/', userData);
+        console.log('Successfully created user record via users endpoint:', newUser);
+        return newUser;
+      }
+      
+    } catch (error) {
+      console.error('Failed to create user record:', error);
+      throw error;
+    }
   }
 
   // Set internal user ID (called during sign-up or when user is properly mapped)

@@ -115,25 +115,42 @@ export function UserProvider({ children }: UserProviderProps) {
         console.log('UserContext: Auth state changed:', event, session?.user?.email);
         
         if (!session?.user) {
-          // User logged out
+          // User logged out or session expired
+          console.log('UserContext: User logged out or session expired');
           setUser(null);
           setInternalUserId(null);
           setError(null);
-        } else {
-          // User logged in or session renewed
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // User logged in or token refreshed
+          console.log('UserContext: Processing sign-in or token refresh');
           setUser(session.user);
           
-          // Get internal user ID
-          const internalId = authService.getCurrentInternalUserId();
-          setInternalUserId(internalId);
+          try {
+            // Always try to get/refresh the internal user ID for new sessions
+            console.log('UserContext: Getting internal user ID for session...');
+            const newInternalId = await authService.getInternalUserId(session.user as AuthUser);
+            setInternalUserId(newInternalId);
+            console.log(`UserContext: Successfully set internal user ID: ${newInternalId}`);
+            setError(null); // Clear any previous errors
+          } catch (err: any) {
+            console.error('UserContext: Failed to get internal user ID:', err);
+            setError(err?.message || 'Failed to initialize user profile');
+            // Don't set user to null here - keep the Supabase user but note the internal ID issue
+          }
+        } else {
+          // Other auth events (like user updated)
+          console.log('UserContext: Other auth event, preserving current state');
+          setUser(session.user);
           
-          // If no internal ID, try to get it
-          if (internalId === null || internalId === 0) {
+          // Only refresh internal ID if we don't have one or it's guest
+          const currentInternalId = authService.getCurrentInternalUserId();
+          if (currentInternalId === null || currentInternalId === 0) {
             try {
               const newInternalId = await authService.getInternalUserId(session.user as AuthUser);
               setInternalUserId(newInternalId);
             } catch (err) {
-              console.error('UserContext: Failed to get internal user ID:', err);
+              console.warn('UserContext: Failed to refresh internal user ID:', err);
+              // Don't overwrite existing state for minor refresh failures
             }
           }
         }
@@ -228,12 +245,15 @@ export function UserProvider({ children }: UserProviderProps) {
   }, [user]);
 
   const isGuestUser = useCallback(() => {
-    return internalUserId === null || internalUserId === 0;
-  }, [internalUserId]);
+    // Only consider someone a guest if they're truly not authenticated
+    // If we have a Supabase user but no internal ID, they're authenticated but having sync issues
+    return !user || internalUserId === null || internalUserId === 0;
+  }, [user, internalUserId]);
 
   const canCreateGroups = useCallback(() => {
-    return internalUserId !== null && internalUserId >= 2;
-  }, [internalUserId]);
+    // Can create groups if authenticated and has valid internal ID
+    return !!(user && internalUserId !== null && internalUserId >= 2);
+  }, [user, internalUserId]);
 
   const clearError = useCallback(() => {
     setError(null);
