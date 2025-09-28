@@ -168,6 +168,28 @@ CREATE TRIGGER trigger_check_group_creation_permissions
 -- UTILITY VIEWS
 -- =====================================================
 
+-- =====================================================
+-- HELPER FUNCTIONS FOR AUTHENTICATION
+-- =====================================================
+
+-- Helper function to get current user's integer ID from auth.uid()
+CREATE OR REPLACE FUNCTION public.current_user_id()
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+STABLE
+AS $$
+DECLARE
+  user_id_result INTEGER;
+BEGIN
+  SELECT user_id INTO user_id_result
+  FROM public.users 
+  WHERE auth_user_id = auth.uid();
+  
+  RETURN user_id_result;
+END;
+$$;
+
 -- Create a view to join auth and profile data (optional, for easier queries)
 CREATE OR REPLACE VIEW public.user_profiles AS
 SELECT 

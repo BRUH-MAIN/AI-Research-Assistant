@@ -22,8 +22,9 @@ CREATE POLICY "Users can read group messages" ON messages
     EXISTS (
       SELECT 1 FROM sessions s
       JOIN group_participants gp ON s.group_id = gp.group_id
+      JOIN users u ON gp.user_id = u.user_id
       WHERE s.session_id = messages.session_id
-      AND gp.user_id = auth.uid()::int
+      AND u.auth_user_id = auth.uid()
     )
   );
 
@@ -33,8 +34,9 @@ CREATE POLICY "Users can send group messages" ON messages
     EXISTS (
       SELECT 1 FROM sessions s
       JOIN group_participants gp ON s.group_id = gp.group_id
+      JOIN users u ON gp.user_id = u.user_id
       WHERE s.session_id = messages.session_id
-      AND gp.user_id = auth.uid()::int
+      AND u.auth_user_id = auth.uid()
     )
   );
 
@@ -43,8 +45,9 @@ CREATE POLICY "Users can update own messages" ON messages
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM group_participants gp
+      JOIN users u ON gp.user_id = u.user_id
       WHERE gp.group_participant_id = messages.sender_id
-      AND gp.user_id = auth.uid()::int
+      AND u.auth_user_id = auth.uid()
     )
   );
 
@@ -53,15 +56,17 @@ CREATE POLICY "Users can delete own messages or admin" ON messages
   FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM group_participants gp
+      JOIN users u ON gp.user_id = u.user_id
       WHERE gp.group_participant_id = messages.sender_id
-      AND gp.user_id = auth.uid()::int
+      AND u.auth_user_id = auth.uid()
     )
     OR
     EXISTS (
       SELECT 1 FROM sessions s
       JOIN group_participants gp ON s.group_id = gp.group_id
+      JOIN users u ON gp.user_id = u.user_id
       WHERE s.session_id = messages.session_id
-      AND gp.user_id = auth.uid()::int
+      AND u.auth_user_id = auth.uid()
       AND gp.role = 'admin'
     )
   );
@@ -111,13 +116,20 @@ CREATE POLICY "Users can read presence in their groups" ON user_presence
     EXISTS (
       SELECT 1 FROM sessions s
       JOIN group_participants gp ON s.group_id = gp.group_id
+      JOIN users u ON gp.user_id = u.user_id
       WHERE s.session_id = user_presence.session_id
-      AND gp.user_id = auth.uid()::int
+      AND u.auth_user_id = auth.uid()
     )
   );
 
 CREATE POLICY "Users can manage own presence" ON user_presence
-  FOR ALL USING (user_id = auth.uid()::int);
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM users u 
+      WHERE u.user_id = user_presence.user_id 
+      AND u.auth_user_id = auth.uid()
+    )
+  );
 
 -- Create indexes for user presence
 CREATE INDEX IF NOT EXISTS idx_user_presence_session_id ON user_presence(session_id);
