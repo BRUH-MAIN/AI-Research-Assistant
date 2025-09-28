@@ -302,7 +302,7 @@ BEGIN
 END;
 $$;
 
--- Create new group (final consolidated version)
+-- Create new group (final consolidated version with is_public support)
 CREATE OR REPLACE FUNCTION create_group(
     p_name TEXT,
     p_created_by INTEGER,
