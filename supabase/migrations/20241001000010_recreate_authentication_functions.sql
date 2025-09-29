@@ -387,6 +387,33 @@ BEGIN
 END;
 $function$;
 
+-- Can user invoke AI (missing function)
+CREATE OR REPLACE FUNCTION public.can_user_invoke_ai(p_user_id integer, p_session_id integer)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+DECLARE
+    v_user_role VARCHAR(50);
+    v_is_session_creator BOOLEAN;
+BEGIN
+    -- Get user's role in the group
+    SELECT gp.role INTO v_user_role
+    FROM sessions s
+    JOIN group_participants gp ON s.group_id = gp.group_id
+    WHERE s.session_id = p_session_id
+    AND gp.user_id = p_user_id;
+    
+    -- Check if user is the session creator
+    SELECT (created_by = p_user_id) INTO v_is_session_creator
+    FROM sessions
+    WHERE session_id = p_session_id;
+    
+    -- Allow AI invocation if user is admin, mentor, or session creator
+    RETURN (v_user_role IN ('admin', 'mentor') OR v_is_session_creator);
+END;
+$function$;
+
 -- Grant permissions
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon;
@@ -407,6 +434,7 @@ COMMENT ON FUNCTION public.verify_password(text, text) IS 'Verifies a password a
 COMMENT ON FUNCTION public.log_auth_event(integer, text, jsonb) IS 'Logs authentication events';
 COMMENT ON FUNCTION public.get_user_session_count(integer) IS 'Returns count of sessions user has access to';
 COMMENT ON FUNCTION public.get_user_group_count(integer) IS 'Returns count of groups user belongs to';
+COMMENT ON FUNCTION public.can_user_invoke_ai(integer, integer) IS 'Checks if user can invoke AI in a session based on role and permissions';
 
 -- =====================================================
 -- FINAL VERIFICATION MESSAGE
@@ -426,9 +454,9 @@ BEGIN
     RAISE NOTICE '   • Paper Management Functions: 13';
     RAISE NOTICE '   • Feedback System Functions: 11';
     RAISE NOTICE '   • AI Metadata Functions: 11';
-    RAISE NOTICE '   • Authentication Functions: 15';
+    RAISE NOTICE '   • Authentication Functions: 16';
     RAISE NOTICE '';
-    RAISE NOTICE '🎉 Total Functions Created: 102';
+    RAISE NOTICE '🎉 Total Functions Created: 103';
     RAISE NOTICE '';
     RAISE NOTICE '📋 Next Steps:';
     RAISE NOTICE '   1. Run: supabase db reset';

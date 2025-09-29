@@ -452,9 +452,9 @@ BEGIN
     WITH message_insert AS (
         INSERT INTO messages (session_id, sender_id, content, message_type, metadata, sent_at)
         VALUES (p_session_id, v_sender_id, p_content, p_message_type, p_metadata, v_timestamp)
-        RETURNING message_id
+        RETURNING messages.message_id
     )
-    SELECT message_id INTO v_message_id FROM message_insert;
+    SELECT message_insert.message_id INTO v_message_id FROM message_insert;
     
     -- Obama's presence update (simple upsert)
     WITH presence_upsert AS (
@@ -467,16 +467,16 @@ BEGIN
     SELECT 1 FROM presence_upsert;
     
     -- Obama's return (pure variables, no table conflicts possible)
-    message_id := v_message_id;
-    session_id := p_session_id;
-    sender_id := v_sender_id;
-    sender_name := v_sender_name;
-    content := p_content;
-    message_type := p_message_type;
-    metadata := p_metadata;
-    sent_at := v_timestamp;
-    
-    RETURN NEXT;
+    RETURN QUERY
+    SELECT 
+        v_message_id as message_id,
+        p_session_id as session_id,
+        v_sender_id as sender_id,
+        v_sender_name as sender_name,
+        p_content as content,
+        p_message_type as message_type,
+        p_metadata as metadata,
+        v_timestamp as sent_at;
 END;
 $function$;
 
