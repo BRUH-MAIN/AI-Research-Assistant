@@ -9,7 +9,9 @@ from app.models.chat import (
     SessionCreate, 
     SessionHistory,
     PromptRequest,
-    PromptResponse
+    PromptResponse,
+    GroupChatRequest,
+    GroupChatResponse
 )
 from app.models.responses import SuccessResponse
 from app.services.chat_service import chat_service
@@ -53,6 +55,29 @@ async def delete_session(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found")
     
     return SuccessResponse(message="Session deleted successfully")
+
+
+@router.post("/group-message", response_model=GroupChatResponse)
+async def handle_group_message(request: GroupChatRequest):
+    """Handle AI invocation from group chat"""
+    if not ai_service.is_configured():
+        raise HTTPException(status_code=500, detail="AI service not configured")
+    
+    try:
+        # Generate AI response based on the user message
+        # You can enhance this to include group context, previous messages, etc.
+        ai_response = await ai_service.generate_simple_response(request.user_message)
+        
+        return GroupChatResponse(
+            response=ai_response,
+            session_id=request.session_id,
+            model="groq"  # or whatever model is being used
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to generate AI response: {str(e)}"
+        )
 
 
 # Legacy endpoint for backward compatibility

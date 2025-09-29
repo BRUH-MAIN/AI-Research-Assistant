@@ -46,3 +46,18 @@ class PromptRequest(BaseModel):
 class PromptResponse(BaseModel):
     """Legacy response model for simple prompts"""
     response: str
+
+
+class GroupChatRequest(BaseModel):
+    """Request model for group chat AI invocation"""
+    session_id: int
+    user_message: str
+    user_id: int
+    trigger_message_id: int
+
+
+class GroupChatResponse(BaseModel):
+    """Response model for group chat AI invocation"""
+    response: str
+    session_id: int
+    model: Optional[str] = None

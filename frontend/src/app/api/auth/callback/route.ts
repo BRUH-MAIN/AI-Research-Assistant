@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Forward the request to Supabase auth callback
-    const supabaseUrl = 'https://deevlykgzfhcyesynwxx.supabase.co/auth/v1/callback';
+    const supabaseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/callback`;
     const callbackUrl = new URL(supabaseUrl);
     callbackUrl.searchParams.set('code', code);
     callbackUrl.searchParams.set('state', state);

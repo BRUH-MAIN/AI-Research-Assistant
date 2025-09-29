@@ -280,7 +280,7 @@ const GroupDetailsPage: React.FC = () => {
 
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => router.push(`/chat?group=${groupId}`)}
+                onClick={() => router.push(`/groups/${groupId}/chat`)}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
               >
                 <ChatBubbleLeftRightIcon className="h-5 w-5" />
@@ -369,7 +369,7 @@ const GroupDetailsPage: React.FC = () => {
                   <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
                   <div className="space-y-3">
                     <button
-                      onClick={() => router.push(`/chat?group=${groupId}`)}
+                      onClick={() => router.push(`/groups/${groupId}/chat`)}
                       className="w-full flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                     >
                       <ChatBubbleLeftRightIcon className="h-5 w-5" />
