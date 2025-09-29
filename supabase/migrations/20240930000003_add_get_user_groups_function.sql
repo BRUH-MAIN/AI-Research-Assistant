@@ -14,9 +14,9 @@ RETURNS TABLE (
     name TEXT,
     description TEXT,
     is_public BOOLEAN,
-    invite_code TEXT,
+    invite_code VARCHAR(12),
     member_count BIGINT,
-    user_role TEXT,
+    user_role VARCHAR(50),
     created_at TIMESTAMP,
     created_by INTEGER
 ) 

@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   PlusIcon,
   UserGroupIcon,
   MagnifyingGlassIcon,
-  FunnelIcon
+  FunnelIcon,
+  ChevronUpIcon
 } from '@heroicons/react/24/outline';
 import GroupCard from '../components/groups/GroupCard';
 import { groupService } from '../services/groupService';
@@ -20,21 +21,150 @@ const GroupsPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
+  const [displayedGroups, setDisplayedGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [error, setError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const previousUserIdRef = useRef<number | null>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const GROUPS_PER_PAGE = 6; // Number of groups to show per page
 
   // Function to clear all group-related state
   const clearGroupState = () => {
     setGroups([]);
     setFilteredGroups([]);
+    setDisplayedGroups([]);
     setSearchTerm('');
     setRoleFilter('all');
     setError(null);
+    setCurrentPage(1);
   };
+
+  // Scroll to top functionality
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, []);
+
+  // Handle scroll to show/hide scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.pageYOffset > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Infinite scroll intersection observer
+  const lastGroupElementRef = useCallback((node: HTMLDivElement) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && displayedGroups.length < filteredGroups.length) {
+        loadMoreGroups();
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, displayedGroups.length, filteredGroups.length]);
+
+  // Load more groups for infinite scroll
+  const loadMoreGroups = useCallback(() => {
+    if (loadingMore || displayedGroups.length >= filteredGroups.length) return;
+    
+    setLoadingMore(true);
+    
+    // Simulate loading delay for smooth UX
+    setTimeout(() => {
+      const nextPage = currentPage + 1;
+      const startIndex = currentPage * GROUPS_PER_PAGE;
+      const endIndex = nextPage * GROUPS_PER_PAGE;
+      const newGroups = filteredGroups.slice(startIndex, endIndex);
+      
+      setDisplayedGroups(prev => [...prev, ...newGroups]);
+      setCurrentPage(nextPage);
+      setLoadingMore(false);
+    }, 500);
+  }, [currentPage, displayedGroups.length, filteredGroups, loadingMore]);
+
+  // Update displayed groups when filtered groups change
+  useEffect(() => {
+    setCurrentPage(1);
+    setDisplayedGroups(filteredGroups.slice(0, GROUPS_PER_PAGE));
+  }, [filteredGroups]);
+
+  // Check authentication and handle user changes
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Initialize authentication
+      const authData = await authService.initializeAuth();
+      
+      if (!authData) {
+        // Clear state when no auth
+        clearGroupState();
+        setUser(null);
+        setCurrentUserId(null);
+        router.push('/login');
+        return;
+      }
+      
+      const currentUser = await authService.getCurrentUser();
+      if (!currentUser) {
+        // Clear state when no user
+        clearGroupState();
+        setUser(null);
+        setCurrentUserId(null);
+        router.push('/login');
+        return;
+      }
+      
+      // Get the internal user ID from auth service
+      const newUserId = authService.getCurrentInternalUserId();
+      
+      setUser(currentUser);
+      setCurrentUserId(newUserId);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = authService.onAuthStateChange(
+      (event: string, session: any) => {
+        if (!session?.user) {
+          // User logged out, clear all state
+          clearGroupState();
+          setUser(null);
+          setCurrentUserId(null);
+          router.push('/login');
+        } else {
+          // User logged in or session renewed
+          const newUserId = authService.getCurrentInternalUserId();
+          
+          setUser(session.user);
+          setCurrentUserId(newUserId);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [router]); // Remove currentUserId from dependencies to prevent infinite loop
+
+  // Handle user changes and clear state when needed
+  useEffect(() => {
+    if (currentUserId !== null && previousUserIdRef.current !== null && previousUserIdRef.current !== currentUserId) {
+      console.log('Different user detected, clearing previous state');
+      clearGroupState();
+    }
+    previousUserIdRef.current = currentUserId;
+  }, [currentUserId]);
 
   // Check authentication and handle user changes
   useEffect(() => {

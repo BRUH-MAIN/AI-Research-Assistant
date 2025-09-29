@@ -82,17 +82,36 @@ router.post('/', async (req, res, next) => {
             p_is_public: is_public || false
         });
         
+        // The create_group function returns a single JSON object, not an array
+        if (!group) {
+            return res.status(500).json({
+                error: 'Failed to create group - no response from database',
+                code: 500
+            });
+        }
+        
+        // Log the actual response for debugging
+        console.log('create_group response:', group);
+        
+        // Check if the group creation was successful
+        if (!group.success || !group.group_id) {
+            return res.status(500).json({
+                error: 'Failed to create group - invalid response from database',
+                code: 500,
+                details: group
+            });
+        }
+        
         // Transform the response to match frontend expectations
-        const groupData = group[0];
         const response = {
-            id: groupData.group_id,
-            group_id: groupData.group_id,
-            name: groupData.name,
-            description: groupData.description || '',
-            is_public: groupData.is_public || false,
-            invite_code: groupData.invite_code,
-            member_count: groupData.member_count || 1,
-            created_at: groupData.created_at
+            id: group.group_id,
+            group_id: group.group_id,
+            name: group.name,
+            description: group.description || '',
+            is_public: group.is_public || false,
+            invite_code: group.invite_code || '',
+            member_count: 1, // Creator is the first member
+            created_at: group.created_at
         };
         
         res.status(201).json(response);

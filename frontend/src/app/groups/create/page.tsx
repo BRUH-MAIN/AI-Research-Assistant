@@ -13,6 +13,7 @@ import {
 import { createClient } from '@supabase/supabase-js';
 import { groupService, CreateGroupData } from '../../services/groupService';
 import { authService } from '../../services/authService';
+import ScrollToTop from '../../components/ui/ScrollToTop';
 
 // Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -40,6 +41,32 @@ const CreateGroupPage: React.FC = () => {
     description: '',
     is_public: false,
   });
+
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    description?: string;
+  }>({});
+
+  // Real-time validation
+  const validateField = (name: string, value: string) => {
+    const errors: { [key: string]: string } = {};
+    
+    if (name === 'name') {
+      if (!value.trim()) {
+        errors.name = 'Group name is required';
+      } else if (value.trim().length < 3) {
+        errors.name = 'Group name must be at least 3 characters long';
+      } else if (value.trim().length > 50) {
+        errors.name = 'Group name must be less than 50 characters';
+      }
+    }
+    
+    if (name === 'description' && value && value.length > 500) {
+      errors.description = 'Description must be less than 500 characters';
+    }
+    
+    return errors;
+  };
 
   // Check authentication
   useEffect(() => {
@@ -89,24 +116,35 @@ const CreateGroupPage: React.FC = () => {
         ...prev,
         [name]: value
       }));
+      
+      // Real-time validation
+      const fieldErrors = validateField(name, value);
+      setFormErrors(prev => ({
+        ...prev,
+        ...fieldErrors,
+        [name]: fieldErrors[name] || undefined
+      }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim()) {
-      setError('Group name is required');
-      return;
-    }
-
-    if (formData.name.trim().length < 3) {
-      setError('Group name must be at least 3 characters long');
-      return;
-    }
-
-    if (formData.name.trim().length > 50) {
-      setError('Group name must be less than 50 characters');
+    // Validate all fields
+    const nameErrors = validateField('name', formData.name);
+    const descErrors = validateField('description', formData.description || '');
+    const allErrors = { ...nameErrors, ...descErrors };
+    
+    setFormErrors(allErrors);
+    
+    // Check if there are any errors
+    if (Object.keys(allErrors).length > 0) {
+      setError('Please fix the errors above before submitting');
+      // Scroll to first error
+      const firstErrorElement = document.querySelector('.border-red-500');
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
@@ -140,6 +178,13 @@ const CreateGroupPage: React.FC = () => {
     } catch (error: any) {
       console.error('Failed to create group:', error);
       setError(error.message || 'Failed to create group. Please try again.');
+      // Scroll to error message
+      setTimeout(() => {
+        const errorElement = document.querySelector('.bg-red-900\\/20');
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
     } finally {
       setLoading(false);
     }
@@ -157,8 +202,8 @@ const CreateGroupPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-gray-950 min-h-screen">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
@@ -180,8 +225,8 @@ const CreateGroupPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Form */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+        {/* Form Container with improved scrolling */}
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Group Name */}
             <div>
@@ -195,33 +240,67 @@ const CreateGroupPage: React.FC = () => {
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder="Enter group name..."
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className={`w-full px-4 py-2 bg-gray-700 border text-white rounded-lg focus:outline-none focus:ring-1 transition-colors ${
+                  formErrors.name
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-600 focus:border-blue-500 focus:ring-blue-500'
+                }`}
                 required
                 maxLength={50}
               />
-              <p className="text-xs text-gray-400 mt-1">
-                {formData.name.length}/50 characters
-              </p>
+              <div className="flex justify-between items-center mt-1">
+                <p className={`text-xs ${formErrors.name ? 'text-red-400' : 'text-gray-400'}`}>
+                  {formErrors.name || `${formData.name.length}/50 characters`}
+                </p>
+              </div>
             </div>
 
-            {/* Description */}
+            {/* Description with improved scrolling */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
                 Description (Optional)
               </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Describe your group's purpose and goals..."
-                rows={4}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
-                maxLength={500}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                {(formData.description || '').length}/500 characters
-              </p>
+              <div className="relative">
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Describe your group's purpose and goals..."
+                  rows={4}
+                  className={`w-full px-4 py-2 bg-gray-700 border text-white rounded-lg focus:outline-none focus:ring-1 resize-y min-h-[100px] max-h-[300px] transition-colors ${
+                    formErrors.description
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                      : 'border-gray-600 focus:border-blue-500 focus:ring-blue-500'
+                  }`}
+                  maxLength={500}
+                  style={{ 
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#4B5563 #374151'
+                  }}
+                />
+                <style jsx>{`
+                  textarea::-webkit-scrollbar {
+                    width: 8px;
+                  }
+                  textarea::-webkit-scrollbar-track {
+                    background: #374151;
+                    border-radius: 4px;
+                  }
+                  textarea::-webkit-scrollbar-thumb {
+                    background: #4B5563;
+                    border-radius: 4px;
+                  }
+                  textarea::-webkit-scrollbar-thumb:hover {
+                    background: #6B7280;
+                  }
+                `}</style>
+              </div>
+              <div className="flex justify-between items-center mt-1">
+                <p className={`text-xs ${formErrors.description ? 'text-red-400' : 'text-gray-400'}`}>
+                  {formErrors.description || `${(formData.description || '').length}/500 characters`}
+                </p>
+              </div>
             </div>
 
             {/* Privacy Settings */}
@@ -232,7 +311,7 @@ const CreateGroupPage: React.FC = () => {
               
               <div className="space-y-3">
                 {/* Private Group (Default) */}
-                <label className="flex items-start space-x-3 cursor-pointer">
+                <label className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors">
                   <input
                     type="radio"
                     name="privacy"
@@ -253,7 +332,7 @@ const CreateGroupPage: React.FC = () => {
                 </label>
 
                 {/* Public Group */}
-                <label className="flex items-start space-x-3 cursor-pointer">
+                <label className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors">
                   <input
                     type="radio"
                     name="privacy"
@@ -275,12 +354,12 @@ const CreateGroupPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Info Box */}
+            {/* Info Box with better mobile handling */}
             <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
               <div className="flex items-start space-x-2">
                 <InformationCircleIcon className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-300">
-                  <p className="font-medium mb-1">What happens after creation:</p>
+                  <p className="font-medium mb-2">What happens after creation:</p>
                   <ul className="space-y-1 text-blue-200">
                     <li>• You'll automatically become the group admin</li>
                     <li>• A unique invite code will be generated</li>
@@ -298,18 +377,18 @@ const CreateGroupPage: React.FC = () => {
               </div>
             )}
 
-            {/* Submit Button */}
-            <div className="flex justify-end space-x-3 pt-4">
+            {/* Submit Button - Fixed positioning */}
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-700">
               <Link
                 href="/groups"
-                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                className="w-full sm:w-auto text-center px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
-                disabled={loading || !formData.name.trim()}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center space-x-2"
+                disabled={loading || !formData.name.trim() || Object.keys(formErrors).some(key => formErrors[key as keyof typeof formErrors])}
+                className="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 {loading && (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -319,7 +398,13 @@ const CreateGroupPage: React.FC = () => {
             </div>
           </form>
         </div>
+        
+        {/* Bottom spacing for better mobile experience */}
+        <div className="h-8"></div>
       </div>
+      
+      {/* Scroll to Top Button */}
+      <ScrollToTop />
     </div>
   );
 };
