@@ -19,10 +19,23 @@ class Settings:
     API_V1_STR: str = os.getenv("API_V1_STR", "/api/v1")
     
     # CORS settings
-    ALLOWED_HOSTS: List[str] = os.getenv(
-        "ALLOWED_HOSTS", 
-        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000"
-    ).split(",")
+    ALLOWED_HOSTS: List[str] = []
+    
+    def __init__(self):
+        """Initialize settings with proper CORS configuration"""
+        allowed_hosts_str = os.getenv(
+            "ALLOWED_HOSTS", 
+            "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000,http://20.205.131.237,http://localhost"
+        )
+        self.ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(",") if host.strip()]
+        
+        # Add any additional hosts from ALLOWED_ORIGINS for compatibility
+        allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "")
+        if allowed_origins_str:
+            additional_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+            # Merge and deduplicate
+            all_hosts = list(set(self.ALLOWED_HOSTS + additional_origins))
+            self.ALLOWED_HOSTS = all_hosts
     
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres")

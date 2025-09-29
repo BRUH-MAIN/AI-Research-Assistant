@@ -19,6 +19,9 @@ def create_application() -> FastAPI:
         lifespan=lifespan
     )
 
+    # Debug CORS configuration
+    print(f"FastAPI CORS allowed hosts: {settings.ALLOWED_HOSTS}")
+
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
