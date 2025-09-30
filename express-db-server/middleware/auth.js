@@ -7,8 +7,12 @@ const jwt = require('jsonwebtoken');
  */
 const authMiddleware = async (req, res, next) => {
     try {
-        // Skip auth for health check and auth status
-        if (req.path === '/health' || req.path === '/auth/status') {
+        // Skip auth for health check, auth status, and arXiv search
+        if (req.path === '/health' || 
+            req.path === '/auth/status' || 
+            req.path === '/papers/search-arxiv' ||
+            req.path.startsWith('/papers/search-arxiv') ||
+            req.originalUrl.includes('/papers/search-arxiv')) {
             return next();
         }
 

@@ -40,6 +40,9 @@ class Settings:
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres")
     
+    # Express DB server settings
+    EXPRESS_DB_URL: str = os.getenv("EXPRESS_DB_URL", "http://localhost:3001")
+    
     # Redis removed - not needed for this project
     
     # Environment

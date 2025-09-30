@@ -4,7 +4,7 @@ Main API router that combines all endpoint routers
 from fastapi import APIRouter
 
 from app.core.config import settings
-from app.api.v1 import chat, system
+from app.api.v1 import chat, system, papers_arxiv
 # Removed database-related imports - Express server handles all database operations
 # from app.api.v1 import users, groups, messages, sessions, feedback
 # from app.api.v1 import group_participants, session_participants, papers, paper_tags, session_papers, ai_metadata
@@ -12,9 +12,9 @@ from app.api.v1 import chat, system
 api_router = APIRouter()
 
 # Include routers - FastAPI only handles AI/ML operations
-# Include routers - FastAPI only handles AI/ML operations
 api_router.include_router(system.router, tags=["system"])
 api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
+api_router.include_router(papers_arxiv.router, prefix="/papers", tags=["papers"])
 
 # Removed database-related router includes - Express server handles all database operations
 # api_router.include_router(users.router, prefix="/users", tags=["users"])

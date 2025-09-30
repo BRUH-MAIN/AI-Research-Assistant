@@ -1,6 +1,10 @@
 // Paper routes - Express.js implementation using Supabase RPC
 const express = require('express');
+const axios = require('axios');
 const router = express.Router();
+
+// FastAPI configuration
+const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
 /**
  * Helper function to execute Supabase RPC calls with error handling
@@ -51,6 +55,121 @@ router.get('/', async (req, res, next) => {
         res.json(papers);
     } catch (error) {
         next(error);
+    }
+});
+
+/**
+ * GET /api/papers/search-arxiv
+ * Search arXiv papers via FastAPI and optionally store in Supabase
+ */
+router.get('/search-arxiv', async (req, res, next) => {
+    try {
+        const { query, max_results = 10, categories, store = 'false' } = req.query;
+        
+        if (!query) {
+            return res.status(400).json({ 
+                error: 'Query parameter is required' 
+            });
+        }
+        
+        console.log(`Searching arXiv via FastAPI: query="${query}", max_results=${max_results}`);
+        
+        // Call FastAPI to search arXiv
+        const fastapiResponse = await axios.get(`${FASTAPI_URL}/api/v1/papers/search-arxiv`, {
+            params: {
+                query,
+                max_results: parseInt(max_results),
+                categories
+            },
+            timeout: 30000 // 30 second timeout
+        });
+        
+        const arxivData = fastapiResponse.data;
+        const papers = arxivData.papers;
+        
+        console.log(`FastAPI returned ${papers.length} papers`);
+        
+        // If store=true, save papers to Supabase
+        if (store.toLowerCase() === 'true' && papers.length > 0) {
+            console.log('Storing papers in Supabase...');
+            const supabase = req.app.locals.supabase;
+            const storedPapers = [];
+            
+            for (const paper of papers) {
+                try {
+                    // Check if paper already exists by title (since arxiv_id is not in schema)
+                    const existing = await executeRPC(supabase, 'search_papers', {
+                        p_query_text: paper.title,
+                        p_limit_count: 5
+                    });
+                    
+                    // Check if any result matches exactly by title
+                    const exactMatch = existing?.find(p => 
+                        p.title.toLowerCase().trim() === paper.title.toLowerCase().trim()
+                    );
+                    
+                    if (exactMatch) {
+                        console.log(`Paper "${paper.title}" already exists, skipping`);
+                        storedPapers.push(exactMatch);
+                        continue;
+                    }
+                    
+                    // Convert arXiv data to match schema
+                    const paperData = {
+                        p_title: paper.title,
+                        p_abstract: paper.abstract,
+                        p_authors: Array.isArray(paper.authors) ? paper.authors.join(', ') : paper.authors,
+                        p_doi: paper.doi || null,
+                        p_published_at: paper.published_date ? new Date(paper.published_date).toISOString() : null,
+                        p_source_url: `${paper.pdf_url} (arXiv:${paper.arxiv_id})`
+                    };
+                    
+                    // Store new paper
+                    const storedPaper = await executeRPC(supabase, 'create_paper', paperData);
+                    
+                    if (storedPaper && storedPaper.length > 0) {
+                        storedPapers.push(storedPaper[0]);
+                        console.log(`Stored paper: ${paper.title}`);
+                    }
+                } catch (storeError) {
+                    console.error(`Error storing paper "${paper.title}":`, storeError);
+                    // Continue with other papers
+                }
+            }
+            
+            console.log(`Successfully stored ${storedPapers.length} papers`);
+            
+            // Return the stored papers with database IDs
+            res.json({
+                ...arxivData,
+                papers: storedPapers,
+                stored_count: storedPapers.length,
+                source: 'arxiv_with_storage'
+            });
+        } else {
+            // Return papers without storing
+            res.json({
+                ...arxivData,
+                source: 'arxiv_direct'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error in arXiv search:', error);
+        
+        if (error.code === 'ECONNREFUSED' || error.response?.status >= 500) {
+            res.status(503).json({ 
+                error: 'FastAPI service unavailable',
+                details: error.message 
+            });
+        } else if (error.response?.status === 400) {
+            res.status(400).json({ 
+                error: 'Invalid request to arXiv service',
+                details: error.response.data 
+            });
+        } else {
+            next(error);
+        }
     }
 });
 
