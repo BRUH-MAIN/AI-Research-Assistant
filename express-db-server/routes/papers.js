@@ -1,5 +1,7 @@
 // Paper routes - Express.js implementation using Supabase RPC
 const express = require('express');
+const axios = require('axios');
+const xml2js = require('xml2js');
 const router = express.Router();
 
 /**
@@ -209,6 +211,232 @@ router.get('/:id/related', async (req, res, next) => {
         
         res.json(relatedPapers);
     } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * POST /api/papers/search
+ * Advanced search for papers with multiple criteria
+ * TEMP FIX: Use direct SQL query to avoid schema mismatch
+ */
+router.post('/search', async (req, res, next) => {
+    try {
+        const { name, tags, limit, offset } = req.body;
+        const supabase = req.app.locals.supabase;
+        
+        // TEMPORARY FIX: Use direct SQL query instead of RPC to avoid schema mismatch
+        let query = supabase
+            .from('papers')
+            .select('*')
+            .limit(limit || 100);
+        
+        if (offset) {
+            query = query.range(offset, offset + (limit || 100) - 1);
+        }
+        
+        if (name) {
+            // Simple text search across title, authors, abstract
+            query = query.or(`title.ilike.%${name}%,authors.ilike.%${name}%,abstract.ilike.%${name}%`);
+        }
+        
+        // Note: Tag search would require a separate paper_tags table query
+        // For now, just do basic text search
+        
+        const { data: papers, error } = await query;
+        
+        if (error) {
+            console.error('Direct query error:', error);
+            throw error;
+        }
+        
+        res.json(papers || []);
+    } catch (error) {
+        console.error('Papers search error:', error);
+        next(error);
+    }
+});
+
+/**
+ * POST /api/papers/search/arxiv
+ * Search arXiv papers using the arXiv API
+ */
+router.post('/search/arxiv', async (req, res, next) => {
+    try {
+        const { query, categories, limit } = req.body;
+        
+        if (!query) {
+            return res.status(400).json({
+                error: 'Query is required for arXiv search',
+                code: 400
+            });
+        }
+        
+        // Build arXiv search query
+        let searchQuery = query;
+        if (categories && categories.length > 0) {
+            const catQueries = categories.map(cat => `cat:${cat}`).join(' OR ');
+            searchQuery = `(${query}) AND (${catQueries})`;
+        }
+        
+        // Search arXiv using their API
+        const arxivApiUrl = `http://export.arxiv.org/api/query?search_query=${encodeURIComponent(searchQuery)}&start=0&max_results=${limit || 20}&sortBy=relevance&sortOrder=descending`;
+        
+        console.log('ArXiv API request:', arxivApiUrl);
+        
+        const response = await axios.get(arxivApiUrl, {
+            timeout: 10000,
+            headers: {
+                'User-Agent': 'Research-Assistant/1.0'
+            }
+        });
+        
+        // Parse XML response
+        const parser = new xml2js.Parser();
+        const result = await parser.parseStringPromise(response.data);
+        
+        const entries = result.feed.entry || [];
+        
+        // Transform arXiv entries to our format
+        const papers = entries.map(entry => {
+            const authors = Array.isArray(entry.author) 
+                ? entry.author.map(a => a.name[0]).join(', ')
+                : (entry.author ? entry.author.name[0] : 'Unknown');
+            
+            const categories = Array.isArray(entry.category)
+                ? entry.category.map(c => c.$.term)
+                : (entry.category ? [entry.category.$.term] : []);
+            
+            const arxivId = entry.id[0].split('/abs/')[1] || entry.id[0];
+            
+            return {
+                title: entry.title[0].replace(/\s+/g, ' ').trim(),
+                abstract: entry.summary[0].replace(/\s+/g, ' ').trim(),
+                authors: authors,
+                arxiv_id: arxivId,
+                categories: categories,
+                primary_category: categories[0] || null,
+                published_at: entry.published ? entry.published[0] : null,
+                updated_at_source: entry.updated ? entry.updated[0] : null,
+                source_url: entry.id[0],
+                pdf_url: entry.link && entry.link.find(l => l.$.type === 'application/pdf') 
+                    ? entry.link.find(l => l.$.type === 'application/pdf').$.href 
+                    : `http://arxiv.org/pdf/${arxivId}.pdf`,
+                doi: entry['arxiv:doi'] ? entry['arxiv:doi'][0] : null,
+                journal_ref: entry['arxiv:journal_ref'] ? entry['arxiv:journal_ref'][0] : null,
+                comment: entry['arxiv:comment'] ? entry['arxiv:comment'][0] : null
+            };
+        });
+        
+        res.json(papers);
+    } catch (error) {
+        console.error('ArXiv search error:', error.message);
+        if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+            return res.status(503).json({
+                error: 'ArXiv service temporarily unavailable',
+                code: 503
+            });
+        }
+        next(error);
+    }
+});
+
+/**
+ * POST /api/papers/arxiv
+ * Create a new arXiv paper entry in the database
+ * TEMP FIX: Use direct insert to avoid timestamp type mismatch
+ */
+router.post('/arxiv', async (req, res, next) => {
+    try {
+        const { 
+            title, 
+            abstract, 
+            authors, 
+            arxiv_id, 
+            categories, 
+            published_at, 
+            updated_at_source,
+            source_url,
+            pdf_url,
+            doi,
+            journal_ref,
+            comment,
+            entry_id,
+            custom_tags
+        } = req.body;
+        
+        if (!title) {
+            return res.status(400).json({
+                error: 'title is required',
+                code: 400
+            });
+        }
+        
+        const supabase = req.app.locals.supabase;
+        
+        // TEMPORARY FIX: Use direct insert instead of RPC to avoid timestamp type mismatch
+        const tags = ['arxiv'];
+        if (categories && categories.length > 0) {
+            tags.push(...categories.map(cat => `arxiv:${cat}`));
+        }
+        if (custom_tags && custom_tags.length > 0) {
+            tags.push(...custom_tags);
+        }
+        
+        // Insert directly into papers table with minimal required fields
+        const { data: paper, error } = await supabase
+            .from('papers')
+            .insert({
+                title: title,
+                authors: authors || 'Unknown',
+                abstract: abstract || '',
+                doi: doi || null
+                // Removing source_url for now since it's causing cache issues
+            })
+            .select()
+            .single();
+        
+        if (error) {
+            console.error('Direct insert error:', error);
+            throw error;
+        }
+        
+        // Also try to insert into arXiv table if it exists
+        try {
+            const { data: arxivPaper, error: arxivError } = await supabase
+                .from('papers_arxiv')
+                .insert({
+                    title: title,
+                    authors: authors || 'Unknown',
+                    abstract: abstract || '',
+                    arxiv_id: arxiv_id,
+                    categories: categories || [],
+                    published_at: published_at ? new Date(published_at).toISOString() : null,
+                    updated_at_source: updated_at_source ? new Date(updated_at_source).toISOString() : null,
+                    source_url: source_url || '',
+                    pdf_url: pdf_url || '',
+                    doi: doi || '',
+                    journal_ref: journal_ref || '',
+                    comment: comment || '',
+                    entry_id: entry_id || ''
+                })
+                .select()
+                .single();
+            
+            if (!arxivError) {
+                console.log('Successfully saved to arXiv table:', arxivPaper);
+            }
+        } catch (arxivErr) {
+            console.warn('Could not save to arXiv table (may not exist):', arxivErr.message);
+        }
+        
+        res.status(201).json({
+            ...paper,
+            arxiv_id: arxiv_id,
+            arxiv_note: `ArXiv ID: ${arxiv_id || 'N/A'}${comment ? '\nComment: ' + comment : ''}`
+        });
+    } catch (error) {
+        console.error('Create arXiv paper error:', error);
         next(error);
     }
 });

@@ -51,7 +51,7 @@ const GroupChatMessage: React.FC<GroupChatMessageProps> = ({
   const isSystem = message.message_type === 'system';
 
   return (
-    <div className={`flex ${isOwn && !isAI && !isSystem ? 'justify-end' : 'justify-start'} mb-4`}>
+    <div className={`flex ${isOwn && !isAI && !isSystem ? 'justify-start' : 'justify-end'} mb-4`}>
       <div className={`max-w-[70%] rounded-lg px-4 py-2 ${styles.container}`}>
         {/* Sender info */}
         {showSender && !isOwn && (

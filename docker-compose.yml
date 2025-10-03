@@ -10,9 +10,18 @@ services:
       - "3001:3001"
     env_file:
       - .env
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - NODE_ENV=development
+      - PORT=3001
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./express-db-server:/app
       - /app/node_modules
+      - ./.env:/app/.env:ro
     restart: unless-stopped
     networks:
       - app-network
@@ -30,9 +39,9 @@ services:
       context: ./backend
       dockerfile: ../Dockerfile.backend
     container_name: fastapi-ai-server
-    # We'll expose to nginx only within the network
-    expose:
-      - "8000"
+    # Expose to host for direct access during development
+    ports:
+      - "8000:8000"
     env_file:
       - .env
     environment:
@@ -63,9 +72,9 @@ services:
       context: ./frontend
       dockerfile: ../Dockerfile.frontend
     container_name: react-frontend
-    # We'll expose to nginx only within the network
-    expose:
-      - "3000"
+    # Expose to host for direct access during development
+    ports:
+      - "3000:3000"
     env_file:
       - .env
     environment:

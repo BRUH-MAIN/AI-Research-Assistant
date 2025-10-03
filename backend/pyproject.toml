@@ -21,4 +21,5 @@ dependencies = [
     "uvicorn[standard]>=0.35.0",
     "arxiv>=2.1.0",
     "requests>=2.31.0",
+    "httpx>=0.28.1",
 ]
