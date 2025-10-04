@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import GroupChatMessage from './GroupChatMessage';
 import GroupChatInput from './GroupChatInput';
 import OnlineUsersList from './OnlineUsersList';
+import SessionPapers from './SessionPapers';
 import { useGroupChat } from '../../hooks/useGroupChat';
 import { 
   ExclamationTriangleIcon, 
@@ -188,12 +189,23 @@ const GroupChatWindow: React.FC<GroupChatWindowProps> = ({
         />
       </div>
 
-      {/* Online users sidebar */}
-      <div className="w-64 border-l border-gray-700 bg-gray-800">
-        <OnlineUsersList 
-          users={onlineUsers}
-          currentUserId={userId}
-        />
+      {/* Sidebar */}
+      <div className="w-64 border-l border-gray-700 bg-gray-800 flex flex-col">
+        {/* Session Papers */}
+        <div className="p-4 border-b border-gray-700">
+          <SessionPapers 
+            sessionId={sessionId}
+            canManagePapers={true}
+          />
+        </div>
+        
+        {/* Online Users */}
+        <div className="flex-1 overflow-hidden">
+          <OnlineUsersList 
+            users={onlineUsers}
+            currentUserId={userId}
+          />
+        </div>
       </div>
     </div>
   );

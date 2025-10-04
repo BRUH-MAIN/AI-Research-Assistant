@@ -50,7 +50,13 @@ router.get('/', async (req, res, next) => {
             });
         }
         
-        res.json(papers);
+        // Transform paper_id to id for frontend compatibility
+        const transformedPapers = papers.map(paper => ({
+            ...paper,
+            id: paper.paper_id
+        }));
+        
+        res.json(transformedPapers);
     } catch (error) {
         next(error);
     }
@@ -85,7 +91,13 @@ router.post('/', async (req, res, next) => {
             p_metadata: metadata || null
         });
         
-        res.status(201).json(paper[0]);
+        // Transform paper_id to id for frontend compatibility
+        const transformedPaper = {
+            ...paper[0],
+            id: paper[0].paper_id
+        };
+        
+        res.status(201).json(transformedPaper);
     } catch (error) {
         next(error);
     }
@@ -118,7 +130,13 @@ router.get('/:id', async (req, res, next) => {
             });
         }
         
-        res.json(paper[0]);
+        // Transform paper_id to id for frontend compatibility
+        const transformedPaper = {
+            ...paper[0],
+            id: paper[0].paper_id
+        };
+        
+        res.json(transformedPaper);
     } catch (error) {
         next(error);
     }
@@ -155,7 +173,13 @@ router.put('/:id', async (req, res, next) => {
             p_metadata: metadata || null
         });
         
-        res.json(paper[0]);
+        // Transform paper_id to id for frontend compatibility
+        const transformedPaper = {
+            ...paper[0],
+            id: paper[0].paper_id
+        };
+        
+        res.json(transformedPaper);
     } catch (error) {
         next(error);
     }
@@ -437,6 +461,100 @@ router.post('/arxiv', async (req, res, next) => {
         });
     } catch (error) {
         console.error('Create arXiv paper error:', error);
+        next(error);
+    }
+});
+
+// =====================================================
+// SESSION-PAPER ASSOCIATION ROUTES
+// =====================================================
+
+/**
+ * GET /api/papers/sessions/:sessionId
+ * Get papers linked to a specific session
+ */
+router.get('/sessions/:sessionId', async (req, res, next) => {
+    try {
+        const sessionId = parseInt(req.params.sessionId);
+        
+        if (isNaN(sessionId)) {
+            return res.status(400).json({
+                error: 'Invalid session ID',
+                code: 400
+            });
+        }
+        
+        const supabase = req.app.locals.supabase;
+        const papers = await executeRPC(supabase, 'get_session_papers', {
+            p_session_id: sessionId
+        });
+        
+        // Transform paper_id to id for frontend compatibility
+        const transformedPapers = papers.map(paper => ({
+            ...paper,
+            id: paper.paper_id
+        }));
+        
+        res.json(transformedPapers);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * POST /api/papers/sessions/:sessionId/:paperId
+ * Link a paper to a session
+ */
+router.post('/sessions/:sessionId/:paperId', async (req, res, next) => {
+    try {
+        const sessionId = parseInt(req.params.sessionId);
+        const paperId = parseInt(req.params.paperId);
+        
+        if (isNaN(sessionId) || isNaN(paperId)) {
+            return res.status(400).json({
+                error: 'Invalid session ID or paper ID',
+                code: 400
+            });
+        }
+        
+        const supabase = req.app.locals.supabase;
+        
+        // Use the current function signature without added_by parameter
+        await executeRPC(supabase, 'add_paper_to_session', {
+            p_session_id: sessionId,
+            p_paper_id: paperId
+        });
+        
+        res.status(201).json({ message: 'Paper linked to session successfully' });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * DELETE /api/papers/sessions/:sessionId/:paperId
+ * Remove paper from session
+ */
+router.delete('/sessions/:sessionId/:paperId', async (req, res, next) => {
+    try {
+        const sessionId = parseInt(req.params.sessionId);
+        const paperId = parseInt(req.params.paperId);
+        
+        if (isNaN(sessionId) || isNaN(paperId)) {
+            return res.status(400).json({
+                error: 'Invalid session ID or paper ID',
+                code: 400
+            });
+        }
+        
+        const supabase = req.app.locals.supabase;
+        await executeRPC(supabase, 'remove_paper_from_session', {
+            p_session_id: sessionId,
+            p_paper_id: paperId
+        });
+        
+        res.status(204).send();
+    } catch (error) {
         next(error);
     }
 });
