@@ -40,6 +40,15 @@ class Settings:
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres")
     
+    # RAG Service API Keys
+    PINECONE_API_KEY: str = os.getenv("PINECONE_API_KEY", "")
+    COHERE_API_KEY: str = os.getenv("COHERE_API_KEY", "")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    
+    # Express DB Server URL for communication (required when FastAPI needs database operations)
+    EXPRESS_DB_URL: str = os.getenv("EXPRESS_DB_URL", "http://localhost:3001")
+    
     # Redis removed - not needed for this project
     
     # Environment
