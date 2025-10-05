@@ -18,9 +18,12 @@ const GroupChatInput: React.FC<GroupChatInputProps> = ({
   const [sending, setSending] = useState(false);
 
   // Check if message contains AI triggers
-  const hasAiTrigger = message.toLowerCase().includes('@ai') || 
-                       message.toLowerCase().includes('/ai') || 
-                       message.toLowerCase().includes('@assistant');
+  const hasGeneralAiTrigger = message.toLowerCase().includes('@ai') || 
+                             message.toLowerCase().includes('/ai') || 
+                             message.toLowerCase().includes('@assistant');
+  const hasPaperAiTrigger = message.toLowerCase().includes('@paper') || 
+                           message.toLowerCase().includes('/paper');
+  const hasAnyAiTrigger = hasGeneralAiTrigger || hasPaperAiTrigger;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +31,7 @@ const GroupChatInput: React.FC<GroupChatInputProps> = ({
     if (!message.trim() || sending || disabled) return;
 
     // Check AI permissions if trying to invoke AI
-    if (hasAiTrigger && !canInvokeAI) {
+    if (hasAnyAiTrigger && !canInvokeAI) {
       alert('You do not have permission to invoke AI in this session. Contact a group admin or session creator.');
       return;
     }
@@ -71,23 +74,27 @@ const GroupChatInput: React.FC<GroupChatInputProps> = ({
           />
           
           {/* AI Trigger Warning */}
-          {hasAiTrigger && !canInvokeAI && (
+          {hasAnyAiTrigger && !canInvokeAI && (
             <div className="mt-2 flex items-center space-x-2 rounded-md bg-amber-500/20 border border-amber-500/30 px-3 py-2 text-sm text-amber-400">
               <ExclamationTriangleIcon className="h-4 w-4" />
               <span>You need admin, mentor, or session creator permissions to invoke AI</span>
             </div>
           )}
           
-          {hasAiTrigger && canInvokeAI && (
+          {hasAnyAiTrigger && canInvokeAI && (
             <div className="mt-2 flex items-center space-x-2 rounded-md bg-blue-500/20 border border-blue-500/30 px-3 py-2 text-sm text-blue-400">
-              <span>🤖 AI will respond to this message</span>
+              {hasPaperAiTrigger ? (
+                <span>📚 Paper AI will respond with research-based answers</span>
+              ) : (
+                <span>🤖 General AI will respond to this message</span>
+              )}
             </div>
           )}
         </div>
         
         <button
           type="submit"
-          disabled={!message.trim() || sending || disabled || (hasAiTrigger && !canInvokeAI)}
+          disabled={!message.trim() || sending || disabled || (hasAnyAiTrigger && !canInvokeAI)}
           className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {sending ? (
@@ -101,7 +108,7 @@ const GroupChatInput: React.FC<GroupChatInputProps> = ({
       {/* AI Usage Hint */}
       <div className="mt-2 text-xs text-gray-400">
         {canInvokeAI ? (
-          <span>💡 Use @ai or /ai to invoke the AI assistant</span>
+          <span>💡 Use @ai for general assistance or @paper for research-based answers</span>
         ) : (
           <span>💡 Only admins, mentors, and session creators can invoke AI</span>
         )}

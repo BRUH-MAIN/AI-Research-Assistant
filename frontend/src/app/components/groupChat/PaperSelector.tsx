@@ -80,10 +80,35 @@ const PaperSelector: React.FC<PaperSelectorProps> = ({
 
     try {
       setAdding(prev => new Set(prev).add(paper.id));
-      await paperService.linkPaperToSession(sessionId, paper.id);
+      
+      // Use the new auto-RAG linking method
+      const result = await paperService.linkPaperToSessionWithRAG(sessionId, paper.id);
       
       // Update session papers list
       setSessionPapers(prev => [...prev, paper]);
+      
+      // Show user feedback about RAG processing
+      if (result.ragResult) {
+        if (result.ragResult.success) {
+          console.log('Paper added and processed for RAG successfully');
+        } else {
+          const { reason, error } = result.ragResult;
+          
+          switch (reason) {
+            case 'no_arxiv_id':
+              console.info('Paper added - manual PDF upload needed for RAG functionality');
+              break;
+            case 'rag_disabled':
+              console.info('Paper added - RAG is not enabled for this session');
+              break;
+            case 'processing_error':
+              console.warn('Paper added but RAG processing failed:', error);
+              break;
+            default:
+              console.warn('Paper added but RAG processing failed:', error);
+          }
+        }
+      }
       
       // Notify parent component
       onPaperAdded?.(paper);

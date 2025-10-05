@@ -24,6 +24,7 @@ const feedbackRoutes = require('./routes/feedback');
 const aiMetadataRoutes = require('./routes/ai-metadata');
 const authRoutes = require('./routes/auth');
 const groupChatRoutes = require('./routes/group-chat');
+const ragRoutes = require('./routes/rag');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -152,6 +153,7 @@ app.use('/api/papers', paperRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/ai-metadata', aiMetadataRoutes);
 app.use('/api/group-chat', groupChatRoutes);
+app.use('/api/rag', ragRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

@@ -7,8 +7,12 @@ const jwt = require('jsonwebtoken');
  */
 const authMiddleware = async (req, res, next) => {
     try {
-        // Skip auth for health check and auth status
-        if (req.path === '/health' || req.path === '/auth/status') {
+        // Skip auth for health check, auth status, RAG endpoints, and internal service calls
+        // RAG endpoints are publicly accessible to allow seamless paper processing
+        if (req.path === '/health' || 
+            req.path === '/auth/status' || 
+            req.originalUrl.startsWith('/api/rag/') ||
+            req.headers['x-internal-service'] === 'fastapi-ai-server') {
             return next();
         }
 

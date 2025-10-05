@@ -90,18 +90,40 @@ export class ApiClient {
       // Handle empty responses
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        console.log('API Client: Success response data:', data);
-        return data;
+        try {
+          const data = await response.json();
+          console.log('API Client: Success response data:', data);
+          return data;
+        } catch (jsonError) {
+          console.error('API Client: Failed to parse JSON response:', jsonError);
+          throw new ApiError('Invalid JSON response from server', response.status, {
+            parseError: jsonError,
+            contentType: contentType
+          });
+        }
       } else {
-        console.log('API Client: Non-JSON response');
-        return {} as T;
+        console.log('API Client: Non-JSON response, content-type:', contentType);
+        // For non-JSON responses, try to get text content for debugging
+        try {
+          const text = await response.text();
+          console.log('API Client: Response text:', text.substring(0, 200));
+          return {} as T;
+        } catch (textError) {
+          console.log('API Client: Could not read response text:', textError);
+          return {} as T;
+        }
       }
     } catch (error) {
       console.error('API Client: Request failed:', error);
       if (error instanceof ApiError) {
         throw error;
       }
+      
+      // Provide more specific error messages
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new ApiError('Unable to connect to server. Please check your connection.', 0, error);
+      }
+      
       throw new ApiError('Network error or server unavailable', 0, error);
     }
   }

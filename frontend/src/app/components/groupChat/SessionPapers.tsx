@@ -9,7 +9,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { paperService } from '../../services/paperService';
 import PaperSelector from './PaperSelector';
+import RAGToggle from './RAGToggle';
 import type { Paper } from '../../types/types';
+import type { SessionRAGStatus } from '../../services/ragService';
 
 interface SessionPapersProps {
   sessionId: number;
@@ -25,6 +27,7 @@ const SessionPapers: React.FC<SessionPapersProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [showPaperSelector, setShowPaperSelector] = useState(false);
   const [removing, setRemoving] = useState<Set<number>>(new Set());
+  const [ragStatus, setRagStatus] = useState<SessionRAGStatus | null>(null);
 
   useEffect(() => {
     fetchSessionPapers();
@@ -68,6 +71,10 @@ const SessionPapers: React.FC<SessionPapersProps> = ({
     setPapers(prev => [...prev, paper]);
   };
 
+  const handleRagStatusChange = (status: SessionRAGStatus) => {
+    setRagStatus(status);
+  };
+
   const truncateText = (text: string, maxLength: number) => {
     if (!text || text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -98,7 +105,15 @@ const SessionPapers: React.FC<SessionPapersProps> = ({
 
   return (
     <>
-      <div className="bg-gray-800 border border-gray-700 rounded-lg">
+      <div className="space-y-3">
+        {/* RAG Toggle */}
+        <RAGToggle 
+          sessionId={sessionId}
+          onStatusChange={handleRagStatusChange}
+        />
+
+        {/* Papers Section */}
+        <div className="bg-gray-800 border border-gray-700 rounded-lg">
         {/* Header */}
         <div 
           className="flex items-center justify-between p-4 cursor-pointer"
@@ -215,6 +230,7 @@ const SessionPapers: React.FC<SessionPapersProps> = ({
             )}
           </div>
         )}
+      </div>
       </div>
 
       {/* Paper Selector Modal */}

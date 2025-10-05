@@ -41,6 +41,9 @@ from pinecone_text.sparse import BM25Encoder
 # Environment variables
 from app.core.config import settings
 
+# Express client for database operations
+from app.services.express_client import express_db_client
+
 # Configuration constants
 INPUT_FOLDER = "data/input"
 INDEX_NAME = "langchain-test-index"
@@ -521,6 +524,118 @@ class RAGService:
         
         return metadata
     
+    @staticmethod
+    def extract_arxiv_id(text: str, source_path: str) -> Optional[str]:
+        """
+        Extract arXiv ID from document text or filename.
+        
+        Args:
+            text: Full text of the document
+            source_path: Path to the source file
+            
+        Returns:
+            arXiv ID if found, None otherwise
+        """
+        # Common arXiv ID patterns
+        arxiv_patterns = [
+            r'arXiv:([0-9]{4}\.[0-9]{4,5}v?[0-9]*)',  # New format: arXiv:2301.12345
+            r'arXiv:([a-z-]+(?:\.[A-Z]{2})?/[0-9]{7}v?[0-9]*)',  # Old format: arXiv:cs.AI/0123456
+            r'(?:^|\s)([0-9]{4}\.[0-9]{4,5}v?[0-9]*)(?:$|\s)',  # Just the ID: 2301.12345
+            r'(?:^|\s)([a-z-]+(?:\.[A-Z]{2})?/[0-9]{7}v?[0-9]*)(?:$|\s)'  # Just the old ID: cs.AI/0123456
+        ]
+        
+        # First check the text (first 3000 characters for performance)
+        search_text = text[:3000]
+        for pattern in arxiv_patterns:
+            match = re.search(pattern, search_text, re.IGNORECASE)
+            if match:
+                return match.group(1)
+        
+        # Check filename
+        filename = os.path.basename(source_path)
+        for pattern in arxiv_patterns:
+            match = re.search(pattern, filename, re.IGNORECASE)
+            if match:
+                return match.group(1)
+        
+        return None
+    
+    @staticmethod
+    def extract_abstract_from_text(text: str) -> str:
+        """
+        Extract abstract from paper text.
+        
+        Args:
+            text: Full text of the document
+            
+        Returns:
+            Abstract text if found, empty string otherwise
+        """
+        # Look for abstract section
+        abstract_patterns = [
+            r'\bAbstract[\s\n]+([^\n]+(?:\n[^\n]+)*?)(?:\n\s*\n|\n\s*(?:1\.|Introduction|Keywords))',
+            r'\bABSTRACT[\s\n]+([^\n]+(?:\n[^\n]+)*?)(?:\n\s*\n|\n\s*(?:1\.|INTRODUCTION|KEYWORDS))',
+            r'\bAbstract[-\s]*[:.][\s\n]+([^\n]+(?:\n[^\n]+)*?)(?:\n\s*\n|\n\s*(?:1\.|Introduction|Keywords))'
+        ]
+        
+        for pattern in abstract_patterns:
+            match = re.search(pattern, text[:5000], re.IGNORECASE | re.DOTALL)
+            if match:
+                abstract = match.group(1).strip()
+                # Clean up the abstract (remove extra whitespace, line breaks)
+                abstract = re.sub(r'\s+', ' ', abstract)
+                return abstract[:500]  # Limit length
+        
+        return ""
+    
+    @staticmethod
+    def extract_arxiv_categories(text: str) -> List[str]:
+        """
+        Extract arXiv categories from paper text.
+        
+        Args:
+            text: Full text of the document
+            
+        Returns:
+            List of arXiv categories
+        """
+        categories = []
+        
+        # Common arXiv category patterns
+        category_patterns = [
+            r'Subject[\s-]*[Cc]lasses?[:\s]+([a-z-]+(?:\.[A-Z]{2})?(?:,\s*[a-z-]+(?:\.[A-Z]{2})?)*)',
+            r'Categories?[:\s]+([a-z-]+(?:\.[A-Z]{2})?(?:,\s*[a-z-]+(?:\.[A-Z]{2})?)*)',
+            r'MSC[:\s]*[0-9]+[A-Z][0-9]+',  # MSC classifications
+        ]
+        
+        search_text = text[:2000]  # Search in first part of document
+        
+        for pattern in category_patterns:
+            matches = re.findall(pattern, search_text, re.IGNORECASE)
+            for match in matches:
+                if isinstance(match, str):
+                    # Split by comma and clean
+                    cats = [cat.strip() for cat in match.split(',')]
+                    categories.extend([cat for cat in cats if cat and len(cat) > 2])
+        
+        # Look for common CS/AI related keywords and map to categories
+        keyword_to_category = {
+            'artificial intelligence': 'cs.AI',
+            'machine learning': 'cs.LG',
+            'natural language processing': 'cs.CL',
+            'computer vision': 'cs.CV',
+            'deep learning': 'cs.LG',
+            'neural network': 'cs.LG',
+            'physics': 'physics'
+        }
+        
+        text_lower = search_text.lower()
+        for keyword, category in keyword_to_category.items():
+            if keyword in text_lower and category not in categories:
+                categories.append(category)
+        
+        return list(set(categories))  # Remove duplicates
+    
     def hierarchical_chunk_documents(self, documents, paper_metadata=None):
         """
         Split documents using hierarchical chunking strategy with section awareness.
@@ -754,7 +869,7 @@ Answer: """
 
         return _qa_chain_cache
     
-    async def upload_document(self, file: UploadFile, upsert_to_index: bool = True) -> Dict[str, Any]:
+    async def upload_document(self, file: UploadFile, upsert_to_index: bool = True, paper_id: Optional[int] = None) -> Dict[str, Any]:
         """Upload and process a PDF document."""
         try:
             # Save uploaded file
@@ -773,6 +888,42 @@ Answer: """
             full_text = "\n".join([page.page_content for page in pages])
             paper_metadata = self.extract_paper_metadata(full_text, str(dest))
             
+            # Check if this is an arXiv paper and store metadata
+            arxiv_stored = False
+            if paper_metadata.get('venue') == 'arXiv' or 'arxiv' in full_text.lower()[:2000]:
+                try:
+                    # Extract arXiv ID from text or filename
+                    arxiv_id = self.extract_arxiv_id(full_text, str(dest))
+                    
+                    if arxiv_id or paper_metadata.get('title'):
+                        # Prepare arXiv metadata for storage
+                        arxiv_data = {
+                            'title': paper_metadata.get('title', file.filename.replace('.pdf', '')),
+                            'authors': paper_metadata.get('authors', []),
+                            'abstract': self.extract_abstract_from_text(full_text),
+                            'arxiv_id': arxiv_id,
+                            'categories': self.extract_arxiv_categories(full_text),
+                            'published_at': None,  # Could be extracted from arXiv text
+                            'source_url': f"https://arxiv.org/abs/{arxiv_id}" if arxiv_id else None,
+                            'pdf_url': f"https://arxiv.org/pdf/{arxiv_id}.pdf" if arxiv_id else None,
+                            'comment': f"Processed from file: {file.filename}"
+                        }
+                        
+                        # Store arXiv metadata via Express client
+                        if paper_id:
+                            # Update existing paper with arXiv metadata
+                            await express_db_client.update_paper_with_arxiv_metadata(paper_id, arxiv_data)
+                        else:
+                            # Create new arXiv paper entry
+                            await express_db_client.create_arxiv_paper(arxiv_data)
+                        
+                        arxiv_stored = True
+                        print(f"✅ Stored arXiv metadata for: {paper_metadata.get('title', file.filename)}")
+                        
+                except Exception as arxiv_error:
+                    print(f"⚠️ Failed to store arXiv metadata: {arxiv_error}")
+                    # Don't fail the entire process if arXiv storage fails
+            
             # Add paper metadata to pages
             for page in pages:
                 page.metadata.update(paper_metadata)
@@ -788,7 +939,8 @@ Answer: """
                 "chunks": len(chunks),
                 "upserted": False,
                 "chunks_upserted": 0,
-                "paper_metadata": paper_metadata
+                "paper_metadata": paper_metadata,
+                "arxiv_stored": arxiv_stored
             }
 
             # Optionally upsert to vector store
@@ -972,7 +1124,7 @@ Answer: """
                     "rank": i + 1,
                     "content": doc.page_content[:500] + "..." if len(doc.page_content) > 500 else doc.page_content,
                     "metadata": self.clean_metadata_for_json(doc.metadata),
-                    "relevance_score": getattr(doc, 'relevance_score', None)
+                    "relevance_score": doc.metadata.get('relevance_score', None)
                 }
                 
                 # Add research paper specific information
@@ -1017,6 +1169,215 @@ Answer: """
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"Error processing question: {str(e)}")
     
+    async def ask_question_session_scoped(self, request: QuestionRequest, session_files: List[str]) -> QuestionResponse:
+        """Ask a question using session-scoped RAG that only searches specific documents."""
+        try:
+            print(f"Processing session-scoped research paper query: '{request.question}'")
+            print(f"Session files to search: {session_files}")
+            
+            qa_chain_data = self.get_qa_chain()
+            qa_chain = qa_chain_data["chain"]
+            reranker = qa_chain_data["reranker"]
+            
+            # Get vector store components for manual filtering
+            vector_store = self.get_vector_store()
+            index = vector_store["index"]
+            embeddings = vector_store["embeddings"]
+            
+            # Generate query embedding
+            query_embedding = embeddings.embed_query(request.question)
+            
+            # Create metadata filter for session files
+            filter_conditions = []
+            for file_name in session_files:
+                filter_conditions.append({"source": {"$eq": f"data/input/{file_name}"}})
+            
+            # If no filter conditions, return empty result
+            if not filter_conditions:
+                print("No session files to search - returning empty result")
+                return QuestionResponse(
+                    question=request.question,
+                    answer="I couldn't find any processed papers in this session. Please add and process some papers first.",
+                    sources=[],
+                    metadata={
+                        "total_sources": 0,
+                        "model_used": LLM_MODEL,
+                        "session_scoped": True,
+                        "session_files_searched": session_files,
+                        "research_paper_aware": True
+                    }
+                )
+            
+            metadata_filter = {"$or": filter_conditions}
+            print(f"Session-scoped RAG query for {len(session_files)} files")
+            
+            # Query Pinecone with filtering
+            try:
+                query_result = index.query(
+                    vector=query_embedding,
+                    top_k=10,  # Get top 10 relevant chunks
+                    include_metadata=True,
+                    filter=metadata_filter
+                )
+            except Exception as query_error:
+                print(f"Error querying Pinecone with filter: {query_error}")
+                # Fallback: try without filter if filter fails
+                try:
+                    query_result = index.query(
+                        vector=query_embedding,
+                        top_k=10,
+                        include_metadata=True
+                    )
+                    print("Fallback query without filter succeeded")
+                except Exception as fallback_error:
+                    raise HTTPException(status_code=500, detail=f"Failed to query vector store: {str(fallback_error)}")
+            
+            print(f"Found {len(query_result.matches)} session-scoped matches")
+            
+            if not query_result.matches:
+                return QuestionResponse(
+                    question=request.question,
+                    answer="I couldn't find any relevant information in the papers from this session. Please make sure the papers are properly processed for RAG.",
+                    sources=[],
+                    metadata={
+                        "total_sources": 0,
+                        "model_used": LLM_MODEL,
+                        "session_scoped": True,
+                        "session_files_searched": session_files,
+                        "research_paper_aware": True
+                    }
+                )
+            
+            # Convert Pinecone matches to documents
+            retrieved_docs = []
+            for match in query_result.matches:
+                doc_content = match.metadata.get('text', match.metadata.get('text_content', ''))
+                if doc_content:
+                    from langchain.schema import Document
+                    doc = Document(
+                        page_content=doc_content,
+                        metadata=match.metadata
+                    )
+                    # Store relevance score in metadata instead of as attribute
+                    doc.metadata['relevance_score'] = match.score
+                    retrieved_docs.append(doc)
+            
+            # Apply reranking if available
+            reranked_docs = retrieved_docs
+            if reranked_docs and reranker:
+                try:
+                    valid_documents = []
+                    for doc in retrieved_docs:
+                        clean_doc = prepare_document_for_reranking(doc)
+                        if clean_doc:
+                            valid_documents.append(clean_doc)
+                    
+                    if valid_documents:
+                        reranked_docs = reranker.compress_documents(
+                            documents=valid_documents,
+                            query=request.question
+                        )
+                        print(f"Session-scoped reranking successful: {len(reranked_docs)} documents returned")
+                        
+                except Exception as e:
+                    print(f"Session-scoped reranking failed with error: {e}")
+            
+            # Generate answer using the context
+            context = "\n\n".join([doc.page_content for doc in reranked_docs[:5]])
+            
+            # Use the LLM to generate an answer
+            try:
+                api_keys = self.get_api_keys()
+                from langchain_groq import ChatGroq
+                llm = ChatGroq(
+                    model=LLM_MODEL,
+                    temperature=TEMPERATURE,
+                    max_tokens=MAX_TOKENS,
+                    api_key=api_keys["GROQ_API_KEY"]
+                )
+                
+                prompt = f"""You are an enterprise-grade research paper RAG agent designed to answer questions based on academic paper content.
+
+Use the following pieces of context from research papers to answer the question at the end. Pay special attention to:
+- Section information (e.g., Abstract, Methodology, Results, etc.)
+- Citations and references mentioned in the text
+- Figure and table captions when relevant
+
+When answering:
+1. If the information comes from a specific section, mention it (e.g., "According to the Methodology section...")
+2. Include relevant citations mentioned in the context
+3. Reference figures or tables when they support your answer
+4. If you don't know the answer, just say that you don't know, don't try to make up an answer
+
+Context:
+{context}
+
+Question: {request.question}
+Answer:"""
+
+                response = llm.invoke(prompt)
+                answer = response.content if hasattr(response, 'content') else str(response)
+                
+            except Exception as llm_error:
+                print(f"Error generating LLM response: {llm_error}")
+                answer = f"I found relevant information in the session papers, but encountered an error generating a response. Please try rephrasing your question. Error: {str(llm_error)}"
+            
+            # Format sources with enhanced research paper metadata
+            sources = []
+            all_sections = set()
+            all_citations = set()
+            all_papers = set()
+            
+            for i, doc in enumerate(reranked_docs[:5]):
+                source_info = {
+                    "rank": i + 1,
+                    "content": doc.page_content[:500] + "..." if len(doc.page_content) > 500 else doc.page_content,
+                    "metadata": self.clean_metadata_for_json(doc.metadata),
+                    "relevance_score": doc.metadata.get('relevance_score', None)
+                }
+                
+                # Enhanced source attribution for research papers
+                if 'source' in doc.metadata:
+                    source_info["source"] = os.path.basename(doc.metadata['source'])
+                if 'section' in doc.metadata:
+                    source_info["section"] = doc.metadata['section']
+                    all_sections.add(doc.metadata['section'])
+                if 'page' in doc.metadata:
+                    source_info["page"] = doc.metadata['page']
+                if 'paper_id' in doc.metadata:
+                    source_info["paper_id"] = doc.metadata['paper_id']
+                    all_papers.add(doc.metadata['paper_id'])
+                
+                sources.append(source_info)
+                
+                # Collect metadata for overall response
+                if doc.metadata.get('citations'):
+                    all_citations.update(doc.metadata['citations'])
+                if doc.metadata.get('paper_id'):
+                    all_papers.add(doc.metadata['paper_id'])
+            
+            return QuestionResponse(
+                question=request.question,
+                answer=answer,
+                sources=sources,
+                metadata={
+                    "total_sources": len(reranked_docs),
+                    "model_used": LLM_MODEL,
+                    "reranked": reranker is not None,
+                    "sections_referenced": list(all_sections),
+                    "citations_found": list(all_citations),
+                    "papers_referenced": list(all_papers),
+                    "session_scoped": True,
+                    "session_files_searched": session_files,
+                    "research_paper_aware": True
+                }
+            )
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Error processing session-scoped question: {str(e)}")
+
     def get_index_stats(self):
         """Get current vector index statistics."""
         vector_store = self.get_vector_store()

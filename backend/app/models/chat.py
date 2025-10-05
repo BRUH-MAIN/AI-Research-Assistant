@@ -61,3 +61,4 @@ class GroupChatResponse(BaseModel):
     response: str
     session_id: int
     model: Optional[str] = None
+    metadata: Optional[dict] = None

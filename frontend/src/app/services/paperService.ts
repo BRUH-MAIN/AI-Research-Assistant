@@ -63,6 +63,72 @@ export class PaperService {
     return apiClient.post<void>(`/papers/sessions/${sessionId}/${paperId}`);
   }
 
+  // Link a paper to a session with automatic RAG processing
+  async linkPaperToSessionWithRAG(sessionId: number, paperId: number): Promise<{
+    linkResult: void;
+    ragResult?: any;
+  }> {
+    try {
+      // First, link the paper to the session
+      const linkResult = await this.linkPaperToSession(sessionId, paperId);
+
+      // Import RAG service here to avoid circular dependencies
+      const { ragService } = await import('./ragService');
+
+      // Check if RAG is enabled for this session
+      const ragStatus = await ragService.getSessionRAGStatus(sessionId);
+      
+      if (ragStatus.is_rag_enabled) {
+        try {
+          // Attempt to auto-fetch and process the paper
+          const ragResult = await ragService.fetchPaperFromArxiv(sessionId, paperId);
+          
+          return {
+            linkResult,
+            ragResult
+          };
+        } catch (ragError: any) {
+          console.warn('Failed to auto-process paper for RAG:', ragError);
+          
+          // Check if it's specifically the "no arXiv ID" error
+          const errorMessage = ragError?.message || '';
+          if (errorMessage.includes('No arXiv ID') || errorMessage.includes('PDF URL')) {
+            return {
+              linkResult,
+              ragResult: { 
+                success: false, 
+                reason: 'no_arxiv_id',
+                error: 'Paper has no arXiv ID or PDF URL for auto-processing' 
+              }
+            };
+          }
+          
+          // Other processing errors
+          return {
+            linkResult,
+            ragResult: { 
+              success: false,
+              reason: 'processing_error', 
+              error: errorMessage
+            }
+          };
+        }
+      }
+
+      return { 
+        linkResult,
+        ragResult: {
+          success: false,
+          reason: 'rag_disabled',
+          error: 'RAG is not enabled for this session'
+        }
+      };
+    } catch (error) {
+      console.error('Failed to link paper to session:', error);
+      throw error;
+    }
+  }
+
   // Remove paper from session
   async removePaperFromSession(sessionId: number, paperId: number): Promise<void> {
     return apiClient.delete<void>(`/papers/sessions/${sessionId}/${paperId}`);

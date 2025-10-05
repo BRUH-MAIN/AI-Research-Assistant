@@ -73,6 +73,18 @@ router.post('/', async (req, res, next) => {
             p_group_id: group_id ? parseInt(group_id) : 1
         });
         
+        // Automatically enable RAG for the new session
+        try {
+            await executeRPC(supabase, 'enable_session_rag', {
+                p_session_id: session[0].session_id,
+                p_enabled_by: parseInt(userId)
+            });
+            console.log(`RAG automatically enabled for new session ${session[0].session_id}`);
+        } catch (ragError) {
+            console.error('Failed to auto-enable RAG for new session:', ragError);
+            // Don't fail session creation if RAG enablement fails
+        }
+        
         res.status(201).json(session[0]);
     } catch (error) {
         next(error);

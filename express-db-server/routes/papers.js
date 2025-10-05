@@ -240,6 +240,48 @@ router.get('/:id/related', async (req, res, next) => {
 });
 
 /**
+ * GET /api/papers/:id/arxiv
+ * Get arXiv information for a specific paper
+ */
+router.get('/:id/arxiv', async (req, res, next) => {
+    try {
+        const paperId = parseInt(req.params.id);
+        
+        if (isNaN(paperId)) {
+            return res.status(400).json({
+                error: 'Invalid paper ID',
+                code: 400
+            });
+        }
+        
+        const supabase = req.app.locals.supabase;
+        
+        // Query papers_arxiv table directly
+        const { data: arxivInfo, error } = await supabase
+            .from('papers_arxiv')
+            .select('*')
+            .eq('paper_id', paperId)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+            console.error('ArXiv query error:', error);
+            throw error;
+        }
+        
+        if (!arxivInfo) {
+            return res.status(404).json({
+                error: 'No arXiv information found for this paper',
+                code: 404
+            });
+        }
+        
+        res.json(arxivInfo);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
  * POST /api/papers/search
  * Advanced search for papers with multiple criteria
  * TEMP FIX: Use direct SQL query to avoid schema mismatch
@@ -386,7 +428,8 @@ router.post('/arxiv', async (req, res, next) => {
             journal_ref,
             comment,
             entry_id,
-            custom_tags
+            custom_tags,
+            paper_id  // Add paper_id to destructuring
         } = req.body;
         
         if (!title) {
@@ -397,68 +440,146 @@ router.post('/arxiv', async (req, res, next) => {
         }
         
         const supabase = req.app.locals.supabase;
+        let main_paper = null;
         
-        // TEMPORARY FIX: Use direct insert instead of RPC to avoid timestamp type mismatch
-        const tags = ['arxiv'];
-        if (categories && categories.length > 0) {
-            tags.push(...categories.map(cat => `arxiv:${cat}`));
-        }
-        if (custom_tags && custom_tags.length > 0) {
-            tags.push(...custom_tags);
-        }
-        
-        // Insert directly into papers table with minimal required fields
-        const { data: paper, error } = await supabase
-            .from('papers')
-            .insert({
-                title: title,
-                authors: authors || 'Unknown',
-                abstract: abstract || '',
-                doi: doi || null
-                // Removing source_url for now since it's causing cache issues
-            })
-            .select()
-            .single();
-        
-        if (error) {
-            console.error('Direct insert error:', error);
-            throw error;
-        }
-        
-        // Also try to insert into arXiv table if it exists
-        try {
-            const { data: arxivPaper, error: arxivError } = await supabase
-                .from('papers_arxiv')
+        // If paper_id is provided, link to existing paper
+        if (paper_id) {
+            console.log(`Linking arXiv data to existing paper ID: ${paper_id}`);
+            
+            // Get the existing paper
+            const { data: existingPaper, error: fetchError } = await supabase
+                .from('papers')
+                .select('*')
+                .eq('paper_id', paper_id)
+                .single();
+            
+            if (fetchError || !existingPaper) {
+                return res.status(404).json({
+                    error: `Paper with ID ${paper_id} not found for linking arXiv data`,
+                    code: 404
+                });
+            }
+            
+            // Update the existing paper with arXiv information
+            const { data: updatedPaper, error: updateError } = await supabase
+                .from('papers')
+                .update({
+                    arxiv_id: arxiv_id || existingPaper.arxiv_id,
+                    url: source_url || existingPaper.url,
+                    abstract: abstract || existingPaper.abstract
+                })
+                .eq('paper_id', paper_id)
+                .select()
+                .single();
+            
+            if (updateError) {
+                console.error('Error updating main paper:', updateError);
+                return res.status(500).json({
+                    error: 'Failed to update existing paper with arXiv data',
+                    details: updateError.message
+                });
+            }
+            
+            main_paper = updatedPaper;
+        } else {
+            // Create new paper entry
+            console.log('Creating new paper entry for arXiv data');
+            
+            const tags = ['arxiv'];
+            if (categories && categories.length > 0) {
+                tags.push(...categories.map(cat => `arxiv:${cat}`));
+            }
+            if (custom_tags && custom_tags.length > 0) {
+                tags.push(...custom_tags);
+            }
+            
+            const { data: newPaper, error: paperError } = await supabase
+                .from('papers')
                 .insert({
                     title: title,
                     authors: authors || 'Unknown',
                     abstract: abstract || '',
+                    doi: doi || null,
                     arxiv_id: arxiv_id,
-                    categories: categories || [],
-                    published_at: published_at ? new Date(published_at).toISOString() : null,
-                    updated_at_source: updated_at_source ? new Date(updated_at_source).toISOString() : null,
-                    source_url: source_url || '',
-                    pdf_url: pdf_url || '',
-                    doi: doi || '',
-                    journal_ref: journal_ref || '',
-                    comment: comment || '',
-                    entry_id: entry_id || ''
+                    url: source_url
                 })
                 .select()
                 .single();
             
-            if (!arxivError) {
-                console.log('Successfully saved to arXiv table:', arxivPaper);
+            if (paperError) {
+                console.error('Error creating new paper:', paperError);
+                return res.status(500).json({
+                    error: 'Failed to create new paper entry',
+                    details: paperError.message
+                });
             }
-        } catch (arxivErr) {
-            console.warn('Could not save to arXiv table (may not exist):', arxivErr.message);
+            
+            main_paper = newPaper;
         }
         
-        res.status(201).json({
-            ...paper,
-            arxiv_id: arxiv_id,
-            arxiv_note: `ArXiv ID: ${arxiv_id || 'N/A'}${comment ? '\nComment: ' + comment : ''}`
-        });
+        // Now create arXiv entry linked to the paper
+        try {
+            const arxivData = {
+                paper_id: main_paper.paper_id,  // Link to the paper (existing or new)
+                title: title,
+                authors: authors || 'Unknown',
+                abstract: abstract || '',
+                arxiv_id: arxiv_id,
+                categories: categories || [],
+                published_at: published_at ? new Date(published_at).toISOString() : null,
+                updated_at_source: updated_at_source ? new Date(updated_at_source).toISOString() : null,
+                source_url: source_url || '',
+                pdf_url: pdf_url || '',
+                doi: doi || '',
+                journal_ref: journal_ref || '',
+                comment: comment || '',
+                entry_id: entry_id || ''
+            };
+            
+            const { data: arxivPaper, error: arxivError } = await supabase
+                .from('papers_arxiv')
+                .insert(arxivData)
+                .select()
+                .single();
+            
+            if (arxivError) {
+                console.error('Error creating arXiv entry:', arxivError);
+                return res.status(500).json({
+                    error: 'Failed to create arXiv entry',
+                    details: arxivError.message
+                });
+            }
+            
+            console.log('Successfully saved to arXiv table:', arxivPaper);
+            
+            res.status(201).json({
+                ...main_paper,
+                arxiv_data: arxivPaper,
+                arxiv_note: `ArXiv ID: ${arxiv_id || 'N/A'}${comment ? '\\nComment: ' + comment : ''}`,
+                paper_arxiv_linked: true,
+                operation: paper_id ? 'linked_existing' : 'created_new'
+            });
+            
+        } catch (arxivErr) {
+            console.error('Error in arXiv table operation:', arxivErr);
+            
+            // If arXiv table insertion fails but we created a new paper, still return the paper
+            if (!paper_id) {
+                res.status(201).json({
+                    ...main_paper,
+                    arxiv_id: arxiv_id,
+                    arxiv_note: `ArXiv ID: ${arxiv_id || 'N/A'} (arXiv table insert failed)`,
+                    paper_arxiv_linked: false,
+                    operation: 'created_new_arxiv_failed'
+                });
+            } else {
+                return res.status(500).json({
+                    error: 'Failed to create arXiv entry for existing paper',
+                    details: arxivErr.message
+                });
+            }
+        }
+        
     } catch (error) {
         console.error('Create arXiv paper error:', error);
         next(error);
@@ -503,7 +624,7 @@ router.get('/sessions/:sessionId', async (req, res, next) => {
 
 /**
  * POST /api/papers/sessions/:sessionId/:paperId
- * Link a paper to a session
+ * Link a paper to a session and automatically trigger RAG processing
  */
 router.post('/sessions/:sessionId/:paperId', async (req, res, next) => {
     try {
@@ -516,16 +637,71 @@ router.post('/sessions/:sessionId/:paperId', async (req, res, next) => {
                 code: 400
             });
         }
-        
+
         const supabase = req.app.locals.supabase;
         
-        // Use the current function signature without added_by parameter
+        // First, link the paper to the session
         await executeRPC(supabase, 'add_paper_to_session', {
             p_session_id: sessionId,
             p_paper_id: paperId
         });
         
-        res.status(201).json({ message: 'Paper linked to session successfully' });
+        // Auto-trigger RAG processing if paper has a PDF URL and RAG is enabled for the session
+        let ragProcessingTriggered = false;
+        try {
+            // Check if session has RAG enabled
+            const ragStatus = await executeRPC(supabase, 'get_session_rag_status', {
+                p_session_id: sessionId
+            });
+            
+            if (ragStatus && ragStatus.is_rag_enabled) {
+                // Get paper details to check if it has a PDF URL
+                const paper = await executeRPC(supabase, 'get_paper_by_id', {
+                    p_paper_id: paperId
+                });
+                
+                if (paper && (paper.pdf_url || paper.url || paper.pdf_path)) {
+                    // Trigger automatic download and RAG processing
+                    const fastApiUrl = process.env.FASTAPI_URL || 'http://fastapi-ai-server:8000';
+                    
+                    // Use the best available URL for PDF (prioritize pdf_url, then url, then pdf_path)
+                    const pdfUrl = paper.pdf_url || paper.url || paper.pdf_path;
+                    
+                    // Call FastAPI to download and process the paper
+                    const ragResponse = await fetch(`${fastApiUrl}/api/v1/session-rag/${sessionId}/papers/auto-process`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            paper_id: paperId,
+                            pdf_url: pdfUrl,
+                            title: paper.title,
+                            authors: paper.authors
+                        })
+                    });
+                    
+                    if (ragResponse.ok) {
+                        console.log(`Successfully triggered RAG processing for paper ${paperId} in session ${sessionId}`);
+                        ragProcessingTriggered = true;
+                    } else {
+                        console.warn(`Failed to trigger RAG processing for paper ${paperId}: ${ragResponse.status}`);
+                    }
+                } else {
+                    console.log(`Paper ${paperId} has no PDF URL, skipping RAG processing`);
+                }
+            } else {
+                console.log(`RAG not enabled for session ${sessionId}, skipping automatic processing`);
+            }
+        } catch (ragError) {
+            // Don't fail the paper linking if RAG processing fails
+            console.error('Failed to trigger automatic RAG processing:', ragError);
+        }
+        
+        res.status(201).json({ 
+            message: 'Paper linked to session successfully',
+            rag_processing_triggered: ragProcessingTriggered
+        });
     } catch (error) {
         next(error);
     }

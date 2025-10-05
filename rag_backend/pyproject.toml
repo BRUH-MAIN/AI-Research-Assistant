@@ -1,0 +1,21 @@
+[project]
+name = "rag-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12.2"
+dependencies = [
+    "fastapi>=0.116.2",
+    "langchain-cohere>=0.4.6",
+    "langchain-community>=0.3.29",
+    "langchain-google-genai>=2.1.12",
+    "langchain-groq>=0.3.8",
+    "langchain-huggingface>=0.3.1",
+    "langchain-pinecone>=0.2.12",
+    "pinecone>=7.3.0",
+    "pinecone-text>=0.11.0",
+    "pypdf>=6.1.1",
+    "python-multipart>=0.0.20",
+    "tqdm>=4.67.1",
+    "uvicorn[standard]>=0.35.0",
+]

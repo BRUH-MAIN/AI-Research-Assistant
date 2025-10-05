@@ -247,3 +247,137 @@ export interface ProfileUpdateData {
   phone_number?: string;
   availability?: 'available' | 'busy' | 'offline';
 }
+
+// =====================================================
+// RAG INTEGRATION TYPES
+// =====================================================
+
+export interface RAGDocument {
+  rag_document_id: number;
+  paper_id: number;
+  file_name: string;
+  file_path: string;
+  processing_status: 'pending' | 'processing' | 'completed' | 'failed';
+  chunks_count: number;
+  vector_store_ids?: string[];
+  processing_error?: string;
+  processed_at?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface SessionRAGStatus {
+  session_rag_id?: number;
+  session_id: number;
+  is_rag_enabled: boolean;
+  total_papers: number;
+  processed_papers: number;
+  rag_enabled_at?: string;
+  enabled_by?: number;
+  enabled_by_name?: string;
+}
+
+export interface SessionPaperWithRAG {
+  paper_id: number;
+  title: string;
+  abstract?: string;
+  authors?: string;
+  doi?: string;
+  added_at: string;
+  has_rag: boolean;
+  rag_status: 'not_processed' | 'pending' | 'processing' | 'completed' | 'failed';
+  rag_file_name?: string;
+  chunks_count?: number;
+  processed_at?: string;
+}
+
+export interface RAGChatMetadata {
+  rag_chat_id: number;
+  message_id: number;
+  session_id: number;
+  used_rag: boolean;
+  sources_used?: string[];
+  chunks_retrieved?: number;
+  processing_time_ms?: number;
+  model_used?: string;
+  created_at: string;
+}
+
+export interface RAGChatStats {
+  total_messages: number;
+  rag_messages: number;
+  rag_usage_percentage: number;
+  avg_chunks_retrieved: number;
+  avg_processing_time_ms: number;
+}
+
+export interface RAGQuestionRequest {
+  question: string;
+  max_chunks?: number;
+  search_type?: 'semantic' | 'hybrid';
+  include_metadata?: boolean;
+}
+
+export interface RAGSource {
+  source: string;
+  page?: number;
+  section?: string;
+  relevance_score?: number;
+  content: string;
+  paper_id?: number;
+  paper_title?: string;
+}
+
+export interface RAGQuestionResponse {
+  answer: string;
+  sources: RAGSource[];
+  metadata?: {
+    session_id?: number;
+    session_papers_used?: number;
+    total_session_papers?: number;
+    processing_time_ms?: number;
+    used_rag?: boolean;
+    model_used?: string;
+    search_type?: string;
+    chunks_retrieved?: number;
+    total_tokens?: number;
+    question_type?: string;
+  };
+  success?: boolean;
+  error?: string;
+}
+
+export interface RAGPaperUploadResult {
+  success: boolean;
+  message: string;
+  paper_id: number;
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  rag_document: RAGDocument;
+  status: 'uploaded_not_processed' | 'uploaded_and_processing' | 'error';
+}
+
+export interface RAGProcessingResult {
+  success: boolean;
+  message: string;
+  paper_id: number;
+  processing_time_ms: number;
+  chunks_count: number;
+  vector_ids_count: number;
+  status: 'completed' | 'failed' | 'already_completed';
+  rag_result?: any;
+  error?: string;
+}
+
+export interface SessionRAGOverview {
+  express_status: SessionRAGStatus;
+  fastapi_status: any;
+  papers: SessionPaperWithRAG[];
+  chat_stats: RAGChatStats;
+  health_status?: {
+    express_healthy: boolean;
+    fastapi_healthy: boolean;
+    overall_healthy: boolean;
+  };
+}

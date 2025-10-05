@@ -152,7 +152,7 @@ const GroupChatWindow: React.FC<GroupChatWindowProps> = ({
                 <p className="text-gray-500">Start the conversation by sending a message!</p>
                 {canInvokeAI && (
                   <p className="text-blue-400 text-sm mt-2">
-                    💡 Try using @ai to get help from the AI assistant
+                    💡 Try using @ai for general help or @paper for research-based answers
                   </p>
                 )}
               </div>
@@ -168,7 +168,7 @@ const GroupChatWindow: React.FC<GroupChatWindowProps> = ({
                 
                 return (
                   <GroupChatMessage
-                    key={message.message_id}
+                    key={`${message.message_id}-${index}-${message.message_type}`}
                     message={message}
                     isOwn={message.sender_user_id === userId}
                     showSender={showSender}

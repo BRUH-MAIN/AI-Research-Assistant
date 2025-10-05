@@ -182,10 +182,15 @@ router.post('/sessions/:sessionId/messages', async (req, res, next) => {
         const supabase = req.app.locals.supabase;
         
         // Check if user can invoke AI (if message contains AI triggers)
-        const aiTriggers = ['@ai', '/ai', '@assistant'];
-        const hasAiTrigger = aiTriggers.some(trigger => content.toLowerCase().includes(trigger.toLowerCase()));
+        const generalAiTriggers = ['@ai', '/ai', '@assistant'];
+        const paperAiTriggers = ['@paper', '/paper'];
+        const allAiTriggers = [...generalAiTriggers, ...paperAiTriggers];
         
-        if (hasAiTrigger) {
+        const hasGeneralAiTrigger = generalAiTriggers.some(trigger => content.toLowerCase().includes(trigger.toLowerCase()));
+        const hasPaperAiTrigger = paperAiTriggers.some(trigger => content.toLowerCase().includes(trigger.toLowerCase()));
+        const hasAnyAiTrigger = hasGeneralAiTrigger || hasPaperAiTrigger;
+        
+        if (hasAnyAiTrigger) {
             const canInvokeAI = await executeRPC(supabase, 'can_user_invoke_ai', {
                 p_user_id: parseInt(user_id),
                 p_session_id: sessionId
@@ -200,9 +205,10 @@ router.post('/sessions/:sessionId/messages', async (req, res, next) => {
             
             // Add AI trigger metadata
             metadata.ai_triggered = true;
-            metadata.ai_trigger_detected = aiTriggers.find(trigger => 
+            metadata.ai_trigger_detected = allAiTriggers.find(trigger => 
                 content.toLowerCase().includes(trigger.toLowerCase())
             );
+            metadata.ai_trigger_type = hasPaperAiTrigger ? 'paper' : 'general';
         }
         
         const message = await executeRPC(supabase, 'send_group_chat_message', {
@@ -216,38 +222,119 @@ router.post('/sessions/:sessionId/messages', async (req, res, next) => {
         const messageResult = message[0];
         
         // If AI was triggered, call FastAPI to get AI response
-        if (hasAiTrigger && messageResult) {
+        if (hasAnyAiTrigger && messageResult) {
             try {
                 // Make request to FastAPI for AI response
-                const fastApiUrl = process.env.FASTAPI_URL || 'http://localhost:8000';
-                const aiResponse = await fetch(`${fastApiUrl}/api/v1/chat/group-message`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
+                const fastApiUrl = process.env.FASTAPI_URL || 'http://fastapi-ai-server:8000';
+                
+                let aiEndpoint;
+                let requestBody;
+                
+                if (hasPaperAiTrigger) {
+                    // Use session-scoped RAG endpoint for @paper triggers
+                    aiEndpoint = `${fastApiUrl}/api/v1/session-rag/${sessionId}/ask`;
+                    requestBody = {
+                        question: content.replace(/@paper|\/paper/gi, '').trim(),
+                        max_chunks: 5,
+                        search_type: "hybrid"
+                    };
+                } else {
+                    // Use general AI endpoint for @ai triggers
+                    aiEndpoint = `${fastApiUrl}/api/v1/chat/group-message`;
+                    requestBody = {
                         session_id: sessionId,
                         user_message: content,
                         user_id: parseInt(user_id),
                         trigger_message_id: messageResult.message_id
-                    })
+                    };
+                }
+                
+                const aiResponse = await fetch(aiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
                 });
                 
                 if (aiResponse.ok) {
                     const aiData = await aiResponse.json();
                     
+                    let responseContent, usedRag = false, sourcesUsed = [], chunksRetrieved = 0;
+                    
+                    if (hasPaperAiTrigger) {
+                        // Handle session-scoped RAG response structure
+                        responseContent = aiData.answer || 'I apologize, but I encountered an error while processing your request.';
+                        usedRag = true;
+                        sourcesUsed = aiData.sources ? aiData.sources.map(s => s.source || s.metadata?.source || '') : [];
+                        chunksRetrieved = aiData.sources ? aiData.sources.length : 0;
+                        
+                        // Add sources to response if available
+                        if (aiData.sources && aiData.sources.length > 0) {
+                            responseContent += "\n\n**Sources:**\n";
+                            for (let i = 0; i < Math.min(aiData.sources.length, 3); i++) {
+                                const source = aiData.sources[i];
+                                const sourceName = source.source || source.metadata?.source || 'Unknown';
+                                responseContent += `${i + 1}. ${sourceName}`;
+                                if (source.page || source.metadata?.page) {
+                                    responseContent += ` (Page ${source.page || source.metadata.page})`;
+                                }
+                                responseContent += "\n";
+                            }
+                        }
+                    } else {
+                        // Handle general AI response structure
+                        responseContent = aiData.response || 'I apologize, but I encountered an error while processing your request.';
+                        usedRag = aiData.metadata?.used_rag || false;
+                        sourcesUsed = aiData.metadata?.sources_used || [];
+                        chunksRetrieved = aiData.metadata?.chunks_retrieved || 0;
+                    }
+                    
                     // Send AI response as a separate message
                     await executeRPC(supabase, 'send_group_chat_message', {
                         p_session_id: sessionId,
-                        p_user_id: 1, // AI user ID (adjust as needed)
-                        p_content: aiData.response || 'I apologize, but I encountered an error while processing your request.',
+                        p_user_id: parseInt(user_id), // Use the original user who triggered AI
+                        p_content: responseContent,
                         p_message_type: 'ai',
                         p_metadata: {
                             ai_response: true,
                             triggered_by: messageResult.message_id,
-                            model_used: aiData.model || 'unknown'
+                            model_used: aiData.model || (hasPaperAiTrigger ? 'session-scoped-rag' : 'groq-general'),
+                            original_user_id: parseInt(user_id),
+                            ai_generated: true,
+                            ai_trigger_type: hasPaperAiTrigger ? 'paper' : 'general',
+                            used_rag: usedRag,
+                            sources_used: sourcesUsed,
+                            chunks_retrieved: chunksRetrieved,
+                            session_scoped: hasPaperAiTrigger
                         }
                     });
+                    
+                    // Record RAG chat metadata if using paper trigger
+                    if (hasPaperAiTrigger && usedRag) {
+                        try {
+                            const ragMetadataEndpoint = `${fastApiUrl}/api/v1/rag/chat/metadata`;
+                            await fetch(ragMetadataEndpoint, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    message_id: messageResult.message_id,
+                                    session_id: sessionId,
+                                    used_rag: true,
+                                    sources_used: sourcesUsed,
+                                    chunks_retrieved: chunksRetrieved,
+                                    processing_time_ms: aiData.metadata?.processing_time_ms || 0,
+                                    model_used: 'session-scoped-rag'
+                                })
+                            });
+                        } catch (metadataError) {
+                            console.error('Failed to record RAG metadata:', metadataError);
+                        }
+                    }
+                } else {
+                    console.error('FastAPI responded with error:', aiResponse.status, await aiResponse.text());
                 }
             } catch (aiError) {
                 console.error('Failed to get AI response:', aiError);
