@@ -1,0 +1,43 @@
+# Virtual environment
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# uv cache
+.uv/
+
+# Local development files
+.env
+.env.local
+.env.development
+.env.test
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Test files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation build
+docs/_build/

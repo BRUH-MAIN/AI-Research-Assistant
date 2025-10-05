@@ -1,0 +1,45 @@
+FROM python:3.12-slim-trixie
+
+# Install system dependencies for AI/ML operations
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl gcc g++ make ca-certificates \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+WORKDIR /app
+
+# Create non-root user for security with home directory first
+RUN groupadd -r aiuser && useradd -r -g aiuser -m aiuser
+
+# Create and set permissions for directories
+RUN mkdir -p /app/data /app/models /app/temp /home/aiuser/.cache
+RUN chown -R aiuser:aiuser /app /home/aiuser/.cache
+
+# Switch to non-root user for dependency installation
+USER aiuser
+
+# Set environment variables for uv to use user-owned directories
+ENV UV_CACHE_DIR=/home/aiuser/.cache/uv
+ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+
+# Copy dependency definitions
+COPY --chown=aiuser:aiuser pyproject.toml uv.lock* ./
+
+# Install dependencies using uv as non-root user
+RUN uv sync --frozen --no-dev
+
+# Copy backend source code (AI/ML focused)
+COPY --chown=aiuser:aiuser . .
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run FastAPI AI server (database endpoints removed)
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

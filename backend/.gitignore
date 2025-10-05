@@ -1,0 +1,25 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache and build files
+__pycache__/
+*.py[cod]
+*.pyo
+*.so
+*.egg-info/
+dist/
+build/
+
+# IDE-specific files (optional)
+.vscode/
+.idea/
+
+# Environment variables (never commit secrets!)
+.env
+*.env
+
+# Other OS/editor files (optional)
+.DS_Store       # macOS
+Thumbs.db       # Windows
