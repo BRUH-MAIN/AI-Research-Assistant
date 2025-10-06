@@ -1,0 +1,125 @@
+\documentclass{beamer}
+\usepackage{ctex, hyperref}
+\usepackage[T1]{fontenc}
+
+% other packages
+\usepackage{latexsym,amsmath,xcolor,multicol,booktabs,calligra}
+\usepackage{graphicx,pstricks,listings,stackengine,hyperref}
+
+\title{AI Research Assistant}
+\subtitle{A review}
+\author{\href{}{Team - 08}}
+\institute{\href{}{School of AI, Amrita Vishwa Vidyapeetham}}
+
+\date{}
+\usepackage{Amr_Beamer}
+
+% defs
+\def\cmd#1{\texttt{\color{red}\footnotesize $\backslash$#1}}
+\def\env#1{\texttt{\color{blue}\footnotesize #1}}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+\definecolor{halfgray}{gray}{0.55}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\bfseries\color{deepblue},
+    emphstyle=\ttfamily\color{deepred},   % Custom highlighting style
+    stringstyle=\color{deepgreen},
+    numbers=left,
+    numberstyle=\small\color{halfgray},
+    rulesepcolor=\color{red!20!green!20!blue!20},
+    frame=shadowbox,
+}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+    \begin{figure}
+            \includegraphics[scale=0.2]{pic/logored.png} 
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+    \tableofcontents[sectionstyle=show,subsectionstyle=show/shaded/hide,subsubsectionstyle=show/shaded/hide]
+\end{frame}
+
+
+% 内容从这里开始
+\section{Introduction}
+\begin{frame}{Introduction}
+    \begin{itemize}
+  \item Researchers struggle to efficiently find and use relevant papers due to the vast volume of academic content.
+  \item Manual searching, reading, and summarizing papers slows down research and reduces productivity.
+  \item Technical terms and complex concepts in papers create barriers, especially for students and new researchers.
+  \item Properly citing sources and adhering to formatting guidelines is error-prone and time-intensive.
+  \item  Academia and industry increasingly need AI tools to simplify research, improve accuracy, and boost efficiency.
+\end{itemize}
+\end{frame}
+
+\section{Problem Statement}
+\begin{frame}{Problem Statement}
+    \begin{itemize}
+  \item Slow, error-prone, and time-consuming manual processes hinder productivity in searching, analyzing, and citing research papers.
+  \item Such problems can be overcome by integrating AI services with the research process. 
+  \item A high-performance database is critical to manage growing data, ensure fast queries, and support real-time AI processing for seamless user experiences.
+\end{itemize}
+\end{frame}
+
+\section{Objective}
+\begin{frame}{Objective}
+   \begin{itemize}
+  \item Develop an AI-powered research platform with capabilities for group collaboration, role-based access for mentors and researchers, and intelligent paper management.
+  \item Design a normalized relational database schema in PostgreSQL to store and manage user profiles, mentor-researcher relationships, research papers, citations, and collaborative projects, ensuring data consistency and optimized CRUD operations.
+  \item Integrate the arXiv API with a Retrieval-Augmented Generation (RAG) engine to enable advanced paper exploration, conceptual querying, and automated citation preparation.
+\end{itemize}
+\end{frame}
+
+\section{Tech Stack}
+\begin{frame}{Tech Stack}
+    % Content for Tech Stack
+    \begin{itemize}
+    \item Frontend: Next.js with TypeScript
+    \item Backend: FastAPI
+    \item Database: PostgreSQL
+    \item UI/Styling: Aceternity UI + Tailwind CSS
+    \item Caching: Redis for high-performance caching
+    \end{itemize}
+\end{frame}
+
+\section{ER Model}
+\begin{frame}{ER Model}
+    % Content for ER Model
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.95\linewidth]{ER-Final[1].png}
+        \caption{ER Model}
+        \label{fig:placeholder}
+    \end{figure}
+\end{frame}
+
+\section{UML Class Diagram}
+\begin{frame}{UML Class Diagram}
+    % Thumbnail
+    \includegraphics[height=0.5\linewidth]{uml_class.pdf}
+    \vspace{1em}
+
+    % Button linking to the Drive-hosted PDF
+    \href{https://drive.google.com/file/d/1zFV6mQx6Ovp5fQPJ1y4IFWDJutJeNi6X/view?usp=drive_link}{\beamergotobutton{Open UML Class Diagram}}
+\end{frame}
+
+\section{UML Sequence Diagram}
+\begin{frame}{UML Sequence Diagram}
+    \centering
+    % Display the SVG
+    \includegraphics[height=0.5\linewidth]{seq2.png}
+
+    \vspace{1em}
+
+    % Optional: Keep the Drive link button if you still want it
+    \href{https://drive.google.com/file/d/1nDxdsARpn7qJ2UEqsf4UgOmcG2kOt_gX/view?usp=sharing}{\beamergotobutton{Open Full Diagram}}
+\end{frame}
+
+\end{document}

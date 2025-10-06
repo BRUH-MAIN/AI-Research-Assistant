@@ -1,0 +1,1087 @@
+\documentclass[12pt]{report}
+
+% Packages
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{amssymb,mathrsfs}
+\usepackage{amsmath, amsthm}
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+\usepackage[lmargin=3cm,rmargin=3cm,tmargin=3cm,bmargin=3.5cm]{geometry}
+\usepackage{nomencl}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{caption}
+\usepackage{rotating}
+\usepackage{lscape}
+\usepackage{siunitx}
+\usepackage{url} % Added for the \url command
+\usepackage{enumitem} % Added to control list spacing
+
+% --- Global spacing adjustments for a more compact layout ---
+\setlist{nosep} % Removes vertical spacing within and around list environments
+
+\renewcommand\bibname{References}
+
+\author{Name}
+\date{}
+
+\begin{document}
+
+% ---------------- Title Page ----------------
+\thispagestyle{empty}
+\begin{large}
+    \begin{center}
+        {\Large{\bf {\sc AI Research Assistant}}}
+        \\
+        PROJECT REPORT \\
+        \vspace{.2cm} % Reduced space
+        \textit{Submitted by}\\
+        \vspace{.2cm} % Reduced space
+        \textbf{B Pranav Karthik - CB.SC.U4AIE23217}\\
+        \textbf{Bharath Sooryaa M - CB.SC.U4AIE23218}\\
+        \textbf{Hari Karthik V - CB.SC.U4AIE23227}\\
+        \textbf{Rohan Ramesh - CB.SC.U4AIE23242}\\
+        \vspace{.2cm} % Reduced space
+        \textit{under the guidance of}\\
+        \vspace{.2cm} % Reduced space
+        \textbf{Dr. Archudha A}\\
+        Assistant Professor, School of Artificial Intelligence \\
+        Amrita Vishwa Vidyapeetham, Coimbatore \\
+        \vspace{.2cm} % Reduced space
+        \textit{in partial fulfillment for the award of the degree of}\\
+        \vspace{.3cm} % Reduced space
+        \textbf{BACHELOR OF TECHNOLOGY}\\
+        \textbf{IN}\\
+        \textbf{COMPUTER SCIENCE ENGINEERING - ARTIFICIAL INTELLIGENCE}\\
+        \vspace*{.2cm} % Reduced space
+        \begin{figure}[H] % Use H from float package to force placement
+            \centering % Used for proper centering
+            \includegraphics*[width=3.1in, height=1in, keepaspectratio=false]{Amrita.jpg}\\
+        \end{figure}
+        \vspace*{.1cm} % Reduced space
+        \textbf{\small{COMPUTER SCIENCE ENGINEERING - ARTIFICIAL INTELLIGENCE}}\\
+        \vspace*{.1cm} % Reduced space
+        \large {\textbf{AMRITA SCHOOL OF ARTIFICIAL INTELLIGENCE}}\\
+        \vspace*{.1cm} % Reduced space
+        \Large{ \textbf{ AMRITA VISHWA VIDYAPEETHAM}}\\
+        \vspace*{.1cm} % Reduced space
+        \small{ COIMBATORE} - 641 112 (\small{INDIA)}\\
+        \vspace*{.1cm} % Reduced space
+        \bf{\small{ APRIL - 2025}}
+    \end{center}
+\end{large}
+
+
+% Theorem environments
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}{Corollary}[section]
+\newtheorem{pro}{Proposition}[section]
+\newtheorem{Lemma}{Lemma}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{rem}{Remark}[section]
+\newtheorem{note}{Note}[section]
+\newtheorem{defn}{Definition}[section]
+
+% New page for the next section
+\newpage
+\thispagestyle{empty}
+\begin{center}
+    \begin{figure}[H]
+        \centering
+        \includegraphics*[width=3.1in, height=1in, keepaspectratio=false]{Amrita.jpg}\\
+    \end{figure}
+    {\Large \textbf{BONAFIDE CERTIFICATE}}
+\end{center}
+
+\noindent This is to certify that the thesis entitled {\small\textbf{``AI Research Assistant"}} submitted by \textbf{B Pranav Karthik (CB.SC.U4AIE23217), Bharath Sooryaa M (CB.SC.U4AIE23218), Hari Karthik V (CB.SC.U4AIE23227), and Rohan Ramesh (CB.SC.U4AIE23242)} for the award of the \textbf{Degree of Bachelor of Technology} in the \textbf{``COMPUTER SCIENCE ENGINEERING - ARTIFICIAL INTELLIGENCE"} is a bonafide record of the work carried out by them under the guidance and supervision of \textbf{Dr. Archudha A, Assistant Professor, School of Artificial Intelligence, Center for Computational Engineering and Networking (CEN), Amrita Vishwa Vidyapeetham, Coimbatore}.\\
+
+\vspace{2cm} % Adjusted space
+\noindent\textbf{Guide} \hfill\textbf{Head of the Department} \\ % Used \hfill for alignment
+\noindent Dr. Archudha A \hfill Dr. K.P. Soman \\
+Assistant Professor \hfill Professor and Dean \\
+School of Artificial Intelligence \hfill School of Artificial Intelligence \\
+Amrita Vishwa Vidyapeetham \hfill Amrita Vishwa Vidyapeetham \\
+
+\vspace{1cm} % Adjusted space
+\textit{{Submitted for the university examination held on ... ... ... ... ... ... \\}}
+\vspace*{.3cm} % Reduced space
+
+\noindent{\textbf{INTERNAL EXAMINER}\hfill \textbf{EXTERNAL EXAMINER}}
+\newpage
+
+\thispagestyle{empty}
+
+% Declaration page
+\begin{center}
+    \large {\textbf{DECLARATION}}
+\end{center}
+
+\vspace*{.1cm}
+We, \textbf{B Pranav Karthik (CB.SC.U4AIE23217), Bharath Sooryaa M \\ (CB.SC.U4AIE23218), Hari Karthik V (CB.SC.U4AIE23227), and Rohan Ramesh (CB.SC.U4AIE23242)}, hereby declare that this thesis entitled {\sc \textbf{``AI Research Assistant "}}, is the record of the original work done by us under the guidance of \textbf{Dr. Archudha A, Assistant Professor, School of Artificial Intelligence, CEN, Amrita Vishwa Vidyapeetham, Coimbatore}. To the best of our knowledge this work has not formed the basis for the award of any degree/diploma/associateship/fellowship/or a similar award to any candidate in any University.\\
+
+\vspace*{1.5cm} % Adjusted space
+\noindent{\bf Place:\hfill Signatures of the Students} \\
+\noindent {\bf Date: }
+
+\vspace*{2cm} % Adjusted space
+\begin{center}
+    \large {COUNTERSIGNED}\\
+    \vspace*{.8cm} % Reduced space
+    \small {Dr. K.P.Soman\\
+        Professor and Dean\\
+        Amrita School of Artificial Intelligence\\
+        Amrita Vishwa Vidyapeetham}
+\end{center}
+
+% New page for table of contents
+\newpage
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+
+% Acknowledgement section
+\begin{center}
+    \section*{Acknowledgement}\addcontentsline{toc}{chapter}{Acknowledgement}
+\end{center}
+
+We would like to express our sincere gratitude to our guide, \textbf{Dr. Archudha A, Assistant Professor, School of Artificial Intelligence, Center for Computational Engineering and Networking (CEN), Amrita Vishwa Vidyapeetham, Coimbatore}, for his constant guidance, encouragement, and invaluable suggestions throughout the course of this project. His expertise in the fields of Materials-Informatics, Digital Twin, and AI-driven scientific discovery greatly inspired our work.
+
+We are also grateful to \textbf{Dr. K.P. Soman}, Dean of Amrita School of Artificial Intelligence, for providing us with the necessary resources and support.
+
+We thank Google for providing access to the Gemini Flash model through their API, which was essential for our work. We also appreciate the open-source community for developing tools and libraries we relied upon.
+
+Finally, we thank our families and friends for their unwavering support during this project.
+
+% \cleardoublepage
+% \addcontentsline{toc}{chapter}{\listfigurename}
+% \listoffigures
+
+% \cleardoublepage
+% \addcontentsline{toc}{chapter}{\listtablename}
+% \listoftables
+% \clearpage
+
+% % List of Abbreviations
+% \chapter*{List of Abbreviations\hfill} \addcontentsline{toc}{chapter}{List of Abbreviations}
+% \begin{tabular}{lll}
+% AI & & Artificial Intelligence \\
+% API & & Application Programming Interface \\
+% CSV & & Comma-Separated Values \\
+% DOI & & Digital Object Identifier \\
+% JSON & & JavaScript Object Notation \\
+% LLM & & Large Language Model \\
+% NLP & & Natural Language Processing \\
+% SQL & & Structured Query Language \\
+% \end{tabular}
+% \newpage
+
+% ---------------- Abstract ----------------
+\chapter*{Abstract}\addcontentsline{toc}{chapter}{Abstract}
+The growing volume of academic literature makes it difficult for researchers to efficiently discover, analyze, and cite relevant work. Manual searching, reading, and referencing are slow, error-prone, and resource-intensive. This project reviews the design of an AI-powered research assistant platform that integrates intelligent paper retrieval, collaboration features, and automated citation generation.
+
+The system leverages a normalized PostgreSQL database schema for managing users, mentors, research groups, papers, and collaborative sessions. The architecture integrates the arXiv API and a Retrieval-Augmented Generation (RAG) engine to enable advanced paper exploration and conceptual querying. The platform is built with Next.js, FastAPI, PostgreSQL, and Redis for high performance.
+
+Through entity-relationship modeling and UML design, the project demonstrates how databases can support scalable AI applications that enhance research productivity, accuracy, and collaboration.
+
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ---------------- Chapter 1: Introduction ----------------
+\chapter{Introduction}
+The exponential growth of academic publications has made it increasingly difficult for researchers to identify and process relevant information. Traditional methods of searching, reading, and summarizing papers are inefficient and error-prone.
+
+Several challenges include:
+\begin{itemize}
+    \item Vast volume of content slows down discovery.
+    \item Complex terminology creates barriers for students.
+    \item Proper citation management is time-intensive.
+    \item Manual processes reduce productivity and collaboration.
+\end{itemize}
+
+\section{Problem Statement}
+Manual searching and citation processes are slow, error-prone, and hinder productivity. A scalable platform integrating AI-driven exploration with efficient database design is required.
+
+\section{Project Overview}
+AI Research Assistant is a full-stack application for searching, downloading, and managing academic papers with ArXiv integration and intelligent chat functionality. The system follows a separated 3-service architecture with complete database separation:
+
+\begin{itemize}
+    \item \textbf{Frontend (Next.js)}: Port 3000, TypeScript, Tailwind CSS, Supabase auth
+    \item \textbf{Express DB Server}: Port 3001, handles ALL database operations via Supabase RPC calls
+    \item \textbf{FastAPI AI Server}: Port 8000, handles ONLY AI/ML operations and chat functionality
+\end{itemize}
+
+\textbf{Critical}: FastAPI has \textbf{ZERO} database interactions. The Express server manages ALL database operations through Supabase RPC functions. FastAPI only handles AI processing and uses Express for any data persistence needs.
+
+\section{Objectives}
+\begin{itemize}
+    \item Build an AI-powered research platform supporting role-based collaboration.
+    \item Design a normalized relational schema in PostgreSQL to manage users, groups, sessions, papers, and metadata.
+    \item Integrate the arXiv API with RAG to enable intelligent search and citation preparation.
+    \item Provide a high-performance backend with caching for real-time responsiveness.
+    \item Implement secure authentication with Supabase Auth integration.
+\end{itemize}
+
+\section{Key Features}
+\begin{itemize}
+    \item \textbf{Paper Search \& Management}: Search and store academic papers from ArXiv
+    \item \textbf{AI Chat Interface}: Intelligent discussion of papers with AI assistance
+    \item \textbf{Group Management}: Collaborative research sessions
+    \item \textbf{User Authentication}: Secure login and user management
+    \item \textbf{Modern Tech Stack}: Next.js frontend, Express.js DB server, FastAPI AI server
+\end{itemize}
+
+\section{Recent Updates}
+\begin{itemize}
+    \item \textbf{Global User Context System}: Centralized authentication system
+    \item \textbf{Database Migration Complete}: FastAPI no longer interacts with the database directly
+    \item \textbf{Improved Error Handling}: Better error management across services
+\end{itemize}
+
+% ---------------- Chapter 2: Literature Survey ----------------
+\chapter{Literature Survey}
+\begin{itemize}
+    \item Tools like Mendeley and Zotero manage references but lack intelligent querying and AI integration.
+    \item Recent work in retrieval-augmented generation highlights the potential of combining databases with AI models for improved knowledge access.
+    \item PostgreSQL is widely adopted for research platforms due to its robustness and support for normalization.
+\end{itemize}
+
+\section{Databases in Research Applications}
+Efficient storage and retrieval are essential in AI-powered platforms. Relational databases ensure consistency, normalization, and reliable CRUD operations.
+
+\section{Entity-Relationship Modeling}
+ER models visualize system entities and relationships, forming the foundation of normalized schemas.
+
+\section{UML in System Design}
+UML diagrams capture structural and behavioral aspects. Class diagrams model system components, while sequence diagrams illustrate workflows.
+
+% ---------------- Chapter 3: Motivation / Gap Analysis ----------------
+\chapter{Motivation / Gap Analysis}
+\section{Motivation}
+The need for an AI-powered research assistant stems from the growing complexity and volume of academic literature. Researchers spend significant time on manual tasks such as searching for papers, understanding complex terminology, managing citations, and collaborating with peers. An intelligent system that automates these processes can dramatically improve research productivity and accuracy.
+
+\section{Gap Analysis}
+\subsection{Existing Solutions}
+Current reference management tools like Mendeley and Zotero provide basic citation management but have significant limitations:
+\begin{itemize}
+    \item \textbf{Lack of AI Integration:} No intelligent querying or conceptual search capabilities.
+    \item \textbf{Limited Collaboration:} Minimal support for real-time collaborative research sessions.
+    \item \textbf{No Context-Aware Retrieval:} Unable to understand research context or provide relevant recommendations.
+    \item \textbf{Manual Citation:} Still requires significant manual effort for citation formatting.
+\end{itemize}
+
+\subsection{Identified Gaps}
+\begin{itemize}
+    \item Absence of AI-driven paper discovery using natural language queries.
+    \item Limited integration of collaborative features with intelligent search.
+    \item Lack of role-based access control for research groups and mentors.
+    \item No unified platform combining database design with RAG-powered exploration.
+\end{itemize}
+
+\subsection{Proposed Solution}
+This project addresses these gaps by:
+\begin{itemize}
+    \item Integrating Retrieval-Augmented Generation (RAG) for context-aware paper retrieval.
+    \item Implementing a normalized database schema for scalable user and paper management.
+    \item Providing collaborative sessions with real-time AI assistance.
+    \item Automating citation generation with academic compliance.
+\end{itemize}
+
+% ---------------- Chapter 4: Methodology ----------------
+\chapter{Methodology}
+\section{System Architecture}
+The platform follows a separated 3-service architecture with complete database separation:
+
+\begin{itemize}
+    \item \textbf{Frontend (Next.js)}: Port 3000
+        \begin{itemize}
+            \item TypeScript, Tailwind CSS
+            \item Supabase Auth integration
+            \item App Router structure
+        \end{itemize}
+    \item \textbf{Express DB Server}: Port 3001
+        \begin{itemize}
+            \item Handles ALL database operations
+            \item Uses Supabase RPC functions
+            \item Manages authentication validation
+        \end{itemize}
+    \item \textbf{FastAPI AI Server}: Port 8000
+        \begin{itemize}
+            \item Handles ONLY AI/ML operations and chat
+            \item Has ZERO database interactions
+            \item Uses Express HTTP client for persistence
+        \end{itemize}
+    \item \textbf{Database Layer}:
+        \begin{itemize}
+            \item Supabase PostgreSQL (port 54322 locally)
+            \item Schema defined in migrations
+            \item Accessed exclusively through Express
+        \end{itemize}
+\end{itemize}
+
+\subsection{Project Structure}
+The project follows a well-organized structure:
+\begin{verbatim}
+project-root/
+├── backend/                   # FastAPI AI server
+│   ├── app/                  # Core application code
+│   │   ├── api/             # API routes
+│   │   ├── core/            # Configuration
+│   │   ├── db/              # Database clients (uses Express)
+│   │   ├── models/          # Data models
+│   │   └── services/        # Business logic
+├── express-db-server/        # Express database server
+│   ├── middleware/          # Auth and error middleware
+│   ├── routes/              # API routes for data access
+├── frontend/                 # Next.js frontend
+│   ├── lib/                # Utilities
+│   ├── src/                # Source code
+│   │   ├── app/           # Next.js App Router
+├── sql-functions/           # SQL functions for Supabase
+├── supabase/                # Supabase configuration
+│   ├── migrations/         # Database migrations
+\end{verbatim}
+
+\section{Database Design Approach}
+\subsection{Normalization Process}
+The database schema follows Third Normal Form (3NF) to ensure:
+\begin{itemize}
+    \item Elimination of redundant data
+    \item Data integrity through foreign key constraints
+    \item Efficient query performance
+\end{itemize}
+
+\subsection{Entity Identification}
+Key entities identified include:
+\begin{itemize}
+    \item \textbf{Users:} Researchers, students, and mentors with role-based access
+    \item \textbf{Groups:} Research groups with hierarchical organization
+    \item \textbf{Sessions:} Collaborative research sessions with chat functionality
+    \item \textbf{Papers:} Academic papers with metadata and tags
+    \item \textbf{Feedback:} User feedback for continuous improvement
+\end{itemize}
+
+\section{Service Communication}
+\subsection{Communication Patterns}
+The project implements specific communication patterns between services:
+
+\begin{enumerate}
+    \item \textbf{Frontend → Express DB Server}: All database operations
+    \begin{verbatim}
+    // Example: Fetching user data
+    const users = await fetch(`${process.env.NEXT_PUBLIC_EXPRESS_DB_URL}/api/users/`);
+    \end{verbatim}
+
+    \item \textbf{Frontend → FastAPI AI Server}: Only for AI/chat features
+    \begin{verbatim}
+    // Example: Sending a chat message
+    const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_URL}/ai/chat/session`, {
+      method: 'POST',
+      body: JSON.stringify({ message: 'Hello AI!' })
+    });
+    \end{verbatim}
+
+    \item \textbf{FastAPI → Express DB Server}: For chat persistence
+    \begin{verbatim}
+    # Example: Storing chat messages
+    async def save_message(message: dict):
+        response = await httpx.post(
+            f"{EXPRESS_DB_URL}/api/messages/",
+            json=message,
+            headers={"Authorization": f"Bearer {token}"}
+        )
+    \end{verbatim}
+\end{enumerate}
+
+\subsection{Authentication Flow}
+The authentication flow follows these steps:
+\begin{enumerate}
+    \item User authenticates with Supabase Auth
+    \item JWT token is stored in client
+    \item Token is passed in headers for API requests
+    \item Both Express and FastAPI validate tokens
+    \item Express handles user data lookup
+\end{enumerate}
+
+\section{AI Integration Methodology}
+\subsection{Retrieval-Augmented Generation (RAG)}
+The RAG pipeline consists of:
+\begin{enumerate}
+    \item \textbf{Query Processing:} User queries are processed and embedded
+    \item \textbf{Semantic Search:} Vector similarity search identifies relevant papers
+    \item \textbf{Context Augmentation:} Retrieved papers provide context for LLM
+    \item \textbf{Response Generation:} AI generates contextual responses with citations
+\end{enumerate}
+
+\subsection{arXiv API Integration}
+Papers are fetched from arXiv using:
+\begin{itemize}
+    \item RESTful API calls with query parameters
+    \item Metadata extraction (title, authors, abstract, DOI)
+    \item Automated storage in PostgreSQL via Express DB Server
+\end{itemize}
+
+\section{Caching Strategy}
+Redis is employed for:
+\begin{itemize}
+    \item Session state management for real-time collaboration
+    \item Frequently accessed paper metadata
+    \item API response caching to reduce latency
+\end{itemize}
+
+% ---------------- Chapter 5: Implementation ----------------
+\chapter{Implementation}
+\section{Software Requirements}
+\begin{itemize}
+    \item \textbf{Frontend Framework:} Next.js 15.5.3+ with TypeScript 5
+    \item \textbf{Backend Framework:} FastAPI (Python 3.10+) and Express.js
+    \item \textbf{Database:} Supabase PostgreSQL 17+
+    \item \textbf{Caching:} Redis 7+
+    \item \textbf{UI Library:} Tailwind CSS 4+
+    \item \textbf{AI/ML:} OpenAI API, Gemini API, or similar LLM service
+    \item \textbf{Development Tools:} Git, Docker, UV package manager, VS Code
+    \item \textbf{Authentication:} Supabase Auth
+\end{itemize}
+
+\section{Hardware Requirements}
+\begin{itemize}
+    \item \textbf{Development:} Minimum 8GB RAM, 4-core processor
+    \item \textbf{Production Server:} 16GB+ RAM, 8-core processor
+    \item \textbf{Storage:} Minimum 100GB SSD for database and cache
+    \item \textbf{Network:} Stable internet connection for API access
+\end{itemize}
+
+\section{Development Setup}
+\begin{itemize}
+    \item \textbf{Quick Start with Docker:}
+    \begin{verbatim}
+    # Clone repository
+    git clone <repository-url>
+    cd research-assistant-local
+
+    # Start development environment
+    ./start-dev-docker.sh
+
+    # Access the application
+    # Frontend: http://localhost:3000
+    # Express API: http://localhost:3001
+    # FastAPI: http://localhost:8000
+    \end{verbatim}
+
+    \item \textbf{Environment Configuration:}
+    \begin{verbatim}
+    # Supabase Configuration
+    SUPABASE_URL=https://your-project.supabase.co
+    SUPABASE_URL_PUBLIC=https://your-project.supabase.co
+    SUPABASE_ANON_KEY=your-anon-key-here
+    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+
+    # Database Configuration
+    DATABASE_URL=postgresql://postgres:password@postgres:5432/postgres
+
+    # Server Configuration
+    FRONTEND_URL=http://localhost:3000
+    EXPRESS_DB_URL=http://localhost:3001
+    FAST_API_URL=http://localhost:8000
+
+    # AI Configuration
+    OPENAI_API_KEY=your-openai-api-key-here
+    ANTHROPIC_API_KEY=your-anthropic-api-key-here
+    \end{verbatim}
+\end{itemize}
+
+\section{Database Schema and ER Model}
+The database uses a PostgreSQL schema with multiple related tables:
+
+\subsection{Core Tables}
+\begin{itemize}
+    \item \textbf{users}
+        \begin{itemize}
+            \item \texttt{user\_id} (PK): Internal user identifier
+            \item \texttt{auth\_user\_id}: Supabase authentication ID
+            \item \texttt{email}: User email
+            \item \texttt{first\_name}, \texttt{last\_name}: User name
+            \item \texttt{profile\_picture\_url}: User avatar
+            \item \texttt{availability}: User status
+        \end{itemize}
+
+    \item \textbf{groups}
+        \begin{itemize}
+            \item \texttt{group\_id} (PK): Group identifier
+            \item \texttt{name}: Group name
+            \item \texttt{description}: Group description
+            \item \texttt{created\_by}: User who created the group
+            \item \texttt{invite\_code}: Unique join code
+            \item \texttt{is\_public}: Public visibility flag
+        \end{itemize}
+
+    \item \textbf{group\_participants}
+        \begin{itemize}
+            \item \texttt{group\_participant\_id} (PK)
+            \item \texttt{group\_id} (FK): Reference to groups
+            \item \texttt{user\_id} (FK): Reference to users
+            \item \texttt{role}: Participant role (owner, admin, member)
+        \end{itemize}
+
+    \item \textbf{sessions}
+        \begin{itemize}
+            \item \texttt{session\_id} (PK): Chat session identifier
+            \item \texttt{title}: Session title
+            \item \texttt{description}: Session description
+            \item \texttt{created\_by} (FK): Reference to users
+            \item \texttt{group\_id} (FK): Optional reference to groups
+            \item \texttt{status}: Session status
+        \end{itemize}
+
+    \item \textbf{messages}
+        \begin{itemize}
+            \item \texttt{message\_id} (PK): Message identifier
+            \item \texttt{session\_id} (FK): Reference to sessions
+            \item \texttt{sender\_id} (FK): Reference to users
+            \item \texttt{content}: Message content
+            \item \texttt{message\_type}: Type of message
+            \item \texttt{sent\_at}: Timestamp
+        \end{itemize}
+
+    \item \textbf{papers}
+        \begin{itemize}
+            \item \texttt{paper\_id} (PK): Paper identifier
+            \item \texttt{title}: Paper title
+            \item \texttt{authors}: Paper authors
+            \item \texttt{abstract}: Paper abstract
+            \item \texttt{arxiv\_id}: ArXiv identifier
+            \item \texttt{doi}: Digital Object Identifier
+            \item \texttt{publish\_date}: Publication date
+        \end{itemize}
+
+    \item \textbf{session\_papers}
+        \begin{itemize}
+            \item \texttt{session\_id} (FK): Reference to sessions
+            \item \texttt{paper\_id} (FK): Reference to papers
+        \end{itemize}
+\end{itemize}
+
+\subsection{Indexes and Relationships}
+\begin{itemize}
+    \item Foreign key relationships between tables
+    \item Indexes on frequently queried columns
+    \item Unique constraints on critical fields
+\end{itemize}
+
+\subsection{Entity-Relationship Diagram}
+% TODO: Insert ER Diagram figure here
+% Example: \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=\textwidth]{er_diagram.png}
+%   \caption{Entity-Relationship Diagram of the System}
+%   \label{fig:er_diagram}
+% \end{figure}
+
+The ER model captures the following key relationships:
+\begin{itemize}
+    \item \textbf{One-to-Many:} User creates multiple Groups, Groups contain multiple Sessions
+    \item \textbf{Many-to-Many:} Users participate in multiple Groups, Sessions reference multiple Papers
+    \item \textbf{Many-to-Many:} Papers have multiple Tags, enabling flexible categorization
+\end{itemize}
+
+\section{UML Diagrams}
+\subsection{UML Class Diagram}
+The class diagram defines system objects such as:
+\begin{itemize}
+    \item \texttt{User}: Attributes (userId, name, email, role) and Methods (register(), login(), updateProfile())
+    \item \texttt{Group}: Attributes (groupId, name, description) and Methods (create(), addMember(), delete())
+    \item \texttt{Session}: Attributes (sessionId, name, createdAt) and Methods (start(), addParticipant(), uploadPaper())
+    \item \texttt{Paper}: Attributes (paperId, title, authors, abstract) and Methods (upload(), search(), generateCitation())
+    \item \texttt{Message}: Attributes (messageId, content, timestamp) and Methods (send(), retrieve())
+\end{itemize}
+
+Associations representing participation, tagging, and feedback are established between these classes.
+
+% TODO: Insert UML Class Diagram figure here
+% Example: \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=\textwidth]{class_diagram.png}
+%   \caption{UML Class Diagram}
+%   \label{fig:class_diagram}
+% \end{figure}
+
+\subsection{UML Sequence Diagram}
+The sequence diagram models interactions such as:
+\begin{itemize}
+    \item \textbf{User Authentication:} User → Frontend → Supabase Auth → Express DB → Database → Response
+    \item \textbf{Group Creation and Joining:} User creates group → Express DB → Supabase RPC → Database stores → User joins → Notification sent
+    \item \textbf{Session Workflow:} User starts session → Express DB → Participants join → Papers uploaded → FastAPI AI generates metadata → Express DB for persistence → Cached in Redis
+    \item \textbf{Paper Retrieval:} User queries → FastAPI AI → RAG processes → arXiv API called → Results ranked → Express DB for storage → Displayed to user
+    \item \textbf{Citation Generation:} User selects paper → FastAPI AI formats citation → Express DB stores → Returned to frontend
+\end{itemize}
+
+% TODO: Insert UML Sequence Diagram figure here
+% Example: \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=\textwidth]{sequence_diagram.png}
+%   \caption{UML Sequence Diagram for Key Workflows}
+%   \label{fig:sequence_diagram}
+% \end{figure}
+
+\section{API Endpoints}
+The API is divided between the Express DB Server and FastAPI AI Server:
+
+\subsection{Express DB Server Endpoints (Port 3001)}
+
+\subsubsection{Authentication Routes}
+\begin{itemize}
+    \item \texttt{GET /api/auth/status} - Get authentication status
+    \item \texttt{GET /api/auth/me} - Get current user's profile
+    \item \texttt{PUT /api/auth/me} - Update user profile
+    \item \texttt{POST /api/auth/sync-profile} - Sync profile with Supabase auth
+\end{itemize}
+
+\subsubsection{User Routes}
+\begin{itemize}
+    \item \texttt{GET /api/users} - Get all users
+    \item \texttt{GET /api/users/:id} - Get specific user
+    \item \texttt{POST /api/users} - Create new user
+    \item \texttt{PUT /api/users/:id} - Update user
+    \item \texttt{DELETE /api/users/:id} - Delete user
+\end{itemize}
+
+\subsubsection{Group Routes}
+\begin{itemize}
+    \item \texttt{GET /api/groups} - Get all groups
+    \item \texttt{POST /api/groups} - Create new group
+    \item \texttt{GET /api/groups/:id} - Get specific group
+    \item \texttt{PUT /api/groups/:id} - Update group
+    \item \texttt{DELETE /api/groups/:id} - Delete group
+    \item \texttt{POST /api/groups/:id/join} - Join group with invite code
+    \item \texttt{GET /api/groups/:id/members} - Get group members
+\end{itemize}
+
+\subsubsection{Session and Message Routes}
+\begin{itemize}
+    \item \texttt{GET /api/sessions} - Get all sessions
+    \item \texttt{POST /api/sessions} - Create new session
+    \item \texttt{GET /api/messages/session/:sessionId} - Get session messages
+    \item \texttt{POST /api/messages} - Send new message
+\end{itemize}
+
+\subsubsection{Paper Routes}
+\begin{itemize}
+    \item \texttt{GET /api/papers} - Get all papers
+    \item \texttt{POST /api/papers/search} - Search for papers
+    \item \texttt{POST /api/papers/search/arxiv} - Search ArXiv API
+    \item \texttt{GET /api/papers/sessions/:sessionId} - Get session papers
+\end{itemize}
+
+\subsection{FastAPI AI Server Endpoints (Port 8000)}
+
+\subsubsection{System Routes}
+\begin{itemize}
+    \item \texttt{GET /health} - System health check
+    \item \texttt{GET /} - API information
+\end{itemize}
+
+\subsubsection{Chat Routes}
+\begin{itemize}
+    \item \texttt{POST /ai/chat/sessions} - Create chat session
+    \item \texttt{GET /ai/chat/\{session\_id\}/history} - Get chat history
+    \item \texttt{POST /ai/chat/\{session\_id\}} - Send message and get AI response
+    \item \texttt{DELETE /ai/chat/\{session\_id\}} - Delete chat session
+    \item \texttt{POST /ai/chat/group-message} - Handle AI in group chat
+\end{itemize}
+
+\section{Authentication System}
+
+\subsection{Overview}
+The authentication system follows a dual-layer approach:
+
+\begin{enumerate}
+    \item \textbf{Primary Layer: Supabase Authentication}
+        \begin{itemize}
+            \item Handles user registration, login, session management
+            \item Provides JWT tokens for API authentication
+            \item Manages password resets and email verification
+        \end{itemize}
+
+    \item \textbf{Secondary Layer: Internal User Management}
+        \begin{itemize}
+            \item Maps Supabase users to internal database records
+            \item Manages user profiles and application-specific data
+            \item Provides development authentication modes
+        \end{itemize}
+\end{enumerate}
+
+\subsection{User ID Mapping Process}
+\begin{verbatim}
+Supabase Auth ID (UUID) ↔ Internal User ID (Integer)
+\end{verbatim}
+
+The mapping process:
+\begin{enumerate}
+    \item Check cached mapping in localStorage
+    \item Query database for user record by auth\_user\_id
+    \item Fallback: lookup by email
+    \item Create user record if not found
+    \item Cache and return internal ID
+\end{enumerate}
+
+\section{Integration with AI Services}
+\begin{itemize}
+    \item The arXiv API provides access to research papers through RESTful endpoints.
+    \item The Retrieval-Augmented Generation (RAG) engine enables conceptual queries and context-aware responses by combining semantic search with large language models.
+    \item Automated citation formatting ensures academic compliance with multiple citation styles (APA, MLA, Chicago).
+    \item FastAPI AI server has memory fallback if Express DB server is unavailable for persistence.
+\end{itemize}
+
+% ---------------- Chapter 6: Results ----------------
+\chapter{Results}
+% TODO: Add actual screenshots of the implemented system
+
+\section{System Overview and Components}
+\subsection{Architecture Implementation}
+The system implements a separated 3-service architecture:
+
+\begin{itemize}
+    \item \textbf{Next.js Frontend} serving the user interface at port 3000
+    \item \textbf{Express DB Server} handling all database operations at port 3001
+    \item \textbf{FastAPI AI Server} managing AI/ML and chat functionality at port 8000
+    \item \textbf{Nginx Reverse Proxy} routing requests and handling SSL termination
+\end{itemize}
+
+\subsection{Key Implementation Features}
+\begin{itemize}
+    \item \textbf{Complete Database Separation:} FastAPI has no direct database access
+    \item \textbf{Service Communication:} Well-defined HTTP API contracts
+    \item \textbf{Authentication Flow:} JWT-based authentication with Supabase
+    \item \textbf{Error Handling:} Robust error management across services
+    \item \textbf{Docker Deployment:} Containerized services with health checks
+\end{itemize}
+
+\subsection{User Interface Components}
+% TODO: Insert screenshot of main dashboard
+% \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=\textwidth]{dashboard.png}
+%   \caption{Main Dashboard showing research groups and sessions}
+%   \label{fig:dashboard}
+% \end{figure}
+
+The dashboard provides an overview of:
+\begin{itemize}
+    \item Active research groups and recent activity
+    \item Ongoing collaborative sessions
+    \item Quick access to paper search and upload
+    \item Notification center for group invitations and updates
+\end{itemize}
+
+\subsection{Paper Search Interface}
+% TODO: Insert screenshot of paper search
+% \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=\textwidth]{search.png}
+%   \caption{AI-powered paper search interface with RAG integration}
+%   \label{fig:search}
+% \end{figure}
+
+The search interface demonstrates:
+\begin{itemize}
+    \item Natural language query input with real-time suggestions
+    \item Semantic search results ranked by relevance
+    \item Paper previews with abstract and metadata
+    \item One-click citation generation and export
+\end{itemize}
+
+\subsection{Collaborative Features}
+% TODO: Insert screenshot of collaborative session
+% \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=\textwidth]{session.png}
+%   \caption{Real-time collaborative research session}
+%   \label{fig:session}
+% \end{figure}
+
+The collaborative session interface shows:
+\begin{itemize}
+    \item Real-time chat with participants
+    \item Shared paper repository for the session
+    \item AI assistant providing contextual help
+    \item Citation management panel
+    \item Role-based access control
+\end{itemize}
+
+\subsection{Service Communication Pattern}
+% TODO: Insert diagram of service communication
+% \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=\textwidth]{services.png}
+%   \caption{Service communication diagram}
+%   \label{fig:services}
+% \end{figure}
+
+The service communication pattern demonstrates:
+\begin{itemize}
+    \item Frontend → Express DB for all database operations
+    \item Frontend → FastAPI AI for chat and AI features only
+    \item FastAPI → Express DB for chat persistence via HTTP client
+    \item Supabase Auth integration across all services
+\end{itemize}
+
+\section{Performance and Development Features}
+
+\subsection{Docker Configuration}
+The Docker setup manages the 3-service architecture with:
+
+\begin{itemize}
+    \item \textbf{Container Security}:
+        \begin{itemize}
+            \item Non-root users for all services
+            \item Read-only volume mounts
+            \item Resource limits
+        \end{itemize}
+    \item \textbf{Development Mode}:
+        \begin{itemize}
+            \item Live reload for all services
+            \item Volume mounts for source code
+            \item Environment variable overrides
+        \end{itemize}
+    \item \textbf{Network Configuration}:
+        \begin{itemize}
+            \item Internal bridge network
+            \item External Supabase network
+            \item Exposed ports for development
+        \end{itemize}
+    \item \textbf{Health Checks}:
+        \begin{itemize}
+            \item All services implement health checks
+            \item Automatic restart on failure
+        \end{itemize}
+\end{itemize}
+
+\subsection{Error Handling Patterns}
+\begin{itemize}
+    \item FastAPI chat service includes fallback to in-memory storage when Express unavailable
+    \item Environment-specific error handling in Express middleware
+    \item Frontend services handle both Express and FastAPI error responses
+\end{itemize}
+
+\subsection{Database Performance}
+\begin{itemize}
+    \item Average query response time: % TODO: Add actual measurement (e.g., < 50ms for indexed queries)
+    \item Concurrent user support: % TODO: Add actual number (e.g., 100+ simultaneous users)
+    \item Data integrity: % TODO: Add success rate (e.g., 99.9% consistency maintained through normalization)
+\end{itemize}
+
+\subsection{AI Service Performance}
+\begin{itemize}
+    \item Paper retrieval accuracy: % TODO: Add percentage (e.g., 85% relevance in top 10 results)
+    \item RAG response time: % TODO: Add time (e.g., 2-3 seconds for context-aware responses)
+    \item Citation generation accuracy: % TODO: Add percentage (e.g., 98% format compliance)
+\end{itemize}
+
+\subsection{Caching Efficiency}
+\begin{itemize}
+    \item Redis cache hit rate: % TODO: Add percentage (e.g., 75% for frequently accessed data)
+    \item Average latency reduction: % TODO: Add percentage (e.g., 60% improvement with caching)
+\end{itemize}
+
+\section{Development and Testing Environments}
+
+\subsection{Development Tools}
+\begin{itemize}
+    \item \textbf{FastAPI Auto-Docs}: Available at \texttt{localhost:8000/docs}
+    \item \textbf{Express Health Check}: Available at \texttt{localhost:3001/health}
+    \item \textbf{Supabase Dashboard}: For database inspection
+    \item \textbf{Docker Compose}: For service orchestration
+\end{itemize}
+
+\subsection{Testing Capabilities}
+\begin{itemize}
+    \item Unit testing for core services
+    \item Integration testing for API endpoints
+    \item Load testing for concurrent user simulation
+    \item Error handling testing with service unavailability simulation
+\end{itemize}
+
+\subsection{User Testing Results}
+% TODO: Add actual user testing data
+\begin{itemize}
+    \item Number of test users: % TODO: Add number (e.g., 25 researchers and students)
+    \item Average satisfaction rating: % TODO: Add rating (e.g., 4.3/5.0)
+    \item Task completion rate: % TODO: Add percentage (e.g., 92% successfully completed assigned tasks)
+    \item Most valued features: % TODO: List top features (e.g., AI-powered search, collaborative sessions, automated citations)
+\end{itemize}
+
+% ---------------- Chapter 7: Conclusion and Future Work ----------------
+\chapter{Conclusion and Future Work}
+\section{Conclusion}
+This project successfully demonstrates the design of an AI Research Assistant platform that integrates normalized database design with intelligent AI-driven services. The system addresses critical challenges in academic research by automating paper discovery, simplifying collaboration, and streamlining citation management.
+
+\subsection{Key Contributions}
+\begin{itemize}
+    \item \textbf{Separated 3-Service Architecture:} A clean separation between frontend, database, and AI operations with complete database isolation.
+    \item \textbf{Normalized Database Schema:} A robust PostgreSQL schema following 3NF for scalable paper and user management, ensuring data integrity and efficient querying.
+    \item \textbf{Comprehensive Design Models:} ER and UML models providing structured design and clear visualization of system architecture, entities, and workflows.
+    \item \textbf{AI Integration:} Successful integration of arXiv API and RAG engine for intelligent retrieval, enabling context-aware paper discovery and automated citation generation.
+    \item \textbf{High-Performance Architecture:} Implementation of Redis caching for real-time responsiveness and support for concurrent collaborative sessions.
+    \item \textbf{Role-Based Collaboration:} Support for research groups with mentors, students, and researchers working together effectively.
+\end{itemize}
+
+\subsection{Architecture Highlights}
+\begin{itemize}
+    \item \textbf{Database Separation:} FastAPI has zero database interactions, using Express server as proxy
+    \item \textbf{RPC Function Design:} Complex database operations handled through predefined SQL functions
+    \item \textbf{Service Communication:} Well-defined API contracts between services
+    \item \textbf{Authentication Flow:} Supabase Auth integration across all services
+\end{itemize}
+
+\subsection{Project Impact}
+The platform significantly reduces the time researchers spend on manual tasks, improves citation accuracy, and enhances collaboration through intelligent features. The normalized database design ensures the system can scale to handle thousands of users and millions of papers.
+
+\section{Future Work}
+\subsection{Feature Enhancements}
+\begin{itemize}
+    \item \textbf{Multi-Source Integration:} Extend system to support multiple academic databases and APIs beyond arXiv (e.g., IEEE Xplore, PubMed, Google Scholar).
+    \item \textbf{Mobile Application:} Create native mobile apps for iOS and Android to support research on-the-go.
+    \item \textbf{Advanced NLP Summarization:} Implement state-of-the-art summarization models for paper abstracts and full-text analysis.
+    \item \textbf{Recommendation Systems:} Develop collaborative filtering and content-based recommendation engines for related research discovery.
+\end{itemize}
+
+\subsection{Performance Optimization}
+\begin{itemize}
+    \item Implement database sharding for horizontal scalability.
+    \item Add support for distributed caching across multiple Redis instances.
+    \item Implement more efficient error handling and fallback mechanisms.
+    \item Optimize service communication with batch processing.
+\end{itemize}
+
+\subsection{Advanced Features}
+\begin{itemize}
+    \item \textbf{Annotation Tools:} Enable collaborative paper annotation and highlighting.
+    \item \textbf{Version Control:} Track changes in research notes and citations over time.
+    \item \textbf{Export Capabilities:} Support export to LaTeX, Word, and other academic formats.
+    \item \textbf{Analytics Dashboard:} Provide insights into research trends, citation networks, and collaboration patterns.
+\end{itemize}
+
+\subsection{Best Practices}
+\begin{itemize}
+    \item \textbf{Security Enhancements:} Implement non-root Docker containers and read-only volumes
+    \item \textbf{Component Design:} Follow single responsibility principle and clear interface definitions
+    \item \textbf{State Management:} Minimize global state and use functional state updates
+    \item \textbf{Error Handling:} Implement environment-specific error handling in Express middleware
+    \item \textbf{Testing \& Monitoring:} Add comprehensive test coverage and performance monitoring
+\end{itemize}
+
+\subsection*{7.3 Project Highlights}
+
+\begin{itemize}
+    \item \textbf{Innovation:} AI-powered research assistant with RAG integration and complete database separation.
+    \item \textbf{Scalability:} Modular architecture allowing easy extension to new AI models and data sources.
+    \item \textbf{Commercialization Potential:} Can be deployed in universities, research labs, or commercial AI research platforms.
+\end{itemize}
+
+% ---------------- Chapter 8: Innovation, Budget and Commercialization ----------------
+% \chapter{Innovation, Budget and Commercialization}
+% \section{Innovation Highlights}
+% \subsection{Novel Contributions}
+% \begin{itemize}
+%     \item \textbf{AI-Database Synergy:} Unique integration of normalized relational database design with RAG-powered intelligent retrieval, combining the reliability of structured data with the flexibility of AI.
+%     \item \textbf{Collaborative Research Sessions:} Real-time collaborative features specifically designed for research teams, unlike existing citation managers that focus on individual use.
+%     \item \textbf{Context-Aware Citation:} Automated citation generation that understands research context and suggests relevant papers based on the current discussion.
+%     \item \textbf{Role-Based Architecture:} Hierarchical system supporting mentors, researchers, and students with appropriate access controls and features.
+% \end{itemize}
+
+% \subsection{Technical Innovation}
+% \begin{itemize}
+%     \item Efficient caching strategy using Redis for session management and API responses.
+%     \item Normalized database schema optimized for academic research workflows.
+%     \item Modular architecture allowing easy integration of new AI models and data sources.
+% \end{itemize}
+
+% \section{Budget Analysis}
+% % TODO: Update with actual project costs
+% \subsection{Development Costs}
+% \begin{itemize}
+%     \item \textbf{Personnel:} 
+%         \begin{itemize}
+%             \item Frontend Developer: % TODO: Add cost (e.g., 3 months × ₹50,000 = ₹1,50,000)
+%             \item Backend Developer: % TODO: Add cost (e.g., 3 months × ₹60,000 = ₹1,80,000)
+%             \item Database Administrator: % TODO: Add cost (e.g., 2 months × ₹55,000 = ₹1,10,000)
+%             \item AI/ML Engineer: % TODO: Add cost (e.g., 3 months × ₹70,000 = ₹2,10,000)
+%         \end{itemize}
+%     \item \textbf{Total Personnel Cost:} % TODO: Add total (e.g., ₹6,50,000)
+% \end{itemize}
+
+% \subsection{Infrastructure Costs}
+% \begin{itemize}
+%     \item \textbf{Cloud Services:} % TODO: Add cost (e.g., AWS/GCP - ₹20,000/month for 3 months = ₹60,000)
+%     \item \textbf{AI API Costs:} % TODO: Add cost (e.g., OpenAI API - ₹30,000 for development phase)
+%     \item \textbf{Database Hosting:} % TODO: Add cost (e.g., PostgreSQL managed service - ₹15,000/month × 3 = ₹45,000)
+%     \item \textbf{Domain and SSL:} % TODO: Add cost (e.g., ₹5,000)
+%     \item \textbf{Total Infrastructure Cost:} % TODO: Add total (e.g., ₹1,40,000)
+% \end{itemize}
+
+% \subsection{Other Costs}
+% \begin{itemize}
+%     \item Development tools and licenses: % TODO: Add cost (e.g., ₹20,000)
+%     \item Testing and quality assurance: % TODO: Add cost (e.g., ₹40,000)
+%     \item Documentation and training materials: % TODO: Add cost (e.g., ₹15,000)
+%     \item Contingency (10\%): % TODO: Add cost (e.g., ₹86,500)
+% \end{itemize}
+
+% \subsection{Total Project Budget}
+% % TODO: Add grand total (e.g., ₹9,51,500 ≈ ₹10,00,000)
+
+% \section{Commercialization Strategy}
+% \subsection{Target Market}
+% \begin{itemize}
+%     \item \textbf{Primary:} Universities, research institutions, and academic departments
+%     \item \textbf{Secondary:} Independent researchers, PhD students, and research organizations
+%     \item \textbf{Market Size:} % TODO: Add estimate (e.g., 50,000+ researchers in India, 5 million+ globally)
+% \end{itemize}
+
+% \subsection{Revenue Model}
+% \begin{itemize}
+%     \item \textbf{Freemium Model:} 
+%         \begin{itemize}
+%             \item Free tier: Basic features for individual researchers
+%             \item Premium tier: % TODO: Add price (e.g., ₹499/month with advanced AI features and unlimited storage)
+%             \item Institutional tier: % TODO: Add price (e.g., ₹50,000/year for universities with 100+ users)
+%         \end{itemize}
+%     \item \textbf{Enterprise Licensing:} Custom solutions for large research organizations
+%     \item \textbf{API Access:} Paid API for third-party integrations
+% \end{itemize}
+
+% \subsection{Go-to-Market Strategy}
+% \begin{itemize}
+%     \item \textbf{Phase 1 (Months 1-3):} Beta launch with selected universities and gather feedback
+%     \item \textbf{Phase 2 (Months 4-6):} Public launch with marketing to academic institutions
+%     \item \textbf{Phase 3 (Months 7-12):} Scale to international markets and add enterprise features
+%     \item \textbf{Marketing Channels:} Academic conferences, university partnerships, research community forums
+% \end{itemize}
+
+% \subsection{Competitive Advantage}
+% \begin{itemize}
+%     \item Superior AI integration compared to Mendeley and Zotero
+%     \item Real-time collaboration features unavailable in existing tools
+%     \item Affordable pricing for educational institutions
+%     \item Strong database design ensuring reliability and scalability
+% \end{itemize}
+
+% \subsection{Financial Projections}
+% % TODO: Add financial projections
+% \begin{itemize}
+%     \item \textbf{Year 1 Revenue:} % TODO: Add estimate (e.g., ₹25,00,000 from 500 premium users and 5 institutional licenses)
+%     \item \textbf{Year 2 Revenue:} % TODO: Add estimate (e.g., ₹75,00,000 with expanded user base)
+%     \item \textbf{Year 3 Revenue:} % TODO: Add estimate (e.g., ₹2,00,00,000 with international expansion)
+%     \item \textbf{Break-even Point:} % TODO: Add timeline (e.g., Expected in 18 months)
+% \end{itemize}
+
+% ---------------- References ----------------
+\chapter*{References}\addcontentsline{toc}{chapter}{References}
+\begin{enumerate}
+    \item PostgreSQL Documentation. \url{https://www.postgresql.org/docs/}
+    \item arXiv API Documentation. \url{https://arxiv.org/help/api/index}
+    \item Lewis, P., et al. \emph{Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks}, NeurIPS 2020.
+\end{enumerate}
+
+\end{document}

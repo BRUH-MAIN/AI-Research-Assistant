@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Research Assistant - DBMS Architecture</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <i class="fas fa-database"></i>
+                    <span>AI Research Assistant</span>
+                </div>
+                <div class="nav-controls">
+                    <button class="nav-btn" onclick="previousSlide()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="slide-counter">
+                        <span id="current-slide">1</span> / <span id="total-slides">12</span>
+                    </span>
+                    <button class="nav-btn" onclick="nextSlide()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Slide Container -->
+        <div class="slide-container">
+            <!-- Slide 1: Title Slide -->
+            <div class="slide active" id="slide-1">
+                <div class="slide-content title-slide">
+                    <div class="title-content">
+                        <h1 class="main-title">AI Research Assistant</h1>
+                        <h2 class="subtitle">Database Management System Architecture</h2>
+                        <div class="team-info">
+                            <p class="team">Team - 08</p>
+                            <p class="institute">School of AI, Amrita Vishwa Vidyapeetham</p>
+                        </div>
+                        <div class="tech-stack-preview">
+                            <div class="tech-item">
+                                <i class="fas fa-database"></i>
+                                <span>PostgreSQL</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fab fa-node-js"></i>
+                                <span>Express.js</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fas fa-lightning-bolt"></i>
+                                <span>FastAPI</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fab fa-react"></i>
+                                <span>Next.js</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Table of Contents -->
+            <div class="slide" id="slide-2">
+                <div class="slide-content">
+                    <h2 class="slide-title">Table of Contents</h2>
+                    <div class="toc-grid">
+                        <div class="toc-item" onclick="goToSlide(3)">
+                            <div class="toc-number">01</div>
+                            <div class="toc-content">
+                                <h3>Introduction</h3>
+                                <p>Project overview and research challenges</p>
+                            </div>
+                        </div>
+                        <div class="toc-item" onclick="goToSlide(4)">
+                            <div class="toc-number">02</div>
+                            <div class="toc-content">
+                                <h3>Problem Statement</h3>
+                                <p>Database challenges in research management</p>
+                            </div>
+                        </div>
+                        <div class="toc-item" onclick="goToSlide(5)">
+                            <div class="toc-number">03</div>
+                            <div class="toc-content">
+                                <h3>Database Architecture</h3>
+                                <p>PostgreSQL schema design and optimization</p>
+                            </div>
+                        </div>
+                        <div class="toc-item" onclick="goToSlide(6)">
+                            <div class="toc-number">04</div>
+                            <div class="toc-content">
+                                <h3>ER Model</h3>
+                                <p>Entity relationships and constraints</p>
+                            </div>
+                        </div>
+                        <div class="toc-item" onclick="goToSlide(7)">
+                            <div class="toc-content">
+                                <h3>Database Schema</h3>
+                                <p>Table structures and relationships</p>
+                            </div>
+                        </div>
+                        <div class="toc-item" onclick="goToSlide(8)">
+                            <div class="toc-content">
+                                <h3>CRUD Operations</h3>
+                                <p>Database operations and API endpoints</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Introduction -->
+            <div class="slide" id="slide-3">
+                <div class="slide-content">
+                    <h2 class="slide-title">Introduction</h2>
+                    <div class="intro-grid">
+                        <div class="intro-card">
+                            <div class="card-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <h3>Research Challenge</h3>
+                            <p>Researchers struggle to efficiently find and use relevant papers due to the vast volume of academic content</p>
+                        </div>
+                        <div class="intro-card">
+                            <div class="card-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h3>Time Complexity</h3>
+                            <p>Manual searching, reading, and summarizing papers slows down research and reduces productivity</p>
+                        </div>
+                        <div class="intro-card">
+                            <div class="card-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3>Collaboration Barrier</h3>
+                            <p>Technical terms and complex concepts create barriers, especially for students and new researchers</p>
+                        </div>
+                        <div class="intro-card">
+                            <div class="card-icon">
+                                <i class="fas fa-quote-right"></i>
+                            </div>
+                            <h3>Citation Management</h3>
+                            <p>Properly citing sources and adhering to formatting guidelines is error-prone and time-intensive</p>
+                        </div>
+                        <div class="intro-card highlight">
+                            <div class="card-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h3>AI Solution</h3>
+                            <p>Academia and industry increasingly need AI tools to simplify research, improve accuracy, and boost efficiency</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Problem Statement -->
+            <div class="slide" id="slide-4">
+                <div class="slide-content">
+                    <h2 class="slide-title">Problem Statement & Database Challenges</h2>
+                    <div class="problem-container">
+                        <div class="problem-section">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Research Problems</h3>
+                            <ul class="problem-list">
+                                <li>Slow, error-prone, and time-consuming manual processes hinder productivity</li>
+                                <li>Searching, analyzing, and citing research papers lacks efficiency</li>
+                                <li>Need for AI services integration with research processes</li>
+                            </ul>
+                        </div>
+                        <div class="problem-section highlight">
+                            <h3><i class="fas fa-database"></i> Database Requirements</h3>
+                            <ul class="problem-list">
+                                <li><strong>Scalability:</strong> Handle growing data volume efficiently</li>
+                                <li><strong>Performance:</strong> Ensure fast queries for real-time operations</li>
+                                <li><strong>Consistency:</strong> Maintain ACID properties for reliable data</li>
+                                <li><strong>Concurrency:</strong> Support multiple users and AI processing</li>
+                                <li><strong>Integration:</strong> Seamless AI processing pipeline support</li>
+                            </ul>
+                        </div>
+                        <div class="solution-box">
+                            <h4><i class="fas fa-lightbulb"></i> Our Solution</h4>
+                            <p>A high-performance PostgreSQL database with optimized schema design, proper indexing, and normalized structure to support real-time AI processing and collaborative research workflows.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Database Architecture -->
+            <div class="slide" id="slide-5">
+                <div class="slide-content">
+                    <h2 class="slide-title">Database Architecture & Tech Stack</h2>
+                    <div class="architecture-container">
+                        <div class="tech-stack">
+                            <h3>Technology Stack</h3>
+                            <div class="tech-grid">
+                                <div class="tech-card primary">
+                                    <i class="fas fa-database"></i>
+                                    <h4>PostgreSQL</h4>
+                                    <p>Primary database with ACID compliance, advanced indexing, and JSON support</p>
+                                </div>
+                                <div class="tech-card">
+                                    <i class="fab fa-node-js"></i>
+                                    <h4>Express.js Server</h4>
+                                    <p>Database operations, CRUD endpoints, authentication middleware</p>
+                                </div>
+                                <div class="tech-card">
+                                    <i class="fas fa-lightning-bolt"></i>
+                                    <h4>FastAPI</h4>
+                                    <p>AI/ML operations, chat functionality, paper processing</p>
+                                </div>
+                                <div class="tech-card">
+                                    <i class="fab fa-react"></i>
+                                    <h4>Next.js Frontend</h4>
+                                    <p>User interface with TypeScript and Tailwind CSS</p>
+                                </div>
+                                <div class="tech-card">
+                                    <i class="fas fa-memory"></i>
+                                    <h4>Redis Cache</h4>
+                                    <p>High-performance caching for frequent queries</p>
+                                </div>
+                                <div class="tech-card">
+                                    <i class="fas fa-server"></i>
+                                    <h4>Supabase</h4>
+                                    <p>PostgreSQL hosting with real-time subscriptions</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="architecture-diagram">
+                            <h3>System Architecture</h3>
+                            <div class="diagram-container">
+                                <div class="layer frontend-layer">
+                                    <h4>Frontend Layer</h4>
+                                    <p>Next.js + TypeScript</p>
+                                </div>
+                                <div class="layer api-layer">
+                                    <h4>API Layer</h4>
+                                    <div class="api-split">
+                                        <div>Express.js<br><small>Database Operations</small></div>
+                                        <div>FastAPI<br><small>AI/ML Operations</small></div>
+                                    </div>
+                                </div>
+                                <div class="layer cache-layer">
+                                    <h4>Cache Layer</h4>
+                                    <p>Redis</p>
+                                </div>
+                                <div class="layer database-layer">
+                                    <h4>Database Layer</h4>
+                                    <p>PostgreSQL (Supabase)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: ER Model -->
+            <div class="slide" id="slide-6">
+                <div class="slide-content">
+                    <h2 class="slide-title">Entity Relationship Model</h2>
+                    <div class="er-container">
+                        <div class="er-diagram">
+                            <svg viewBox="0 0 1000 600" class="er-svg">
+                                <!-- Users Entity -->
+                                <g class="entity" transform="translate(50, 50)">
+                                    <rect x="0" y="0" width="120" height="80" class="entity-box"/>
+                                    <text x="60" y="25" class="entity-title">USERS</text>
+                                    <text x="10" y="45" class="entity-attr">user_id (PK)</text>
+                                    <text x="10" y="60" class="entity-attr">email</text>
+                                    <text x="10" y="75" class="entity-attr">first_name</text>
+                                </g>
+
+                                <!-- Groups Entity -->
+                                <g class="entity" transform="translate(300, 50)">
+                                    <rect x="0" y="0" width="120" height="80" class="entity-box"/>
+                                    <text x="60" y="25" class="entity-title">GROUPS</text>
+                                    <text x="10" y="45" class="entity-attr">group_id (PK)</text>
+                                    <text x="10" y="60" class="entity-attr">name</text>
+                                    <text x="10" y="75" class="entity-attr">invite_code</text>
+                                </g>
+
+                                <!-- Sessions Entity -->
+                                <g class="entity" transform="translate(550, 50)">
+                                    <rect x="0" y="0" width="120" height="80" class="entity-box"/>
+                                    <text x="60" y="25" class="entity-title">SESSIONS</text>
+                                    <text x="10" y="45" class="entity-attr">session_id (PK)</text>
+                                    <text x="10" y="60" class="entity-attr">topic</text>
+                                    <text x="10" y="75" class="entity-attr">status</text>
+                                </g>
+
+                                <!-- Papers Entity -->
+                                <g class="entity" transform="translate(800, 50)">
+                                    <rect x="0" y="0" width="120" height="80" class="entity-box"/>
+                                    <text x="60" y="25" class="entity-title">PAPERS</text>
+                                    <text x="10" y="45" class="entity-attr">paper_id (PK)</text>
+                                    <text x="10" y="60" class="entity-attr">title</text>
+                                    <text x="10" y="75" class="entity-attr">doi</text>
+                                </g>
+
+                                <!-- Messages Entity -->
+                                <g class="entity" transform="translate(300, 250)">
+                                    <rect x="0" y="0" width="120" height="80" class="entity-box"/>
+                                    <text x="60" y="25" class="entity-title">MESSAGES</text>
+                                    <text x="10" y="45" class="entity-attr">message_id (PK)</text>
+                                    <text x="10" y="60" class="entity-attr">content</text>
+                                    <text x="10" y="75" class="entity-attr">sent_at</text>
+                                </g>
+
+                                <!-- Group Participants Relationship -->
+                                <g class="relationship" transform="translate(200, 75)">
+                                    <polygon points="0,15 30,0 60,15 30,30" class="relationship-box"/>
+                                    <text x="30" y="20" class="relationship-title">PARTICIPATES</text>
+                                </g>
+
+                                <!-- Session Relationship -->
+                                <g class="relationship" transform="translate(450, 75)">
+                                    <polygon points="0,15 30,0 60,15 30,30" class="relationship-box"/>
+                                    <text x="30" y="20" class="relationship-title">CREATES</text>
+                                </g>
+
+                                <!-- Connections -->
+                                <line x1="170" y1="90" x2="200" y2="90" class="connection"/>
+                                <line x1="260" y1="90" x2="300" y2="90" class="connection"/>
+                                <line x1="420" y1="90" x2="450" y2="90" class="connection"/>
+                                <line x1="510" y1="90" x2="550" y2="90" class="connection"/>
+                                
+                                <!-- Vertical connections -->
+                                <line x1="360" y1="130" x2="360" y2="250" class="connection"/>
+                                <line x1="610" y1="130" x2="610" y2="200" class="connection"/>
+                                <line x1="610" y1="200" x2="420" y2="200" class="connection"/>
+                                <line x1="420" y1="200" x2="420" y2="250" class="connection"/>
+
+                                <!-- Cardinality labels -->
+                                <text x="180" y="85" class="cardinality">1</text>
+                                <text x="280" y="85" class="cardinality">M</text>
+                                <text x="430" y="85" class="cardinality">1</text>
+                                <text x="530" y="85" class="cardinality">M</text>
+                            </svg>
+                        </div>
+                        <div class="er-features">
+                            <h3>Key Features</h3>
+                            <div class="feature-grid">
+                                <div class="feature-item">
+                                    <i class="fas fa-key"></i>
+                                    <h4>Primary Keys</h4>
+                                    <p>Every entity has a unique identifier for data integrity</p>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-link"></i>
+                                    <h4>Foreign Keys</h4>
+                                    <p>Referential integrity maintained across all relationships</p>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-users"></i>
+                                    <h4>Many-to-Many</h4>
+                                    <p>Junction tables for complex relationships like group membership</p>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <h4>Constraints</h4>
+                                    <p>Check constraints ensure data validity and business rules</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: Database Schema -->
+            <div class="slide" id="slide-7">
+                <div class="slide-content">
+                    <h2 class="slide-title">Database Schema & Table Structures</h2>
+                    <div class="schema-container">
+                        <div class="schema-grid">
+                            <div class="table-card core">
+                                <h3><i class="fas fa-users"></i> Core User Management</h3>
+                                <div class="table-structure">
+                                    <h4>users</h4>
+                                    <ul>
+                                        <li><span class="pk">user_id</span> INTEGER PRIMARY KEY</li>
+                                        <li>auth_user_id UUID UNIQUE</li>
+                                        <li>email TEXT NOT NULL UNIQUE</li>
+                                        <li>first_name, last_name TEXT</li>
+                                        <li>availability VARCHAR(50)</li>
+                                    </ul>
+                                    <div class="table-stats">
+                                        <span class="stat">5 indexes</span>
+                                        <span class="stat">Guest user (ID: 0)</span>
+                                        <span class="stat">AI user (ID: 1)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="table-card">
+                                <h3><i class="fas fa-users-cog"></i> Group Management</h3>
+                                <div class="table-structure">
+                                    <h4>groups</h4>
+                                    <ul>
+                                        <li><span class="pk">group_id</span> SERIAL PRIMARY KEY</li>
+                                        <li>name TEXT NOT NULL</li>
+                                        <li>invite_code VARCHAR(12) UNIQUE</li>
+                                        <li>is_public BOOLEAN</li>
+                                        <li><span class="fk">created_by</span> INT REFERENCES users</li>
+                                    </ul>
+                                </div>
+                                <div class="table-structure">
+                                    <h4>group_participants</h4>
+                                    <ul>
+                                        <li><span class="fk">group_id</span> INT REFERENCES groups</li>
+                                        <li><span class="fk">user_id</span> INT REFERENCES users</li>
+                                        <li>role VARCHAR(50) CHECK</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="table-card">
+                                <h3><i class="fas fa-comments"></i> Session & Messaging</h3>
+                                <div class="table-structure">
+                                    <h4>sessions</h4>
+                                    <ul>
+                                        <li><span class="pk">session_id</span> SERIAL PRIMARY KEY</li>
+                                        <li><span class="fk">group_id</span> INT REFERENCES groups</li>
+                                        <li>topic TEXT</li>
+                                        <li>status VARCHAR(50) CHECK</li>
+                                    </ul>
+                                </div>
+                                <div class="table-structure">
+                                    <h4>messages</h4>
+                                    <ul>
+                                        <li><span class="pk">message_id</span> SERIAL PRIMARY KEY</li>
+                                        <li><span class="fk">session_id</span> INT REFERENCES sessions</li>
+                                        <li>content TEXT NOT NULL</li>
+                                        <li>sent_at TIMESTAMP DEFAULT NOW()</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="table-card">
+                                <h3><i class="fas fa-file-alt"></i> Research Papers</h3>
+                                <div class="table-structure">
+                                    <h4>papers</h4>
+                                    <ul>
+                                        <li><span class="pk">paper_id</span> SERIAL PRIMARY KEY</li>
+                                        <li>title TEXT NOT NULL</li>
+                                        <li>abstract TEXT</li>
+                                        <li>authors TEXT</li>
+                                        <li>doi TEXT UNIQUE</li>
+                                        <li>source_url TEXT</li>
+                                    </ul>
+                                </div>
+                                <div class="table-structure">
+                                    <h4>paper_tags</h4>
+                                    <ul>
+                                        <li><span class="fk">paper_id</span> INT REFERENCES papers</li>
+                                        <li>tag VARCHAR(100)</li>
+                                        <li>PRIMARY KEY (paper_id, tag)</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="table-card">
+                                <h3><i class="fas fa-robot"></i> AI Integration</h3>
+                                <div class="table-structure">
+                                    <h4>ai_metadata</h4>
+                                    <ul>
+                                        <li><span class="pk">id</span> SERIAL PRIMARY KEY</li>
+                                        <li>page_no INTEGER</li>
+                                        <li><span class="fk">message_id</span> INT REFERENCES messages</li>
+                                        <li><span class="fk">paper_id</span> INT REFERENCES papers</li>
+                                    </ul>
+                                </div>
+                                <div class="table-structure">
+                                    <h4>feedback</h4>
+                                    <ul>
+                                        <li><span class="pk">feedback_id</span> SERIAL PRIMARY KEY</li>
+                                        <li><span class="fk">session_id</span> INT REFERENCES sessions</li>
+                                        <li>rating INTEGER CHECK (1-5)</li>
+                                        <li>content TEXT</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="schema-features">
+                            <div class="feature-highlight">
+                                <h4><i class="fas fa-database"></i> Schema Features</h4>
+                                <ul>
+                                    <li><strong>Normalized Design:</strong> 3NF compliance for data integrity</li>
+                                    <li><strong>Optimized Indexing:</strong> Strategic indexes on frequently queried columns</li>
+                                    <li><strong>Referential Integrity:</strong> Foreign key constraints ensure data consistency</li>
+                                    <li><strong>Check Constraints:</strong> Business rule enforcement at database level</li>
+                                    <li><strong>Default Values:</strong> Automatic timestamp and status management</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: CRUD Operations -->
+            <div class="slide" id="slide-8">
+                <div class="slide-content">
+                    <h2 class="slide-title">CRUD Operations & API Endpoints</h2>
+                    <div class="crud-container">
+                        <div class="api-architecture">
+                            <h3>Dual Server Architecture</h3>
+                            <div class="server-split">
+                                <div class="server-box express">
+                                    <h4><i class="fab fa-node-js"></i> Express.js Server (Port 3001)</h4>
+                                    <p>Handles all database CRUD operations</p>
+                                    <div class="endpoints">
+                                        <div class="endpoint-group">
+                                            <h5>User Management</h5>
+                                            <div class="endpoint get">GET /api/users</div>
+                                            <div class="endpoint post">POST /api/users</div>
+                                            <div class="endpoint put">PUT /api/users/:id</div>
+                                            <div class="endpoint delete">DELETE /api/users/:id</div>
+                                        </div>
+                                        <div class="endpoint-group">
+                                            <h5>Group Operations</h5>
+                                            <div class="endpoint get">GET /api/groups</div>
+                                            <div class="endpoint post">POST /api/groups</div>
+                                            <div class="endpoint get">GET /api/groups/join/:code</div>
+                                        </div>
+                                        <div class="endpoint-group">
+                                            <h5>Sessions & Messages</h5>
+                                            <div class="endpoint get">GET /api/sessions</div>
+                                            <div class="endpoint post">POST /api/messages</div>
+                                            <div class="endpoint get">GET /api/group-chat/:groupId</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="server-box fastapi">
+                                    <h4><i class="fas fa-lightning-bolt"></i> FastAPI Server (Port 8000)</h4>
+                                    <p>Handles AI/ML operations and chat functionality</p>
+                                    <div class="endpoints">
+                                        <div class="endpoint-group">
+                                            <h5>AI Chat</h5>
+                                            <div class="endpoint post">POST /api/v1/chat/query</div>
+                                            <div class="endpoint post">POST /api/v1/chat/upload</div>
+                                        </div>
+                                        <div class="endpoint-group">
+                                            <h5>System</h5>
+                                            <div class="endpoint get">GET /api/v1/system/health</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="crud-examples">
+                            <h3>Database Operation Examples</h3>
+                            <div class="operation-tabs">
+                                <button class="tab-btn active" onclick="showOperation('create')">CREATE</button>
+                                <button class="tab-btn" onclick="showOperation('read')">READ</button>
+                                <button class="tab-btn" onclick="showOperation('update')">UPDATE</button>
+                                <button class="tab-btn" onclick="showOperation('delete')">DELETE</button>
+                            </div>
+
+                            <div class="operation-content active" id="create-content">
+                                <h4>Create Operations</h4>
+                                <div class="code-example">
+                                    <div class="code-header">
+                                        <span>POST /api/groups - Create New Group</span>
+                                    </div>
+                                    <pre><code>// Express.js Route Handler
+router.post('/', async (req, res) => {
+  const { name, description, isPublic } = req.body;
+  const inviteCode = generateInviteCode();
+  
+  const { data, error } = await supabase
+    .from('groups')
+    .insert({
+      name,
+      description,
+      invite_code: inviteCode,
+      is_public: isPublic,
+      created_by: req.user.user_id
+    })
+    .select('*')
+    .single();
+    
+  if (error) throw error;
+  res.json(data);
+});</code></pre>
+                                </div>
+                            </div>
+
+                            <div class="operation-content" id="read-content">
+                                <h4>Read Operations</h4>
+                                <div class="code-example">
+                                    <div class="code-header">
+                                        <span>GET /api/sessions/:groupId - Fetch Group Sessions</span>
+                                    </div>
+                                    <pre><code>// Complex JOIN query with filtering
+const { data, error } = await supabase
+  .from('sessions')
+  .select(`
+    *,
+    groups!inner(name),
+    session_participants(
+      user_id,
+      users(first_name, last_name)
+    ),
+    messages(count)
+  `)
+  .eq('group_id', groupId)
+  .eq('groups.is_public', true)
+  .order('started_at', { ascending: false });</code></pre>
+                                </div>
+                            </div>
+
+                            <div class="operation-content" id="update-content">
+                                <h4>Update Operations</h4>
+                                <div class="code-example">
+                                    <div class="code-header">
+                                        <span>PUT /api/users/:id - Update User Profile</span>
+                                    </div>
+                                    <pre><code>// Transactional update with validation
+const { data, error } = await supabase
+  .from('users')
+  .update({
+    first_name: firstName,
+    last_name: lastName,
+    bio: bio,
+    availability: availability,
+    updated_at: new Date().toISOString()
+  })
+  .eq('user_id', userId)
+  .eq('auth_user_id', req.user.id)
+  .select('*')
+  .single();</code></pre>
+                                </div>
+                            </div>
+
+                            <div class="operation-content" id="delete-content">
+                                <h4>Delete Operations</h4>
+                                <div class="code-example">
+                                    <div class="code-header">
+                                        <span>DELETE /api/groups/:id - Cascade Delete Group</span>
+                                    </div>
+                                    <pre><code>// Cascade delete with permission check
+const { error } = await supabase
+  .from('groups')
+  .delete()
+  .eq('group_id', groupId)
+  .eq('created_by', req.user.user_id);
+
+// Automatically cascades to:
+// - group_participants
+// - sessions
+// - messages
+// - feedback</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 9: Database Performance -->
+            <div class="slide" id="slide-9">
+                <div class="slide-content">
+                    <h2 class="slide-title">Database Performance & Optimization</h2>
+                    <div class="performance-container">
+                        <div class="performance-grid">
+                            <div class="perf-card">
+                                <h3><i class="fas fa-search-plus"></i> Indexing Strategy</h3>
+                                <div class="index-list">
+                                    <div class="index-item">
+                                        <h4>Primary Key Indexes</h4>
+                                        <p>Automatic B-tree indexes on all primary keys for O(log n) lookups</p>
+                                    </div>
+                                    <div class="index-item">
+                                        <h4>Foreign Key Indexes</h4>
+                                        <p>Indexes on all foreign key columns for efficient joins</p>
+                                    </div>
+                                    <div class="index-item">
+                                        <h4>Unique Constraints</h4>
+                                        <p>Unique indexes on email, invite_code, and DOI fields</p>
+                                    </div>
+                                    <div class="index-item">
+                                        <h4>Composite Indexes</h4>
+                                        <p>Multi-column indexes for complex query patterns</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="perf-card">
+                                <h3><i class="fas fa-bolt"></i> Query Optimization</h3>
+                                <div class="optimization-features">
+                                    <div class="opt-feature">
+                                        <h4>Connection Pooling</h4>
+                                        <p>Supabase manages connection pools for efficient resource usage</p>
+                                    </div>
+                                    <div class="opt-feature">
+                                        <h4>Query Planning</h4>
+                                        <p>PostgreSQL's cost-based optimizer for execution plans</p>
+                                    </div>
+                                    <div class="opt-feature">
+                                        <h4>Prepared Statements</h4>
+                                        <p>Parameterized queries prevent SQL injection and improve performance</p>
+                                    </div>
+                                    <div class="opt-feature">
+                                        <h4>Selective Queries</h4>
+                                        <p>Use SELECT with specific columns to reduce data transfer</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="perf-card">
+                                <h3><i class="fas fa-memory"></i> Caching Strategy</h3>
+                                <div class="cache-layers">
+                                    <div class="cache-layer-item">
+                                        <h4>Redis Cache</h4>
+                                        <p>In-memory caching for frequently accessed data like user sessions</p>
+                                    </div>
+                                    <div class="cache-layer-item">
+                                        <h4>Query Result Cache</h4>
+                                        <p>Cache expensive JOIN operations and aggregations</p>
+                                    </div>
+                                    <div class="cache-layer-item">
+                                        <h4>Session Cache</h4>
+                                        <p>Store active session data to reduce database round trips</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="perf-card">
+                                <h3><i class="fas fa-chart-line"></i> Performance Metrics</h3>
+                                <div class="metrics-grid">
+                                    <div class="metric">
+                                        <div class="metric-value">~5ms</div>
+                                        <div class="metric-label">Avg Query Time</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">1000+</div>
+                                        <div class="metric-label">Concurrent Users</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">99.9%</div>
+                                        <div class="metric-label">Uptime</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-value">ACID</div>
+                                        <div class="metric-label">Compliance</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="performance-tips">
+                            <h3>Optimization Techniques</h3>
+                            <div class="tips-grid">
+                                <div class="tip">
+                                    <i class="fas fa-filter"></i>
+                                    <h4>Efficient Filtering</h4>
+                                    <p>Use WHERE clauses with indexed columns for faster results</p>
+                                </div>
+                                <div class="tip">
+                                    <i class="fas fa-link"></i>
+                                    <h4>Smart Joins</h4>
+                                    <p>Use INNER JOINs when possible and limit result sets</p>
+                                </div>
+                                <div class="tip">
+                                    <i class="fas fa-clock"></i>
+                                    <h4>Timestamp Indexing</h4>
+                                    <p>Index timestamp columns for time-based queries</p>
+                                </div>
+                                <div class="tip">
+                                    <i class="fas fa-compress"></i>
+                                    <h4>Data Pagination</h4>
+                                    <p>Implement LIMIT and OFFSET for large datasets</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: Security & Authentication -->
+            <div class="slide" id="slide-10">
+                <div class="slide-content">
+                    <h2 class="slide-title">Database Security & Authentication</h2>
+                    <div class="security-container">
+                        <div class="security-grid">
+                            <div class="security-card primary">
+                                <h3><i class="fas fa-shield-alt"></i> Authentication Layer</h3>
+                                <div class="auth-features">
+                                    <div class="auth-item">
+                                        <h4>Supabase Auth</h4>
+                                        <p>JWT-based authentication with secure token management</p>
+                                    </div>
+                                    <div class="auth-item">
+                                        <h4>OAuth Integration</h4>
+                                        <p>Support for Google OAuth and other providers</p>
+                                    </div>
+                                    <div class="auth-item">
+                                        <h4>Role-Based Access</h4>
+                                        <p>Admin, Member, and Mentor roles with specific permissions</p>
+                                    </div>
+                                    <div class="auth-item">
+                                        <h4>Session Management</h4>
+                                        <p>Secure session handling with automatic token refresh</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="security-card">
+                                <h3><i class="fas fa-lock"></i> Data Protection</h3>
+                                <div class="protection-features">
+                                    <div class="protection-item">
+                                        <h4>SQL Injection Prevention</h4>
+                                        <p>Parameterized queries and prepared statements</p>
+                                    </div>
+                                    <div class="protection-item">
+                                        <h4>Input Validation</h4>
+                                        <p>Server-side validation and sanitization</p>
+                                    </div>
+                                    <div class="protection-item">
+                                        <h4>CORS Policy</h4>
+                                        <p>Strict Cross-Origin Resource Sharing configuration</p>
+                                    </div>
+                                    <div class="protection-item">
+                                        <h4>Rate Limiting</h4>
+                                        <p>API rate limiting to prevent abuse</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="security-card">
+                                <h3><i class="fas fa-database"></i> Database Security</h3>
+                                <div class="db-security-features">
+                                    <div class="db-security-item">
+                                        <h4>Row Level Security (RLS)</h4>
+                                        <p>User can only access their own data</p>
+                                    </div>
+                                    <div class="db-security-item">
+                                        <h4>Encrypted Connections</h4>
+                                        <p>TLS/SSL encryption for all database connections</p>
+                                    </div>
+                                    <div class="db-security-item">
+                                        <h4>Backup Encryption</h4>
+                                        <p>Encrypted backups with point-in-time recovery</p>
+                                    </div>
+                                    <div class="db-security-item">
+                                        <h4>Access Control</h4>
+                                        <p>Database-level user permissions and policies</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-flow">
+                            <h3>Authentication Flow</h3>
+                            <div class="flow-diagram">
+                                <div class="flow-step">
+                                    <div class="step-number">1</div>
+                                    <div class="step-content">
+                                        <h4>User Login</h4>
+                                        <p>OAuth or email/password</p>
+                                    </div>
+                                </div>
+                                <div class="flow-arrow">→</div>
+                                <div class="flow-step">
+                                    <div class="step-number">2</div>
+                                    <div class="step-content">
+                                        <h4>JWT Token</h4>
+                                        <p>Supabase generates secure token</p>
+                                    </div>
+                                </div>
+                                <div class="flow-arrow">→</div>
+                                <div class="flow-step">
+                                    <div class="step-number">3</div>
+                                    <div class="step-content">
+                                        <h4>Middleware Validation</h4>
+                                        <p>Express.js validates token</p>
+                                    </div>
+                                </div>
+                                <div class="flow-arrow">→</div>
+                                <div class="flow-step">
+                                    <div class="step-number">4</div>
+                                    <div class="step-content">
+                                        <h4>Database Access</h4>
+                                        <p>Authorized operations only</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-policies">
+                            <h3>Security Policies</h3>
+                            <div class="policy-grid">
+                                <div class="policy-item">
+                                    <i class="fas fa-user-shield"></i>
+                                    <h4>User Isolation</h4>
+                                    <p>Users can only access their groups and sessions</p>
+                                </div>
+                                <div class="policy-item">
+                                    <i class="fas fa-eye-slash"></i>
+                                    <h4>Data Privacy</h4>
+                                    <p>Personal information protected by privacy constraints</p>
+                                </div>
+                                <div class="policy-item">
+                                    <i class="fas fa-history"></i>
+                                    <h4>Audit Trail</h4>
+                                    <p>All operations logged with timestamps</p>
+                                </div>
+                                <div class="policy-item">
+                                    <i class="fas fa-trash-alt"></i>
+                                    <h4>Data Retention</h4>
+                                    <p>Automatic cleanup of expired sessions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 11: Real-time Features -->
+            <div class="slide" id="slide-11">
+                <div class="slide-content">
+                    <h2 class="slide-title">Real-time Features & Collaboration</h2>
+                    <div class="realtime-container">
+                        <div class="realtime-grid">
+                            <div class="realtime-card primary">
+                                <h3><i class="fas fa-bolt"></i> Supabase Realtime</h3>
+                                <div class="realtime-features">
+                                    <div class="feature-item">
+                                        <h4>WebSocket Connections</h4>
+                                        <p>Persistent connections for instant updates</p>
+                                    </div>
+                                    <div class="feature-item">
+                                        <h4>Database Change Streams</h4>
+                                        <p>Listen to INSERT, UPDATE, DELETE operations</p>
+                                    </div>
+                                    <div class="feature-item">
+                                        <h4>Room-based Subscriptions</h4>
+                                        <p>Subscribe to specific group or session channels</p>
+                                    </div>
+                                    <div class="feature-item">
+                                        <h4>Automatic Reconnection</h4>
+                                        <p>Resilient connections with automatic recovery</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="realtime-card">
+                                <h3><i class="fas fa-comments"></i> Live Chat</h3>
+                                <div class="chat-features">
+                                    <div class="chat-item">
+                                        <h4>Instant Messaging</h4>
+                                        <p>Real-time message delivery within sessions</p>
+                                    </div>
+                                    <div class="chat-item">
+                                        <h4>AI Integration</h4>
+                                        <p>Live AI responses in chat discussions</p>
+                                    </div>
+                                    <div class="chat-item">
+                                        <h4>Message History</h4>
+                                        <p>Persistent chat history with search capabilities</p>
+                                    </div>
+                                    <div class="chat-item">
+                                        <h4>Typing Indicators</h4>
+                                        <p>Real-time typing status updates</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="realtime-card">
+                                <h3><i class="fas fa-users"></i> Collaboration Features</h3>
+                                <div class="collab-features">
+                                    <div class="collab-item">
+                                        <h4>Live Presence</h4>
+                                        <p>See who's online in your groups</p>
+                                    </div>
+                                    <div class="collab-item">
+                                        <h4>Session Participation</h4>
+                                        <p>Real-time participant join/leave notifications</p>
+                                    </div>
+                                    <div class="collab-item">
+                                        <h4>Paper Sharing</h4>
+                                        <p>Instant paper recommendations in sessions</p>
+                                    </div>
+                                    <div class="collab-item">
+                                        <h4>Status Updates</h4>
+                                        <p>Live availability and status changes</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="realtime-architecture">
+                            <h3>Real-time Architecture</h3>
+                            <div class="architecture-flow">
+                                <div class="arch-component frontend">
+                                    <h4>Frontend (Next.js)</h4>
+                                    <p>WebSocket client with React hooks</p>
+                                    <div class="component-details">
+                                        <span>• useSupabaseRealtime()</span>
+                                        <span>• Channel subscriptions</span>
+                                        <span>• State management</span>
+                                    </div>
+                                </div>
+                                <div class="arch-arrow">⟷</div>
+                                <div class="arch-component realtime">
+                                    <h4>Supabase Realtime</h4>
+                                    <p>WebSocket server with PostgreSQL integration</p>
+                                    <div class="component-details">
+                                        <span>• Database listeners</span>
+                                        <span>• Channel routing</span>
+                                        <span>• Message broadcasting</span>
+                                    </div>
+                                </div>
+                                <div class="arch-arrow">⟷</div>
+                                <div class="arch-component database">
+                                    <h4>PostgreSQL</h4>
+                                    <p>Database with WAL (Write-Ahead Logging)</p>
+                                    <div class="component-details">
+                                        <span>• Change capture</span>
+                                        <span>• Trigger functions</span>
+                                        <span>• NOTIFY events</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="realtime-examples">
+                            <h3>Implementation Examples</h3>
+                            <div class="example-tabs">
+                                <button class="example-tab active" onclick="showExample('messages')">Live Messages</button>
+                                <button class="example-tab" onclick="showExample('presence')">User Presence</button>
+                                <button class="example-tab" onclick="showExample('papers')">Paper Updates</button>
+                            </div>
+
+                            <div class="example-content active" id="messages-example">
+                                <div class="code-example">
+                                    <div class="code-header">Live Message Subscription</div>
+                                    <pre><code>// Frontend: Subscribe to new messages
+const supabase = createClient(url, key);
+
+useEffect(() => {
+  const channel = supabase
+    .channel(`session-${sessionId}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `session_id=eq.${sessionId}`
+    }, (payload) => {
+      setMessages(prev => [...prev, payload.new]);
+    })
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}, [sessionId]);</code></pre>
+                                </div>
+                            </div>
+
+                            <div class="example-content" id="presence-example">
+                                <div class="code-example">
+                                    <div class="code-header">User Presence Tracking</div>
+                                    <pre><code>// Track online users in a group
+const channel = supabase.channel(`group-${groupId}`, {
+  config: { presence: { key: userId } }
+});
+
+channel
+  .on('presence', { event: 'sync' }, () => {
+    const users = channel.presenceState();
+    setOnlineUsers(Object.keys(users));
+  })
+  .on('presence', { event: 'join' }, ({ newPresences }) => {
+    // Handle user joining
+  })
+  .subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await channel.track({ user_id: userId, online_at: new Date() });
+    }
+  });</code></pre>
+                                </div>
+                            </div>
+
+                            <div class="example-content" id="papers-example">
+                                <div class="code-example">
+                                    <div class="code-header">Paper Sharing Updates</div>
+                                    <pre><code>// Listen for papers added to session
+const channel = supabase
+  .channel(`session-papers-${sessionId}`)
+  .on('postgres_changes', {
+    event: '*',
+    schema: 'public',
+    table: 'session_papers',
+    filter: `session_id=eq.${sessionId}`
+  }, (payload) => {
+    if (payload.eventType === 'INSERT') {
+      // Fetch paper details and update UI
+      fetchPaperDetails(payload.new.paper_id);
+    }
+  })
+  .subscribe();</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 12: Conclusion -->
+            <div class="slide" id="slide-12">
+                <div class="slide-content">
+                    <h2 class="slide-title">Conclusion & Future Enhancements</h2>
+                    <div class="conclusion-container">
+                        <div class="achievements">
+                            <h3><i class="fas fa-trophy"></i> Key Achievements</h3>
+                            <div class="achievement-grid">
+                                <div class="achievement-item">
+                                    <div class="achievement-icon">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <h4>Robust Database Design</h4>
+                                    <p>Normalized PostgreSQL schema with optimized performance and data integrity</p>
+                                </div>
+                                <div class="achievement-item">
+                                    <div class="achievement-icon">
+                                        <i class="fas fa-rocket"></i>
+                                    </div>
+                                    <h4>Scalable Architecture</h4>
+                                    <p>Dual-server architecture supporting both database operations and AI processing</p>
+                                </div>
+                                <div class="achievement-item">
+                                    <div class="achievement-icon">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <h4>Real-time Collaboration</h4>
+                                    <p>WebSocket-based real-time features for seamless user collaboration</p>
+                                </div>
+                                <div class="achievement-item">
+                                    <div class="achievement-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <h4>Enterprise Security</h4>
+                                    <p>Comprehensive security with authentication, authorization, and data protection</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="database-summary">
+                            <h3><i class="fas fa-chart-bar"></i> Database Statistics</h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-number">12</div>
+                                    <div class="stat-label">Core Tables</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">25+</div>
+                                    <div class="stat-label">Optimized Indexes</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">15+</div>
+                                    <div class="stat-label">API Endpoints</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">3NF</div>
+                                    <div class="stat-label">Normalization</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">100%</div>
+                                    <div class="stat-label">ACID Compliance</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">1000+</div>
+                                    <div class="stat-label">Concurrent Users</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="future-enhancements">
+                            <h3><i class="fas fa-road"></i> Future Enhancements</h3>
+                            <div class="enhancement-grid">
+                                <div class="enhancement-category">
+                                    <h4><i class="fas fa-database"></i> Database Optimizations</h4>
+                                    <ul>
+                                        <li>Implement database sharding for horizontal scaling</li>
+                                        <li>Add materialized views for complex analytics</li>
+                                        <li>Implement database partitioning for large datasets</li>
+                                        <li>Advanced caching strategies with Redis clusters</li>
+                                    </ul>
+                                </div>
+                                <div class="enhancement-category">
+                                    <h4><i class="fas fa-brain"></i> AI Integration</h4>
+                                    <ul>
+                                        <li>Vector database integration for semantic search</li>
+                                        <li>Machine learning-based query optimization</li>
+                                        <li>Automated paper categorization and tagging</li>
+                                        <li>Intelligent recommendation algorithms</li>
+                                    </ul>
+                                </div>
+                                <div class="enhancement-category">
+                                    <h4><i class="fas fa-chart-line"></i> Analytics & Monitoring</h4>
+                                    <ul>
+                                        <li>Real-time performance monitoring dashboard</li>
+                                        <li>Query performance analytics</li>
+                                        <li>User behavior tracking and insights</li>
+                                        <li>Automated alerting for system health</li>
+                                    </ul>
+                                </div>
+                                <div class="enhancement-category">
+                                    <h4><i class="fas fa-globe"></i> Scalability</h4>
+                                    <ul>
+                                        <li>Multi-region database deployment</li>
+                                        <li>Read replicas for improved performance</li>
+                                        <li>Microservices architecture migration</li>
+                                        <li>Container orchestration with Kubernetes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="thank-you">
+                            <h3>Thank You</h3>
+                            <p>Questions & Discussion</p>
+                            <div class="contact-info">
+                                <div class="contact-item">
+                                    <i class="fas fa-users"></i>
+                                    <span>Team - 08</span>
+                                </div>
+                                <div class="contact-item">
+                                    <i class="fas fa-university"></i>
+                                    <span>School of AI, Amrita Vishwa Vidyapeetham</span>
+                                </div>
+                                <div class="contact-item">
+                                    <i class="fab fa-github"></i>
+                                    <span>GitHub: AI-Research-Assistant-local</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

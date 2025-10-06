@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Research Assistant - Technical Presentation</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#slide-1">
+                <i class="fas fa-robot me-2"></i>
+                AI Research Assistant
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-1">Intro</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-2">Problem</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-3">Objective</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-4">Architecture</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-5">AI Engine</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-6">Tech Stack</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-7">Database</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-8">UML</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-9">API</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-10">Express</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-11">FastAPI</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-12">DB Ops</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#slide-13">Summary</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Slide 1: Title/Introduction -->
+    <section id="slide-1" class="slide slide-title">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center justify-content-center">
+                <div class="col-lg-10 text-center">
+                    <h1 class="display-2 fw-bold mb-4 fade-in">
+                        AI Research Assistant
+                    </h1>
+                    <p class="lead fs-3 mb-5 fade-in-delay">
+                        A Comprehensive Technical Architecture Review
+                    </p>
+                    <div class="fade-in-delay-2">
+                        <p class="fs-5 text-light mb-2">Academic Paper Research Platform with AI Integration</p>
+                        <p class="fs-6 text-light opacity-75 mb-4">Team - 08 | School of AI, Amrita Vishwa Vidyapeetham</p>
+                    </div>
+                    <div class="mt-5 fade-in-delay-3">
+                        <a href="#slide-2" class="btn btn-light btn-lg me-3">
+                            <i class="fas fa-play me-2"></i>Start Presentation
+                        </a>
+                        <a href="#" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-download me-2"></i>Export PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">01</div>
+    </section>
+
+    <!-- Slide 2: Problem Statement -->
+    <section id="slide-2" class="slide">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-lg-12">
+                    <h2 class="display-4 fw-bold mb-4 slide-in-left">Problem Statement</h2>
+                    <ul class="list-unstyled fs-5 slide-in-left-delay">
+                        <li class="mb-3"><i class="fas fa-check-circle text-success me-3"></i>Slow, error-prone, and time-consuming manual processes hinder productivity in searching, analyzing, and citing research papers.</li>
+                        <li class="mb-3"><i class="fas fa-check-circle text-success me-3"></i>Such problems can be overcome by integrating AI services with the research process.</li>
+                        <li class="mb-3"><i class="fas fa-check-circle text-success me-3"></i>A high-performance database is critical to manage growing data, ensure fast queries, and support real-time AI processing for seamless user experiences.</li>
+                    </ul>
+                    <div class="mt-4 slide-in-left-delay-2">
+                        <p class="fs-5">
+                            Researchers struggle with the vast volume of academic content, manual searching, reading, summarizing papers, and properly citing sources - all of which slow down research and reduce productivity.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">02</div>
+    </section>
+
+    <!-- Slide 3: Objective -->
+    <section id="slide-3" class="slide bg-light">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">Objective</h2>
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="service-card h-100 fade-in">
+                                <div class="service-icon">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <h4 class="fw-semibold mb-3">AI-Powered Platform</h4>
+                                <p>Develop an AI-powered research platform with capabilities for group collaboration, role-based access for mentors and researchers, and intelligent paper management.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="service-card h-100 fade-in-delay">
+                                <div class="service-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <h4 class="fw-semibold mb-3">Normalized Database</h4>
+                                <p>Design a normalized relational database schema in PostgreSQL to store and manage user profiles, mentor-researcher relationships, research papers, citations, and collaborative projects.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="service-card h-100 fade-in-delay-2">
+                                <div class="service-icon">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <h4 class="fw-semibold mb-3">RAG Engine</h4>
+                                <p>Integrate the arXiv API with a Retrieval-Augmented Generation (RAG) engine to enable advanced paper exploration, conceptual querying, and automated citation preparation.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">03</div>
+    </section>
+
+    <!-- Slide 4: System Architecture -->
+    <section id="slide-4" class="slide bg-light">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">System Architecture</h2>
+                    
+                    <!-- Architecture Overview -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="service-card fade-in">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-sitemap text-primary me-2"></i>3-Service Separated Architecture</h4>
+                                <p class="mb-3">Our system implements a clean separation of concerns with three independent services:</p>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="architecture-component">
+                                            <div class="component-icon bg-primary">
+                                                <i class="fab fa-react text-white"></i>
+                                            </div>
+                                            <h5 class="mt-2">Frontend (Port 3000)</h5>
+                                            <p class="small">Next.js with TypeScript<br>User interface & authentication</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="architecture-component">
+                                            <div class="component-icon bg-success">
+                                                <i class="fas fa-database text-white"></i>
+                                            </div>
+                                            <h5 class="mt-2">Express DB (Port 3001)</h5>
+                                            <p class="small">Node.js Express Server<br>ALL database operations</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="architecture-component">
+                                            <div class="component-icon bg-warning">
+                                                <i class="fas fa-brain text-white"></i>
+                                            </div>
+                                            <h5 class="mt-2">FastAPI AI (Port 8000)</h5>
+                                            <p class="small">Python FastAPI<br>AI processing ONLY</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-4 mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Critical Design:</strong> FastAPI has ZERO direct database access. Express server acts as the exclusive database proxy, ensuring complete separation of AI and data operations.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">04</div>
+    </section>
+
+    <!-- Slide 5: AI Implementation -->
+    <section id="slide-5" class="slide">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">AI Implementation</h2>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="service-card h-100 fade-in">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-brain text-primary me-2"></i>Retrieval-Augmented Generation</h4>
+                                <p>The core AI innovation in this project is the integration of a RAG (Retrieval-Augmented Generation) architecture that:</p>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Improves research accuracy by retrieving relevant academic papers</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Processes complex queries about research concepts</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Generates contextually accurate responses based on retrieved papers</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Reduces hallucinations by grounding answers in source material</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-cogs text-primary me-2"></i>AI Services Architecture</h4>
+                                <p>The AI system is isolated from database operations for improved security and performance:</p>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>FastAPI AI Server handles ONLY AI processing</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>Vector embeddings for semantic search of papers</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>In-memory chat fallback when database unavailable</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>HTTP client for database persistence via Express</li>
+                                </ul>
+                                <p class="mt-3">This separation ensures that the AI components can be scaled and optimized independently from data management operations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">05</div>
+    </section>
+
+    <!-- Slide 6: Tech Stack -->
+    <section id="slide-6" class="slide bg-light">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">Technology Stack</h2>
+                    <div class="row g-4 text-center">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="stat-card fade-in">
+                                <div class="service-icon">
+                                    <i class="fab fa-react"></i>
+                                </div>
+                                <h4 class="fw-semibold mt-4">Frontend</h4>
+                                <p>Next.js 13+ with TypeScript<br>Tailwind CSS + Aceternity UI</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="stat-card fade-in-delay">
+                                <div class="service-icon">
+                                    <i class="fab fa-node-js"></i>
+                                </div>
+                                <h4 class="fw-semibold mt-4">Express Server</h4>
+                                <p>Node.js Express.js<br>Database proxy & RPC functions</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="stat-card fade-in-delay-2">
+                                <div class="service-icon">
+                                    <i class="fab fa-python"></i>
+                                </div>
+                                <h4 class="fw-semibold mt-4">FastAPI Server</h4>
+                                <p>Python FastAPI<br>AI processing & RAG engine</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="stat-card fade-in-delay-3">
+                                <div class="service-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <h4 class="fw-semibold mt-4">Database</h4>
+                                <p>PostgreSQL with Supabase<br>RLS & real-time features</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Technologies -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="service-card fade-in-delay-4">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-tools text-primary me-2"></i>Development & Deployment Tools</h4>
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <i class="fab fa-docker fs-2 text-primary mb-2"></i>
+                                        <p class="small mb-0"><strong>Docker</strong><br>Containerization</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <i class="fas fa-server fs-2 text-primary mb-2"></i>
+                                        <p class="small mb-0"><strong>Nginx</strong><br>Reverse proxy</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <i class="fas fa-bolt fs-2 text-primary mb-2"></i>
+                                        <p class="small mb-0"><strong>Redis</strong><br>Caching layer</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <i class="fas fa-rocket fs-2 text-primary mb-2"></i>
+                                        <p class="small mb-0"><strong>UV</strong><br>Package management</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">06</div>
+    </section>
+
+    <!-- Slide 7: Database Design -->
+    <section id="slide-7" class="slide">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">Database Design & Schema</h2>
+                    
+                    <!-- Database Overview -->
+                    <div class="row mb-4">
+                        <div class="col-lg-6">
+                            <div class="service-card h-100 fade-in">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-database text-primary me-2"></i>PostgreSQL Schema Design</h4>
+                                <p>Normalized relational database with the following core entities:</p>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-table text-primary me-2"></i><strong>Users:</strong> Authentication & profiles</li>
+                                    <li class="mb-2"><i class="fas fa-table text-primary me-2"></i><strong>Groups:</strong> Collaborative research teams</li>
+                                    <li class="mb-2"><i class="fas fa-table text-primary me-2"></i><strong>Papers:</strong> Research documents & metadata</li>
+                                    <li class="mb-2"><i class="fas fa-table text-primary me-2"></i><strong>Sessions:</strong> Chat conversations</li>
+                                    <li class="mb-2"><i class="fas fa-table text-primary me-2"></i><strong>Messages:</strong> Chat history</li>
+                                    <li class="mb-2"><i class="fas fa-table text-primary me-2"></i><strong>AI Metadata:</strong> Processing analytics</li>
+                                    <li class="mb-2"><i class="fas fa-table text-primary me-2"></i><strong>Feedback:</strong> User feedback system</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-shield-alt text-primary me-2"></i>Security & Performance Features</h4>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i><strong>Row-Level Security (RLS)</strong><br>User-specific data access policies</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i><strong>Real-time Subscriptions</strong><br>Live chat and collaboration features</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i><strong>Database Functions</strong><br>Server-side business logic</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i><strong>Automated Triggers</strong><br>Data integrity and audit trails</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i><strong>Indexing Strategy</strong><br>Optimized query performance</li>
+                                </ul>
+                                
+                                <div class="alert alert-success mt-3 mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Migration-First:</strong> All schema changes managed through versioned Supabase migrations.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ER Diagram Reference -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="service-card fade-in-delay-2 text-center">
+                                <h5 class="fw-semibold mb-3"><i class="fas fa-project-diagram text-primary me-2"></i>Entity Relationship Model</h5>
+                                <p class="text-muted">Complete ER diagram showing all table relationships, foreign keys, and constraints</p>
+                                <div class="chart-placeholder" style="height: 200px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px dashed #6c757d;">
+                                    <div class="d-flex align-items-center justify-content-center h-100">
+                                        <div>
+                                            <i class="fas fa-image fs-1 text-muted mb-3"></i>
+                                            <p class="text-muted">ER Diagram would be displayed here<br><small>Showing normalized database schema with all relationships</small></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">07</div>
+    </section>
+
+    <!-- Slide 8: UML Diagrams -->
+    <section id="slide-8" class="slide bg-light">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">UML System Design</h2>
+                    
+                    <!-- UML Class Diagram -->
+                    <div class="row mb-4">
+                        <div class="col-lg-4">
+                            <div class="service-card h-100 fade-in">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-project-diagram text-primary me-2"></i>Class Diagram</h4>
+                                <p>Static structure showing:</p>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>Service layer architecture</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>Data access patterns</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>Entity relationships</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>Interface definitions</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="chart-container slide-in-right mx-auto text-center">
+                                <div class="chart-placeholder" style="height: 300px; background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%); border: 2px dashed #6c757d;">
+                                    <div class="d-flex align-items-center justify-content-center h-100">
+                                        <div>
+                                            <i class="fas fa-sitemap fs-1 text-primary mb-3"></i>
+                                            <p class="text-muted">UML Class Diagram<br><small>Component relationships and interfaces</small></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- UML Sequence Diagram -->
+                    <div class="row">
+                        <div class="col-lg-8 order-lg-1 order-2">
+                            <div class="chart-container slide-in-right mx-auto text-center">
+                                <div class="chart-placeholder" style="height: 300px; background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%); border: 2px dashed #6c757d;">
+                                    <div class="d-flex align-items-center justify-content-center h-100">
+                                        <div>
+                                            <i class="fas fa-exchange-alt fs-1 text-success mb-3"></i>
+                                            <p class="text-muted">UML Sequence Diagram<br><small>Dynamic interaction between system components</small></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 order-lg-2 order-1">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-exchange-alt text-primary me-2"></i>Sequence Diagram</h4>
+                                <p>Dynamic interaction flow:</p>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>User authentication flow</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>API request processing</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>Data retrieval patterns</li>
+                                    <li class="mb-2"><i class="fas fa-angle-right text-primary me-2"></i>Service communication</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">08</div>
+    </section>
+    
+    Slide 9: API Architecture Overview
+    <section id="slide-9" class="slide">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">API Architecture Overview</h2>
+                    
+                    <!-- Service Communication Architecture -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="service-card fade-in">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-exchange-alt text-primary me-2"></i>Service Communication Patterns</h4>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5 class="fw-semibold text-success mb-3">Data Flow Routes</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2">
+                                                <i class="fas fa-arrow-right text-success me-2"></i>
+                                                <strong>Frontend → Express DB (3001):</strong> ALL database operations
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="fas fa-arrow-right text-warning me-2"></i>
+                                                <strong>Frontend → FastAPI (8000):</strong> ONLY AI chat and processing
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="fas fa-arrow-right text-info me-2"></i>
+                                                <strong>FastAPI → Express DB:</strong> Chat persistence via HTTP client
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5 class="fw-semibold text-primary mb-3">Authentication & Security</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2">
+                                                <i class="fas fa-shield-alt text-primary me-2"></i>
+                                                <strong>JWT Tokens:</strong> Supabase auth across all services
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="fas fa-lock text-primary me-2"></i>
+                                                <strong>Row-Level Security:</strong> Database-level access control
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                                                <strong>Rate Limiting:</strong> Service-specific throttling
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Critical Architecture Decision:</strong> FastAPI has NO direct database access. Express server acts as the exclusive database proxy, ensuring complete separation of concerns and simplified security management.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Standards -->
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-code text-primary me-2"></i>API Standards</h4>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>RESTful design principles</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Consistent error handling</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Standardized response formats</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>OpenAPI documentation</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-network-wired text-primary me-2"></i>Communication Protocols</h4>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-wifi text-success me-2"></i>HTTP/HTTPS for API calls</li>
+                                    <li class="mb-2"><i class="fas fa-bolt text-success me-2"></i>WebSocket for real-time chat</li>
+                                    <li class="mb-2"><i class="fas fa-database text-success me-2"></i>PostgreSQL native connections</li>
+                                    <li class="mb-2"><i class="fas fa-memory text-success me-2"></i>Redis for session management</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-chart-line text-primary me-2"></i>Performance Features</h4>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-rocket text-success me-2"></i>Connection pooling</li>
+                                    <li class="mb-2"><i class="fas fa-compress text-success me-2"></i>Response compression</li>
+                                    <li class="mb-2"><i class="fas fa-clock text-success me-2"></i>Request timeout handling</li>
+                                    <li class="mb-2"><i class="fas fa-search text-success me-2"></i>Query optimization</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">09</div>
+    </section>
+
+    <!-- Slide 10: Express DB Server Details -->
+    <section id="slide-10" class="slide bg-light">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">Express DB Server (Port 3001)</h2>
+                    
+                    <!-- Express Server Overview -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="service-card fade-in">
+                                <h4 class="fw-semibold mb-3"><i class="fab fa-node-js text-success me-2"></i>Database Operations Hub</h4>
+                                <p class="mb-3">The Express server serves as the <strong>exclusive database proxy</strong> for all data operations using Supabase RPC functions:</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5 class="fw-semibold mb-2">Core Responsibilities</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-database text-primary me-2"></i>All CRUD operations via RPC</li>
+                                            <li class="mb-2"><i class="fas fa-users text-primary me-2"></i>User management & authentication</li>
+                                            <li class="mb-2"><i class="fas fa-comments text-primary me-2"></i>Chat session & message handling</li>
+                                            <li class="mb-2"><i class="fas fa-file-alt text-primary me-2"></i>Paper management & search</li>
+                                            <li class="mb-2"><i class="fas fa-users-cog text-primary me-2"></i>Group collaboration features</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5 class="fw-semibold mb-2">Technical Implementation</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-code text-primary me-2"></i>Node.js Express framework</li>
+                                            <li class="mb-2"><i class="fas fa-function text-primary me-2"></i>Supabase RPC function calls</li>
+                                            <li class="mb-2"><i class="fas fa-shield-alt text-primary me-2"></i>JWT token validation</li>
+                                            <li class="mb-2"><i class="fas fa-exclamation-triangle text-primary me-2"></i>Centralized error handling</li>
+                                            <li class="mb-2"><i class="fas fa-chart-bar text-primary me-2"></i>Request logging & analytics</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Endpoints -->
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-sitemap text-primary me-2"></i>API Endpoint Categories</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless">
+                                        <tbody>
+                                            <tr>
+                                                <td class="fw-semibold">Authentication</td>
+                                                <td><code class="api-endpoint">/api/auth/*</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">User Management</td>
+                                                <td><code class="api-endpoint">/api/users/*</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">Paper Operations</td>
+                                                <td><code class="api-endpoint">/api/papers/*</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">Chat Sessions</td>
+                                                <td><code class="api-endpoint">/api/sessions/*</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">Message Handling</td>
+                                                <td><code class="api-endpoint">/api/messages/*</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">Group Management</td>
+                                                <td><code class="api-endpoint">/api/groups/*</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">AI Metadata</td>
+                                                <td><code class="api-endpoint">/api/ai-metadata/*</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">Feedback System</td>
+                                                <td><code class="api-endpoint">/api/feedback/*</code></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-code text-primary me-2"></i>RPC Integration Pattern</h4>
+                                <pre class="code-block small"><code>// Express RPC Helper Function
+async function executeRPC(supabase, functionName, params = {}) {
+  const { data, error } = await supabase.rpc(functionName, params);
+  if (error) throw error;
+  return data;
+}
+
+// Usage in Route Handler
+router.get('/users/:id', async (req, res) => {
+  try {
+    const user = await executeRPC(supabase, 'get_user_by_id', {
+      p_user_id: parseInt(req.params.id)
+    });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});</code></pre>
+                                
+                                <div class="alert alert-warning mt-3 mb-0">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Note:</strong> All database operations use parameterized RPC calls for security and performance.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">10</div>
+    </section>
+
+    <!-- Slide 11: FastAPI Server Details -->
+    <section id="slide-11" class="slide">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">FastAPI AI Server (Port 8000)</h2>
+                    
+                    <!-- FastAPI Overview -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="service-card fade-in">
+                                <h4 class="fw-semibold mb-3"><i class="fab fa-python text-warning me-2"></i>AI Processing Engine</h4>
+                                <p class="mb-3">FastAPI server handles <strong>ONLY AI and machine learning operations</strong> with zero direct database access:</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5 class="fw-semibold mb-2">AI Capabilities</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-brain text-primary me-2"></i>RAG-based chat processing</li>
+                                            <li class="mb-2"><i class="fas fa-search text-primary me-2"></i>Semantic paper search</li>
+                                            <li class="mb-2"><i class="fas fa-robot text-primary me-2"></i>AI model integration</li>
+                                            <li class="mb-2"><i class="fas fa-comments text-primary me-2"></i>Natural language processing</li>
+                                            <li class="mb-2"><i class="fas fa-chart-line text-primary me-2"></i>Response optimization</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5 class="fw-semibold mb-2">Architecture Features</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-memory text-primary me-2"></i>In-memory session storage</li>
+                                            <li class="mb-2"><i class="fas fa-network-wired text-primary me-2"></i>HTTP client for Express communication</li>
+                                            <li class="mb-2"><i class="fas fa-shield-alt text-primary me-2"></i>No direct database connections</li>
+                                            <li class="mb-2"><i class="fas fa-cogs text-primary me-2"></i>Async processing pipeline</li>
+                                            <li class="mb-2"><i class="fas fa-heartbeat text-primary me-2"></i>Health monitoring endpoints</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Endpoints & Implementation -->
+                    <div class="row">
+                        <div class="col-lg-5">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-api text-primary me-2"></i>FastAPI Endpoints</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless">
+                                        <tbody>
+                                            <tr>
+                                                <td><code class="api-endpoint">POST /api/v1/chat/{session_id}</code></td>
+                                                <td class="small">AI chat processing</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="api-endpoint">POST /api/v1/chat/sessions</code></td>
+                                                <td class="small">Create chat session</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="api-endpoint">GET /api/v1/chat/{session_id}/history</code></td>
+                                                <td class="small">Retrieve chat history</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="api-endpoint">DELETE /api/v1/chat/{session_id}</code></td>
+                                                <td class="small">Delete chat session</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="api-endpoint">GET /api/v1/system/health</code></td>
+                                                <td class="small">System health check</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="alert alert-success mt-3 mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Focus:</strong> Minimal endpoint surface focused solely on AI operations.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-7">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-cogs text-primary me-2"></i>AI Service Implementation</h4>
+                                <pre class="code-block small"><code># FastAPI Chat Service Pattern
+from app.services.chat_service import chat_service
+from app.services.express_client import express_client
+
+@router.post("/{session_id}", response_model=ChatResponse)
+async def send_message(session_id: str, request: ChatRequest):
+    """Send message and get AI response"""
+    try:
+        # Process AI request in-memory
+        ai_response = await ai_service.process_query(
+            request.message, 
+            session_id
+        )
+        
+        # Persist to database via Express (optional)
+        if express_client.is_available():
+            await express_client.save_message(
+                session_id, 
+                request.message, 
+                ai_response
+            )
+        
+        return ChatResponse(
+            response=ai_response,
+            session_id=session_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">11</div>
+    </section>
+
+    <!-- Slide 12: Database Operations & Functions -->
+    <section id="slide-12" class="slide bg-light">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h2 class="display-4 fw-bold text-center mb-5 fade-in">Database Operations & Functions</h2>
+                    
+                    <!-- Database Overview -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="service-card fade-in">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-database text-primary me-2"></i>PostgreSQL + Supabase Architecture</h4>
+                                <p class="mb-3">Comprehensive database layer with advanced PostgreSQL features and Supabase integration:</p>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h5 class="fw-semibold mb-2">Schema Features</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-table text-primary me-2"></i>Normalized schema design</li>
+                                            <li class="mb-2"><i class="fas fa-key text-primary me-2"></i>Foreign key constraints</li>
+                                            <li class="mb-2"><i class="fas fa-search text-primary me-2"></i>Optimized indexing strategy</li>
+                                            <li class="mb-2"><i class="fas fa-clock text-primary me-2"></i>Temporal data tracking</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5 class="fw-semibold mb-2">Security Features</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-shield-alt text-primary me-2"></i>Row-Level Security (RLS)</li>
+                                            <li class="mb-2"><i class="fas fa-user-shield text-primary me-2"></i>Role-based access control</li>
+                                            <li class="mb-2"><i class="fas fa-audit text-primary me-2"></i>Audit trail triggers</li>
+                                            <li class="mb-2"><i class="fas fa-lock text-primary me-2"></i>Data encryption at rest</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5 class="fw-semibold mb-2">Performance Features</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-bolt text-primary me-2"></i>Real-time subscriptions</li>
+                                            <li class="mb-2"><i class="fas fa-sync text-primary me-2"></i>Connection pooling</li>
+                                            <li class="mb-2"><i class="fas fa-compress text-primary me-2"></i>Query optimization</li>
+                                            <li class="mb-2"><i class="fas fa-backup text-primary me-2"></i>Automated backups</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Database Functions and Triggers -->
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-function text-primary me-2"></i>RPC Functions (Sample)</h4>
+                                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                    <table class="table table-sm table-striped">
+                                        <tbody>
+                                            <tr><td><code class="function-name">get_user_by_id</code></td><td class="small">User retrieval</td></tr>
+                                            <tr><td><code class="function-name">create_group</code></td><td class="small">Group creation with invite code</td></tr>
+                                            <tr><td><code class="function-name">search_papers</code></td><td class="small">Full-text paper search</td></tr>
+                                            <tr><td><code class="function-name">create_session</code></td><td class="small">Chat session creation</td></tr>
+                                            <tr><td><code class="function-name">add_group_member</code></td><td class="small">Group membership management</td></tr>
+                                            <tr><td><code class="function-name">create_message</code></td><td class="small">Message creation with metadata</td></tr>
+                                            <tr><td><code class="function-name">get_user_groups</code></td><td class="small">User group membership</td></tr>
+                                            <tr><td><code class="function-name">create_ai_metadata</code></td><td class="small">AI processing analytics</td></tr>
+                                            <tr><td><code class="function-name">get_feedback_stats</code></td><td class="small">Feedback analytics</td></tr>
+                                            <tr><td><code class="function-name">cleanup_old_presence</code></td><td class="small">Maintenance operations</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="text-muted small mt-2">50+ total RPC functions encapsulating complex business logic</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="service-card h-100 fade-in-delay">
+                                <h4 class="fw-semibold mb-3"><i class="fas fa-bolt text-primary me-2"></i>Database Triggers</h4>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-clock text-primary me-2"></i>
+                                        <code class="function-name">update_users_updated_at</code><br>
+                                        <small class="text-muted">Automatic timestamp updates</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-key text-primary me-2"></i>
+                                        <code class="function-name">trigger_set_group_invite_code</code><br>
+                                        <small class="text-muted">Auto-generate group invite codes</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-shield-alt text-primary me-2"></i>
+                                        <code class="function-name">check_group_creation_permissions</code><br>
+                                        <small class="text-muted">Enforce business rules</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-user-plus text-primary me-2"></i>
+                                        <code class="function-name">handle_new_user</code><br>
+                                        <small class="text-muted">New user setup automation</small>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-eye text-primary me-2"></i>
+                                        <code class="function-name">update_user_last_seen</code><br>
+                                        <small class="text-muted">Activity tracking</small>
+                                    </li>
+                                </ul>
+                                
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Migration Strategy:</strong> All schema changes managed through versioned Supabase migrations for reliable deployments.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">12</div>
+    </section>
+
+    <!-- Slide 13: Conclusion & Future Work -->
+    <section id="slide-13" class="slide slide-title">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center justify-content-center">
+                <div class="col-lg-10 text-center">
+                    <h1 class="display-3 fw-bold mb-4 fade-in">
+                        Project Summary
+                    </h1>
+                    <div class="row text-start fade-in-delay">
+                        <div class="col-lg-6">
+                            <h3 class="fw-semibold mb-3 text-light">Key Achievements</h3>
+                            <ul class="list-unstyled fs-5">
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-3"></i>3-service separated architecture with clear boundaries</li>
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-3"></i>RAG-based AI integration for enhanced research</li>
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-3"></i>Comprehensive database design with 50+ RPC functions</li>
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-3"></i>Secure authentication and authorization</li>
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-3"></i>Real-time collaboration features</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-6">
+                            <h3 class="fw-semibold mb-3 text-light">Technical Innovation</h3>
+                            <ul class="list-unstyled fs-5">
+                                <li class="mb-3"><i class="fas fa-star text-warning me-3"></i>Zero database coupling in AI services</li>
+                                <li class="mb-3"><i class="fas fa-star text-warning me-3"></i>Express as exclusive database proxy</li>
+                                <li class="mb-3"><i class="fas fa-star text-warning me-3"></i>Scalable microservices architecture</li>
+                                <li class="mb-3"><i class="fas fa-star text-warning me-3"></i>Modern TypeScript + Python stack</li>
+                                <li class="mb-3"><i class="fas fa-star text-warning me-3"></i>Docker-based deployment strategy</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-5 fade-in-delay-2">
+                        <h4 class="text-light mb-3">Future Enhancements</h4>
+                        <p class="fs-5 text-light opacity-75">Vector database integration • Advanced RAG optimization • Multi-model AI support • Enhanced collaboration tools</p>
+                    </div>
+                    <div class="mt-5 fade-in-delay-3">
+                        <p class="fs-5 text-light opacity-75">Thank you for your attention</p>
+                        <p class="fs-6 text-light opacity-50">Team - 08 | School of AI, Amrita Vishwa Vidyapeetham</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">13</div>
+    </section>
+
+    <!-- Navigation Controls -->
+    <div class="slide-controls">
+        <button class="btn btn-primary btn-sm" id="prevSlide">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="btn btn-primary btn-sm" id="nextSlide">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Slide Progress -->
+    <div class="slide-progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <!-- Slide Indicator -->
+    <div class="slide-indicator">
+        <span id="currentSlideNumber">1</span> / <span id="totalSlides">13</span>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html>
