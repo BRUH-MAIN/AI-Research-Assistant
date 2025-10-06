@@ -558,10 +558,21 @@ router.put('/:id/members/:userId/role', async (req, res, next) => {
             p_admin_user_id: updatedBy
         });
         
+        console.log('RPC result:', result);
+        
+        if (!result || result.length === 0) {
+            return res.status(500).json({
+                error: 'No result returned from update_group_member_role function',
+                code: 500
+            });
+        }
+        
         const updateResult = result[0];
+        console.log('Update result:', updateResult);
         
         res.json({ 
-            message: `User role updated to ${updateResult.role} successfully` 
+            message: `User role updated to ${role} successfully`,
+            data: updateResult
         });
     } catch (error) {
         next(error);
