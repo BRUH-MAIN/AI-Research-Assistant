@@ -1,8 +1,8 @@
-import TopBar from '../components/TopBar'
-import InputBar from "../components/InputBar"
-import useHandleInput from '../hooks/useHandleInput'
-import Chat from './Chat';  
-import { useState, useEffect } from 'react';
+import TopBar from "../components/TopBar";
+import InputBar from "../components/InputBar";
+import useHandleInput from "../hooks/useHandleInput";
+import Chat from "./Chat";
+import { useState, useEffect } from "react";
 
 function MainWindow() {
   const { messages, onSendMessage, messageBlocks, isConnected } = useHandleInput();
@@ -12,47 +12,60 @@ function MainWindow() {
     if (messages.length > 0 && !isChatVisible) {
       const timer = setTimeout(() => {
         setIsChatVisible(true);
-      }, 500); // 500ms delay
+      }, 360);
       return () => clearTimeout(timer);
     }
   }, [messages, isChatVisible]);
 
   return (
-    <div className="rounded-0 h-full w-full flex flex-col items-center relative bg-gray-950 border-2 border-l-0 border-white overflow-hidden">
-      <TopBar />
-      
-      {/* Connection Status Indicator */}
-      <div className="absolute top-4 right-4 z-20">
-        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-          isConnected 
-            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-            : 'bg-red-500/20 text-red-400 border border-red-500/30'
-        }`}>
-          {isConnected ? '● Connected' : '● Disconnected'}
-        </div>
+    <section className="relative flex h-full w-full flex-col gap-6 overflow-hidden px-4 pb-8 pt-6 sm:px-8 lg:px-12">
+      <div className="pointer-events-none absolute inset-0 opacity-60 blur-3xl" aria-hidden>
+        <div className="absolute inset-0 bg-glow-iris" />
       </div>
 
-      {/* Disconnected Warning */}
+      <TopBar isConnected={isConnected} />
+
       {!isConnected && (
-        <div className="absolute top-16 right-4 z-20 bg-amber-500/20 border border-amber-500/30 text-amber-400 px-4 py-2 rounded-lg text-sm max-w-xs">
-          <p className="font-medium">Backend Unavailable</p>
-          <p className="text-xs mt-1">Make sure the FastAPI server is running on port 8000</p>
+        <div className="relative z-20 -mt-2 flex w-full items-center justify-between gap-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200 shadow-soft">
+          <div>
+            <p className="font-semibold tracking-wide">Offline mode</p>
+            <p className="text-amber-100/80">Launch the FastAPI backend on :8000 to resume streaming responses.</p>
+          </div>
+          <span className="hidden rounded-full border border-amber-400/40 px-3 py-1 sm:block">
+            Troubleshooting guide →
+          </span>
         </div>
       )}
-      
-      {isChatVisible && <div className='flex-1 w-full flex items-start pt-4 justify-center overflow-y-auto pb-20 scrollbar-gutter-stable ml-4'>
-        <Chat messages={messageBlocks} />
-      </div>}
-      <div className={`z-10 bg-transparent flex items-center justify-center w-full translation-transformation duration-200 ease-in-out absolute inset-x-0 ${
-        messages.length > 0 
-          ? 'bottom-0 mb-5' 
-          : 'top-1/2 transform -translate-y-1/2'
-      }`}>
-        <InputBar onSendMessage={onSendMessage} isConnected={isConnected}/>
+
+      <div className="relative z-10 flex flex-1 flex-col gap-6">
+        <div className="relative flex-1 overflow-hidden rounded-[32px] border border-white/10 bg-surface/80 p-6 shadow-soft backdrop-blur-2xl">
+          <div className="pointer-events-none absolute inset-0 bg-white/3 opacity-60" aria-hidden />
+          {isChatVisible ? (
+            <div className="relative flex h-full w-full justify-center overflow-y-auto pb-16 pr-1">
+              <Chat messages={messageBlocks} />
+            </div>
+          ) : (
+            <div className="relative flex h-full flex-col items-center justify-center gap-6 text-center text-white/70">
+              <div className="space-y-3">
+                <p className="text-sm uppercase tracking-[0.3em] text-white/50">Conversation ready</p>
+                <h2 className="text-3xl font-semibold text-white">Ask about any paper, dataset, or idea.</h2>
+                <p className="mx-auto max-w-xl text-sm text-white/70">
+                  Summon evidence-based explanations, compare methodologies, or spin up summaries. Your responses will unfold here.
+                </p>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/60">
+                Press Shift ↵ to add line breaks
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="relative z-20 mx-auto w-full max-w-3xl">
+          <InputBar onSendMessage={onSendMessage} isConnected={isConnected} />
+        </div>
       </div>
-      <div className='absolute bottom-0 max-w-3xl w-full h-11  bg-gray-950 backdrop-blur-sm'/>
-    </div>
-  )
+    </section>
+  );
 }
 
-export default MainWindow
+export default MainWindow;

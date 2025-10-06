@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { useUser } from '../contexts';
-import { 
-  UserIcon, 
-  Cog6ToothIcon as SettingsIcon, 
+import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { useUser } from "../contexts";
+import {
+  UserIcon,
+  Cog6ToothIcon as SettingsIcon,
   ArrowRightOnRectangleIcon as LogoutIcon,
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,
   UserGroupIcon,
   Bars3Icon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 const Navigation = () => {
   const { 
@@ -47,9 +47,9 @@ const Navigation = () => {
     try {
       await signOut();
       setDropdownOpen(false);
-      router.push('/');
+      router.push("/");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -58,179 +58,219 @@ const Navigation = () => {
   };
 
   const navLinks = [
-    { href: '/papers', label: 'Papers', icon: DocumentTextIcon, requireAuth: false },
-    { href: '/groups', label: 'Groups', icon: UserGroupIcon, requireAuth: true },
-    { href: '/chat', label: 'Chat', icon: ChatBubbleLeftRightIcon, requireAuth: true },
+    { href: "/papers", label: "Papers", icon: DocumentTextIcon, requireAuth: false },
+    { href: "/groups", label: "Groups", icon: UserGroupIcon, requireAuth: true },
+    { href: "/chat", label: "Chat", icon: ChatBubbleLeftRightIcon, requireAuth: true },
   ];
 
   if (isLoading) {
     return (
-      <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="animate-pulse bg-gray-700 h-8 w-32 rounded"></div>
-            <div className="animate-pulse bg-gray-700 h-8 w-24 rounded"></div>
-          </div>
+      <nav className="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-white/5">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="h-9 w-32 animate-pulse rounded-full bg-white/10" />
+          <div className="h-9 w-24 animate-pulse rounded-full bg-white/10" />
         </div>
       </nav>
     );
   }
 
   return (
-    <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo and App Name */}
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AR</span>
-              </div>
-              <span className="text-white font-semibold text-lg hidden sm:block">
-                AI Research Assistant
-              </span>
-            </Link>
-          </div>
+    <nav className="sticky top-0 z-50 border-b border-white/10 bg-surface/80 backdrop-blur-2xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo + App name */}
+        <Link
+          href="/"
+          className="group flex items-center gap-3 rounded-full px-2 py-1 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+        >
+          <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-accent to-accent-soft text-base font-bold shadow-floating shadow-accent/50 transition group-hover:shadow-soft">
+            AR
+          </span>
+          <span className="hidden text-base tracking-tight text-white/90 sm:block">
+            AI Research Assistant
+          </span>
+        </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) => {
-              if (link.requireAuth && !user) return null;
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                    isActivePath(link.href)
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+        {/* Desktop nav */}
+        <div className="hidden items-center gap-2 md:flex">
+          {navLinks.map((link) => {
+            if (link.requireAuth && !user) return null;
+            const Icon = link.icon;
+            const active = isActivePath(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`group relative flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all duration-300 ease-glide ${
+                  active
+                    ? "bg-white/10 text-white shadow-soft"
+                    : "text-white/70 hover:bg-white/8 hover:text-white"
+                }`}
+              >
+                <span
+                  className={`absolute inset-0 rounded-full border border-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
+                    active ? "opacity-100" : ""
                   }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{link.label}</span>
-                </Link>
-              );
-            })}
-          </div>
+                  aria-hidden="true"
+                />
+                <Icon className="h-4 w-4" />
+                <span>{link.label}</span>
+                {active && (
+                  <span className="absolute -bottom-2 left-1/2 h-1 w-1.5 -translate-x-1/2 rounded-full bg-white" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
 
-          {/* User Profile or Auth Buttons */}
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  {getUserAvatar() ? (
-                    <img
-                      src={getUserAvatar()!}
-                      alt="Profile"
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
-                      <UserIcon className="h-5 w-5 text-white" />
-                    </div>
-                  )}
-                  <span className="text-white text-sm font-medium hidden sm:block">
-                    {getUserDisplayName()}
+        {/* Profile / auth */}
+        <div className="flex items-center gap-3">
+          {user ? (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="group flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 shadow-soft transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+              >
+                {getUserAvatar() ? (
+                  <img
+                    src={getUserAvatar()!}
+                    alt="Profile"
+                    className="h-9 w-9 rounded-full object-cover ring-2 ring-white/10 transition group-hover:ring-accent"
+                  />
+                ) : (
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-emerald-400 to-sky-500 text-white shadow-soft">
+                    <UserIcon className="h-5 w-5" />
                   </span>
-                </button>
+                )}
+                <span className="hidden text-sm font-medium sm:block">
+                  {getUserDisplayName()}
+                </span>
+                <span className="hidden text-xs text-white/60 md:block">
+                  {user.email}
+                </span>
+              </button>
 
-                {/* Dropdown Menu */}
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-1">
-                    <div className="px-4 py-3 border-b border-gray-700">
-                      <p className="text-white font-medium">{getUserDisplayName()}</p>
-                      <p className="text-gray-400 text-sm truncate">{user.email}</p>
-                    </div>
-                    
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-white/10 bg-surface/95 shadow-soft">
+                  <div className="space-y-1 border-b border-white/10 bg-white/5 px-4 py-3">
+                    <p className="text-sm font-semibold text-white/90">
+                      {getUserDisplayName()}
+                    </p>
+                    <p className="text-xs text-white/60">{user.email}</p>
+                  </div>
+                  <div className="py-2">
                     <Link
                       href="/profile"
-                      className="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-white/70 transition hover:bg-white/8 hover:text-white"
                       onClick={() => setDropdownOpen(false)}
                     >
                       <UserIcon className="h-4 w-4" />
-                      <span>Profile</span>
+                      Profile
                     </Link>
-                    
                     <Link
                       href="/settings"
-                      className="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-white/70 transition hover:bg-white/8 hover:text-white"
                       onClick={() => setDropdownOpen(false)}
                     >
                       <SettingsIcon className="h-4 w-4" />
-                      <span>Settings</span>
+                      Settings
                     </Link>
-                    
-                    <div className="border-t border-gray-700 mt-1 pt-1">
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-3 px-4 py-2 text-red-400 hover:text-red-300 hover:bg-gray-700 transition-colors w-full text-left"
-                      >
-                        <LogoutIcon className="h-4 w-4" />
-                        <span>Sign out</span>
-                      </button>
-                    </div>
                   </div>
-                )}
+                  <div className="border-t border-white/10 bg-white/5 px-4 py-2">
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-3 rounded-full px-3 py-2 text-sm text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200"
+                    >
+                      <LogoutIcon className="h-4 w-4" />
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="rounded-full px-4 py-2 text-sm font-medium text-white/80 transition hover:text-white"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-full bg-gradient-to-r from-accent via-accent-soft to-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:shadow-floating"
+              >
+                Join now
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile menu trigger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/5 text-white/70 transition hover:border-white/20 hover:text-white md:hidden"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <XMarkIcon className="h-5 w-5" /> : <Bars3Icon className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile sheet */}
+      {mobileMenuOpen && (
+        <div className="border-t border-white/10 bg-surface/95 pb-6 md:hidden">
+          <div className="px-4 pt-4">
+            {user && (
+              <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-white/80 shadow-soft">
+                <p className="text-sm font-semibold text-white/90">{getUserDisplayName()}</p>
+                <p className="text-xs text-white/60">{user.email}</p>
               </div>
+            )}
+            <div className="flex flex-col gap-2">
+              {navLinks.map((link) => {
+                if (link.requireAuth && !user) return null;
+                const Icon = link.icon;
+                const active = isActivePath(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition ${
+                      active
+                        ? "border-white/15 bg-white/12 text-white"
+                        : "border-white/5 bg-white/2 text-white/70 hover:border-white/15 hover:bg-white/10 hover:text-white"
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="font-medium">{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="mt-6 w-full rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-200 transition hover:border-rose-500/50 hover:bg-rose-500/15"
+              >
+                Sign out
+              </button>
             ) : (
-              <div className="flex items-center space-x-3">
+              <div className="mt-6 grid gap-3">
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                  className="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-semibold text-white/80 transition hover:border-white/20 hover:text-white"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="rounded-2xl bg-gradient-to-r from-accent via-accent-soft to-rose-500 px-4 py-3 text-center text-sm font-semibold text-white shadow-soft transition hover:shadow-floating"
                 >
-                  Sign up
+                  Join now
                 </Link>
               </div>
             )}
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              {mobileMenuOpen ? (
-                <XMarkIcon className="h-6 w-6" />
-              ) : (
-                <Bars3Icon className="h-6 w-6" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-gray-800 border-t border-gray-700">
-          <div className="px-4 py-2 space-y-1">
-            {navLinks.map((link) => {
-              if (link.requireAuth && !user) return null;
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActivePath(link.href)
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{link.label}</span>
-                </Link>
-              );
-            })}
           </div>
         </div>
       )}

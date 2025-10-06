@@ -1,53 +1,73 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-import type { User } from '@supabase/supabase-js';
-import { 
-  UserIcon, 
-  BellIcon, 
-  ShieldCheckIcon, 
-  MoonIcon,
-  SunIcon,
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient, type Session, type User } from "@supabase/supabase-js";
+import {
+  BellIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon
-} from '@heroicons/react/24/outline';
+  ExclamationCircleIcon,
+  MoonIcon,
+  ShieldCheckIcon,
+  SunIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
+import { cn } from "@/lib/utils";
 
-// Supabase Configuration
+type Message = { type: "success" | "error"; text: string };
+type ThemeOption = "dark" | "light";
+
+type SettingsState = {
+  theme: ThemeOption;
+  notifications: {
+    email: boolean;
+    push: boolean;
+    research_updates: boolean;
+    chat_messages: boolean;
+  };
+  privacy: {
+    profile_visibility: "public" | "private" | "friends";
+    search_history: boolean;
+    analytics: boolean;
+  };
+};
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// Create Supabase client
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const Settings = () => {
+const initialSettings: SettingsState = {
+  theme: "dark",
+  notifications: {
+    email: true,
+    push: false,
+    research_updates: true,
+    chat_messages: true,
+  },
+  privacy: {
+    profile_visibility: "public",
+    search_history: true,
+    analytics: true,
+  },
+};
+
+export default function SettingsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [settings, setSettings] = useState<SettingsState>(initialSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [settings, setSettings] = useState({
-    theme: 'dark',
-    notifications: {
-      email: true,
-      push: false,
-      research_updates: true,
-      chat_messages: true
-    },
-    privacy: {
-      profile_visibility: 'public',
-      search_history: true,
-      analytics: true
-    }
-  });
-  const router = useRouter();
+  const [message, setMessage] = useState<Message | null>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+    const bootstrap = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        router.push('/login');
+        setLoading(false);
+        router.push("/login");
         return;
       }
 
@@ -55,25 +75,49 @@ const Settings = () => {
       setLoading(false);
     };
 
-    checkAuth();
+    bootstrap();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+      if (!session?.user) {
+        router.push("/login");
+        return;
+      }
+      setUser(session.user);
+    });
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
-  const handleSettingChange = (category: string, setting: string, value: any) => {
-    setSettings(prev => {
-      if (category === 'theme') {
-        return { ...prev, theme: value };
-      }
-      
-      const categoryData = prev[category as keyof typeof prev];
-      if (typeof categoryData === 'object' && categoryData !== null) {
-        return {
-          ...prev,
-          [category]: { ...categoryData, [setting]: value }
-        };
-      }
-      
-      return prev;
-    });
+  const handleThemeChange = (nextTheme: ThemeOption) => {
+    setSettings((prev) => ({
+      ...prev,
+      theme: nextTheme,
+    }));
+  };
+
+  const handleNotificationToggle = (key: keyof SettingsState["notifications"]) => {
+    setSettings((prev) => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [key]: !prev.notifications[key],
+      },
+    }));
+  };
+
+  const handlePrivacyToggle = <K extends keyof SettingsState["privacy"]>(
+    key: K,
+    value: SettingsState["privacy"][K]
+  ) => {
+    setSettings((prev) => ({
+      ...prev,
+      privacy: {
+        ...prev.privacy,
+        [key]: value,
+      },
+    }));
   };
 
   const handleSave = async () => {
@@ -81,40 +125,96 @@ const Settings = () => {
     setMessage(null);
 
     try {
-      // Here you would save settings to your backend
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      setMessage({ type: 'success', text: 'Settings saved successfully!' });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setMessage({ type: "success", text: "Settings saved successfully." });
     } catch (error) {
-      console.error('Failed to save settings:', error);
-      setMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
+      console.error("Failed to save settings:", error);
+      setMessage({
+        type: "error",
+        text: "We couldn’t save your preferences. Please try again.",
+      });
     } finally {
       setSaving(false);
     }
   };
 
+  const ActiveThemeIcon = settings.theme === "dark" ? MoonIcon : SunIcon;
+  const themeDescriptor = useMemo(
+    () =>
+      settings.theme === "dark"
+        ? "Dim interface with higher contrast for late-night work."
+        : "Bright interface tuned for daylight readability and presentation.",
+    [settings.theme]
+  );
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface text-white">
+        <div
+          className="pointer-events-none absolute inset-0 bg-glow-iris opacity-60 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative z-10 flex flex-col items-center gap-4 text-center">
+          <div className="h-16 w-16 animate-spin rounded-full border-2 border-white/20 border-t-transparent" />
+          <p className="text-sm text-white/70">Loading your preferences…</p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Settings</h1>
-          <p className="text-gray-400 mt-2">Manage your application preferences and privacy settings</p>
-        </div>
+  if (!user) {
+    return null;
+  }
 
-        {/* Message Display */}
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-surface text-white">
+      <div
+        className="pointer-events-none absolute inset-0 bg-glow-iris opacity-70 blur-3xl"
+        aria-hidden
+      />
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col gap-12 px-6 py-16 sm:px-10 lg:px-16">
+        <header className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-4">
+            <p className="text-xs uppercase tracking-[0.35em] text-white/50">Workspace preferences</p>
+            <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+              Tailor how your research studio sounds, signals, and safeguards.
+            </h1>
+            <p className="text-sm text-white/70">
+              Configure lighting, notification cadence, and privacy posture so your assistant complements your focus instead of interrupting it.
+            </p>
+          </div>
+
+          <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 shadow-soft">
+            <p className="text-xs uppercase tracking-[0.3em] text-white/50">Current theme</p>
+            <div className="mt-4 flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white">
+                      <ActiveThemeIcon className="h-6 w-6" />
+              </div>
+              <div className="space-y-1 text-sm text-white/70">
+                <p className="text-sm font-semibold text-white">{settings.theme === "dark" ? "Dark mode" : "Light mode"}</p>
+                <p>{themeDescriptor}</p>
+              </div>
+            </div>
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/4 p-4 text-xs text-white/60">
+              <p>
+                Sync your theme choice with the desktop app via <strong className="text-white">Preferences → Display</strong> to stay consistent across devices.
+              </p>
+            </div>
+          </div>
+        </header>
+
         {message && (
-          <div className={`mb-6 p-4 rounded-lg flex items-center space-x-3 ${
-            message.type === 'success' ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'
-          }`}>
-            {message.type === 'success' ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className={cn(
+              "flex items-center gap-3 rounded-3xl border px-4 py-3 text-sm shadow-soft",
+              message.type === "success"
+                ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                : "border-rose-400/30 bg-rose-500/10 text-rose-200"
+            )}
+          >
+            {message.type === "success" ? (
               <CheckCircleIcon className="h-5 w-5" />
             ) : (
               <ExclamationCircleIcon className="h-5 w-5" />
@@ -123,227 +223,287 @@ const Settings = () => {
           </div>
         )}
 
-        <div className="space-y-8">
-          {/* Theme Settings */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <div className="flex items-center space-x-3 mb-6">
-              {settings.theme === 'dark' ? (
-                <MoonIcon className="h-6 w-6 text-blue-500" />
-              ) : (
-                <SunIcon className="h-6 w-6 text-yellow-500" />
-              )}
-              <h2 className="text-xl font-semibold text-white">Appearance</h2>
+        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+          <aside className="space-y-6">
+            <div className="rounded-[32px] border border-white/10 bg-white/6 p-8 shadow-soft">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <UserIcon className="h-6 w-6 text-white/70" />
+                  <div>
+                    <p className="text-sm font-semibold text-white">{user.email}</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-white/50">Account owner</p>
+                  </div>
+                </div>
+                <div className="grid gap-3 text-sm text-white/70">
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <span className="text-white/60">Theme</span>
+                    <span className="text-white/85">{settings.theme === "dark" ? "Dark" : "Light"}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <span className="text-white/60">Email notifications</span>
+                    <span className="text-white/85">{settings.notifications.email ? "Enabled" : "Muted"}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <span className="text-white/60">Profile visibility</span>
+                    <span className="text-white/85">{settings.privacy.profile_visibility}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Theme</label>
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => handleSettingChange('theme', '', 'dark')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                      settings.theme === 'dark'
-                        ? 'bg-blue-600 border-blue-600 text-white'
-                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                    }`}
+
+            <div className="rounded-[32px] border border-white/10 bg-white/4 p-6 shadow-soft">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50">Tips</p>
+              <ul className="mt-4 space-y-3 text-sm text-white/70">
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span>Enable research updates to receive curated paper drops every Friday.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span>Set profile visibility to friends when coordinating with closed cohorts.</span>
+                </li>
+              </ul>
+            </div>
+          </aside>
+
+          <section className="space-y-8">
+            <div className="rounded-[32px] border border-white/10 bg-white/7 p-8 shadow-soft backdrop-blur-2xl">
+              <div className="flex items-center gap-3">
+                {settings.theme === "dark" ? (
+                  <MoonIcon className="h-6 w-6 text-accent" />
+                ) : (
+                  <SunIcon className="h-6 w-6 text-amber-300" />
+                )}
+                <div>
+                  <p className="text-lg font-semibold text-white">Appearance</p>
+                  <p className="text-sm text-white/70">Choose how the studio renders content across sessions.</p>
+                </div>
+              </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {([
+                  {
+                    id: "dark" as ThemeOption,
+                    label: "Dark mode",
+                    icon: MoonIcon,
+                    description: "Inky backdrop with cinematic contrast and subtle glows.",
+                  },
+                  {
+                    id: "light" as ThemeOption,
+                    label: "Light mode",
+                    icon: SunIcon,
+                    description: "Magazine-inspired whites with softened drop shadows.",
+                  },
+                ] satisfies Array<{ id: ThemeOption; label: string; icon: typeof MoonIcon; description: string }>).map(
+                  (option) => {
+                    const isActive = settings.theme === option.id;
+                    const Icon = option.icon;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => handleThemeChange(option.id)}
+                        className={cn(
+                          "flex h-full flex-col gap-3 rounded-3xl border px-5 py-4 text-left transition",
+                          isActive
+                            ? "border-accent bg-accent/10 text-white shadow-soft"
+                            : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                        )}
+                      >
+                        <span className="flex items-center gap-3 text-sm font-semibold">
+                          <Icon className="h-5 w-5" />
+                          {option.label}
+                        </span>
+                        <span className="text-xs text-white/60">{option.description}</span>
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[32px] border border-white/10 bg-white/7 p-8 shadow-soft backdrop-blur-2xl">
+              <div className="flex items-center gap-3">
+                <BellIcon className="h-6 w-6 text-accent" />
+                <div>
+                  <p className="text-lg font-semibold text-white">Notifications</p>
+                  <p className="text-sm text-white/70">Decide when the assistant can interrupt, whisper, or wait.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {[
+                  {
+                    key: "email" as const,
+                    label: "Email digests",
+                    description: "Summaries of new activity, papers, and decisions.",
+                  },
+                  {
+                    key: "research_updates" as const,
+                    label: "Research updates",
+                    description: "Friday dispatch covering new citations and RAG highlights.",
+                  },
+                  {
+                    key: "chat_messages" as const,
+                    label: "Chat pulses",
+                    description: "Ping when collaborators reply or the assistant posts results.",
+                  },
+                  {
+                    key: "push" as const,
+                    label: "Push notifications",
+                    description: "Real-time nudges to keep experiments on-track.",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/80"
                   >
-                    <MoonIcon className="h-4 w-4" />
-                    <span>Dark</span>
-                  </button>
-                  <button
-                    onClick={() => handleSettingChange('theme', '', 'light')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                      settings.theme === 'light'
-                        ? 'bg-blue-600 border-blue-600 text-white'
-                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                    }`}
+                    <div className="max-w-md space-y-1">
+                      <p className="font-medium text-white">{item.label}</p>
+                      <p className="text-xs text-white/60">{item.description}</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.notifications[item.key]}
+                      onClick={() => handleNotificationToggle(item.key)}
+                      className={cn(
+                        "relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition",
+                        settings.notifications[item.key]
+                          ? "bg-accent shadow-soft"
+                          : "bg-white/10"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-soft transition",
+                          settings.notifications[item.key] ? "translate-x-6" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[32px] border border-white/10 bg-white/7 p-8 shadow-soft backdrop-blur-2xl">
+              <div className="flex items-center gap-3">
+                <ShieldCheckIcon className="h-6 w-6 text-accent" />
+                <div>
+                  <p className="text-lg font-semibold text-white">Privacy & security</p>
+                  <p className="text-sm text-white/70">Control what’s visible and how telemetry is gathered.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-5">
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.25em] text-white/50">Profile visibility</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {([
+                      { id: "public", label: "Public" },
+                      { id: "friends", label: "Friends" },
+                      { id: "private", label: "Private" },
+                    ] satisfies Array<{ id: SettingsState["privacy"]["profile_visibility"]; label: string }>).map(
+                      (option) => {
+                        const isActive = settings.privacy.profile_visibility === option.id;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => handlePrivacyToggle("profile_visibility", option.id)}
+                            className={cn(
+                              "rounded-3xl border px-4 py-3 text-left text-sm transition",
+                              isActive
+                                ? "border-accent bg-accent/10 text-white"
+                                : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                            )}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+
+                {[
+                  {
+                    key: "search_history" as const,
+                    label: "Save search history",
+                    description: "Allow personalised recall when revisiting queries.",
+                  },
+                  {
+                    key: "analytics" as const,
+                    label: "Share anonymised analytics",
+                    description: "Help us improve the experience by sharing usage patterns.",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/80"
                   >
-                    <SunIcon className="h-4 w-4" />
-                    <span>Light</span>
-                  </button>
-                </div>
+                    <div className="max-w-md space-y-1">
+                      <p className="font-medium text-white">{item.label}</p>
+                      <p className="text-xs text-white/60">{item.description}</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.privacy[item.key]}
+                      onClick={() => handlePrivacyToggle(item.key, !settings.privacy[item.key])}
+                      className={cn(
+                        "relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition",
+                        settings.privacy[item.key] ? "bg-accent shadow-soft" : "bg-white/10"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-soft transition",
+                          settings.privacy[item.key] ? "translate-x-6" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* Notifications */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <div className="flex items-center space-x-3 mb-6">
-              <BellIcon className="h-6 w-6 text-blue-500" />
-              <h2 className="text-xl font-semibold text-white">Notifications</h2>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-white font-medium">Email Notifications</h3>
-                  <p className="text-gray-400 text-sm">Receive updates via email</p>
-                </div>
-                <button
-                  onClick={() => handleSettingChange('notifications', 'email', !settings.notifications.email)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    settings.notifications.email ? 'bg-blue-600' : 'bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      settings.notifications.email ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-white font-medium">Research Updates</h3>
-                  <p className="text-gray-400 text-sm">Get notified about new papers and research</p>
-                </div>
-                <button
-                  onClick={() => handleSettingChange('notifications', 'research_updates', !settings.notifications.research_updates)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    settings.notifications.research_updates ? 'bg-blue-600' : 'bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      settings.notifications.research_updates ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-white font-medium">Chat Messages</h3>
-                  <p className="text-gray-400 text-sm">Notifications for new chat messages</p>
-                </div>
-                <button
-                  onClick={() => handleSettingChange('notifications', 'chat_messages', !settings.notifications.chat_messages)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    settings.notifications.chat_messages ? 'bg-blue-600' : 'bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      settings.notifications.chat_messages ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Privacy Settings */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <div className="flex items-center space-x-3 mb-6">
-              <ShieldCheckIcon className="h-6 w-6 text-blue-500" />
-              <h2 className="text-xl font-semibold text-white">Privacy & Security</h2>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Profile Visibility</label>
-                <select
-                  value={settings.privacy.profile_visibility}
-                  onChange={(e) => handleSettingChange('privacy', 'profile_visibility', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="public">Public</option>
-                  <option value="private">Private</option>
-                  <option value="friends">Friends Only</option>
-                </select>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-white font-medium">Save Search History</h3>
-                  <p className="text-gray-400 text-sm">Allow us to save your searches to improve recommendations</p>
-                </div>
-                <button
-                  onClick={() => handleSettingChange('privacy', 'search_history', !settings.privacy.search_history)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    settings.privacy.search_history ? 'bg-blue-600' : 'bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      settings.privacy.search_history ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-white font-medium">Analytics</h3>
-                  <p className="text-gray-400 text-sm">Help us improve the app by sharing usage analytics</p>
-                </div>
-                <button
-                  onClick={() => handleSettingChange('privacy', 'analytics', !settings.privacy.analytics)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    settings.privacy.analytics ? 'bg-blue-600' : 'bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      settings.privacy.analytics ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Account Actions */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <div className="flex items-center space-x-3 mb-6">
-              <UserIcon className="h-6 w-6 text-blue-500" />
-              <h2 className="text-xl font-semibold text-white">Account</h2>
-            </div>
-            
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <button
-                onClick={() => router.push('/profile')}
-                className="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                type="button"
+                onClick={() => router.back()}
+                className="rounded-full border border-white/15 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
               >
-                Edit Profile
+                Cancel
               </button>
-              
-              <div className="border-t border-gray-700 pt-4">
-                <button className="text-red-400 hover:text-red-300 text-sm transition-colors">
-                  Delete Account
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSettings(initialSettings)}
+                  className="rounded-full border border-white/15 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
+                >
+                  Restore defaults
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  aria-busy={saving}
+                  onClick={handleSave}
+                  className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent via-accent-soft to-rose-500 px-6 py-3 text-sm font-semibold shadow-soft transition hover:shadow-floating disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saving ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" />
+                      <span>Saving…</span>
+                    </>
+                  ) : (
+                    <span>Save settings</span>
+                  )}
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Save Button */}
-          <div className="flex justify-end space-x-4 pt-6">
-            <button
-              onClick={() => router.back()}
-              className="px-6 py-2 border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center space-x-2"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <span>Save Settings</span>
-              )}
-            </button>
-          </div>
+          </section>
         </div>
       </div>
     </div>
   );
-};
-
-export default Settings;
+}

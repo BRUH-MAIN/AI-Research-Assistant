@@ -1,519 +1,383 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
+  AdjustmentsHorizontalIcon,
+  ArrowPathIcon,
+  MagnifyingGlassIcon,
   PlusIcon,
   UserGroupIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  ChevronUpIcon
-} from '@heroicons/react/24/outline';
-import GroupCard from '../components/groups/GroupCard';
-import { groupService } from '../services/groupService';
-import { authService } from '../services/authService';
-import type { Group } from '../types/types';
-import type { User } from '../services/authService';
+} from "@heroicons/react/24/outline";
+import GroupCard from "../components/groups/GroupCard";
+import { groupService } from "../services/groupService";
+import { authService, type User } from "../services/authService";
+import type { Group } from "../types/types";
 
-const GroupsPage: React.FC = () => {
+const GROUPS_STEP = 6;
+const ROLE_FILTERS = [
+  { label: "All roles", value: "all" },
+  { label: "Admins", value: "admin" },
+  { label: "Mentors", value: "mentor" },
+  { label: "Members", value: "member" },
+] as const;
+
+type RoleFilter = (typeof ROLE_FILTERS)[number]["value"];
+
+export default function GroupsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
-  const [displayedGroups, setDisplayedGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [error, setError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const previousUserIdRef = useRef<number | null>(null);
-  const observer = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+  const [visibleCount, setVisibleCount] = useState(GROUPS_STEP);
+  const [leavingGroupId, setLeavingGroupId] = useState<number | null>(null);
 
-  const GROUPS_PER_PAGE = 6; // Number of groups to show per page
-
-  // Function to clear all group-related state
-  const clearGroupState = () => {
-    setGroups([]);
-    setFilteredGroups([]);
-    setDisplayedGroups([]);
-    setSearchTerm('');
-    setRoleFilter('all');
-    setError(null);
-    setCurrentPage(1);
-  };
-
-  // Scroll to top functionality
-  const scrollToTop = useCallback(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
+  const filteredGroups = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    return groups.filter((group) => {
+      const matchesSearch = normalizedSearch
+        ? (group.name?.toLowerCase().includes(normalizedSearch) ||
+            group.description?.toLowerCase().includes(normalizedSearch))
+        : true;
+      const matchesRole =
+        roleFilter === "all" ? true : group.user_role === roleFilter;
+      return matchesSearch && matchesRole;
     });
+  }, [groups, searchTerm, roleFilter]);
+
+  const displayedGroups = useMemo(
+    () => filteredGroups.slice(0, visibleCount),
+    [filteredGroups, visibleCount]
+  );
+
+  const loadGroups = useCallback(async (userId: number) => {
+    const data = await groupService.getUserGroups(userId);
+    setGroups(data);
   }, []);
 
-  // Handle scroll to show/hide scroll-to-top button
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.pageYOffset > 300);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Infinite scroll intersection observer
-  const lastGroupElementRef = useCallback((node: HTMLDivElement) => {
-    if (loading) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && displayedGroups.length < filteredGroups.length) {
-        loadMoreGroups();
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [loading, displayedGroups.length, filteredGroups.length]);
-
-  // Load more groups for infinite scroll
-  const loadMoreGroups = useCallback(() => {
-    if (loadingMore || displayedGroups.length >= filteredGroups.length) return;
-    
-    setLoadingMore(true);
-    
-    // Simulate loading delay for smooth UX
-    setTimeout(() => {
-      const nextPage = currentPage + 1;
-      const startIndex = currentPage * GROUPS_PER_PAGE;
-      const endIndex = nextPage * GROUPS_PER_PAGE;
-      const newGroups = filteredGroups.slice(startIndex, endIndex);
-      
-      setDisplayedGroups(prev => [...prev, ...newGroups]);
-      setCurrentPage(nextPage);
-      setLoadingMore(false);
-    }, 500);
-  }, [currentPage, displayedGroups.length, filteredGroups, loadingMore]);
-
-  // Update displayed groups when filtered groups change
-  useEffect(() => {
-    setCurrentPage(1);
-    setDisplayedGroups(filteredGroups.slice(0, GROUPS_PER_PAGE));
+    setVisibleCount(GROUPS_STEP);
   }, [filteredGroups]);
 
-  // Check authentication and handle user changes
   useEffect(() => {
-    const checkAuth = async () => {
-      // Initialize authentication
-      const authData = await authService.initializeAuth();
-      
-      if (!authData) {
-        // Clear state when no auth
-        clearGroupState();
-        setUser(null);
-        setCurrentUserId(null);
-        router.push('/login');
-        return;
-      }
-      
-      const currentUser = await authService.getCurrentUser();
-      if (!currentUser) {
-        // Clear state when no user
-        clearGroupState();
-        setUser(null);
-        setCurrentUserId(null);
-        router.push('/login');
-        return;
-      }
-      
-      // Get the internal user ID from auth service
-      const newUserId = authService.getCurrentInternalUserId();
-      
-      setUser(currentUser);
-      setCurrentUserId(newUserId);
-    };
+    let active = true;
+    let subscription: { unsubscribe: () => void } | null = null;
 
-    checkAuth();
-
-    const { data: { subscription } } = authService.onAuthStateChange(
-      (event: string, session: any) => {
-        if (!session?.user) {
-          // User logged out, clear all state
-          clearGroupState();
-          setUser(null);
-          setCurrentUserId(null);
-          router.push('/login');
-        } else {
-          // User logged in or session renewed
-          const newUserId = authService.getCurrentInternalUserId();
-          
-          setUser(session.user);
-          setCurrentUserId(newUserId);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [router]); // Remove currentUserId from dependencies to prevent infinite loop
-
-  // Handle user changes and clear state when needed
-  useEffect(() => {
-    if (currentUserId !== null && previousUserIdRef.current !== null && previousUserIdRef.current !== currentUserId) {
-      console.log('Different user detected, clearing previous state');
-      clearGroupState();
-    }
-    previousUserIdRef.current = currentUserId;
-  }, [currentUserId]);
-
-  // Check authentication and handle user changes
-  useEffect(() => {
-    const checkAuth = async () => {
-      // Initialize authentication
-      const authData = await authService.initializeAuth();
-      
-      if (!authData) {
-        // Clear state when no auth
-        clearGroupState();
-        setUser(null);
-        setCurrentUserId(null);
-        router.push('/login');
-        return;
-      }
-      
-      const currentUser = await authService.getCurrentUser();
-      if (!currentUser) {
-        // Clear state when no user
-        clearGroupState();
-        setUser(null);
-        setCurrentUserId(null);
-        router.push('/login');
-        return;
-      }
-      
-      // Get the internal user ID from auth service
-      const newUserId = authService.getCurrentInternalUserId();
-      
-      setUser(currentUser);
-      setCurrentUserId(newUserId);
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = authService.onAuthStateChange(
-      (event: string, session: any) => {
-        if (!session?.user) {
-          // User logged out, clear all state
-          clearGroupState();
-          setUser(null);
-          setCurrentUserId(null);
-          router.push('/login');
-        } else {
-          // User logged in or session renewed
-          const newUserId = authService.getCurrentInternalUserId();
-          
-          setUser(session.user);
-          setCurrentUserId(newUserId);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [router]); // Remove currentUserId from dependencies to prevent infinite loop
-
-  // Handle user changes and clear state when needed
-  useEffect(() => {
-    if (currentUserId !== null && previousUserIdRef.current !== null && previousUserIdRef.current !== currentUserId) {
-      console.log('Different user detected, clearing previous state');
-      clearGroupState();
-    }
-    previousUserIdRef.current = currentUserId;
-  }, [currentUserId]);
-
-  // Load user's groups
-  useEffect(() => {
-    if (!user) return;
-    
-    // Add timeout for loading
-    const loadingTimeout = setTimeout(() => {
-      if (loading) {
-        setError('Loading is taking longer than expected. Please refresh the page.');
-        setLoading(false);
-      }
-    }, 10000); // 10 second timeout
-
-    const loadGroups = async () => {
+    const bootstrap = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Wait for currentUserId to be set, but with a fallback
-        let userId = currentUserId;
-        let retryCount = 0;
-        const maxRetries = 5;
-        
-        while (userId === null && retryCount < maxRetries) {
-          console.log(`Waiting for user ID... attempt ${retryCount + 1}`);
-          await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
-          userId = authService.getCurrentInternalUserId();
-          retryCount++;
+
+        const session = await authService.initializeAuth();
+        if (!session) {
+          router.push("/login");
+          return;
         }
-        
-        if (userId === null) {
-          console.warn('Could not get user ID after retries, using guest access');
-          userId = 0; // Use guest user ID as fallback
+
+        const currentUser = await authService.getCurrentUser();
+        if (!currentUser) {
+          router.push("/login");
+          return;
         }
-        
-        console.log(`Loading groups for user ID: ${userId}`);
-        
-        const userGroups = await groupService.getUserGroups(userId);
-        console.log('Loaded groups:', userGroups);
-        setGroups(userGroups);
-        setFilteredGroups(userGroups);
-        setCurrentUserId(userId);
-        clearTimeout(loadingTimeout);
-      } catch (error: any) {
-        console.error('Failed to load groups:', error);
-        clearTimeout(loadingTimeout);
-        
-        // Handle specific error for user not found
-        if (error.message?.includes('User with ID') && error.message?.includes('not found')) {
-          setError(`User not found in system. You may have limited access. (User ID: ${currentUserId || 'unknown'})`);
-          // Still allow the page to load but with empty groups
-          setGroups([]);
-          setFilteredGroups([]);
-        } else if (error.message?.includes('Network Error') || error.message?.includes('fetch')) {
-          setError('Unable to connect to server. Please check your connection and try again.');
-        } else {
-          setError('Failed to load groups. Please try again.');
+
+        if (!active) return;
+        setUser(currentUser);
+
+        let internalId = authService.getCurrentInternalUserId();
+        if (!internalId) {
+          internalId = await authService.refreshInternalUserId();
         }
+
+        if (!internalId) {
+          internalId = 0; // fallback to guest
+        }
+
+        if (!active) return;
+        setCurrentUserId(internalId);
+        await loadGroups(internalId);
+      } catch (err) {
+        console.error("Failed to bootstrap groups:", err);
+        if (!active) return;
+        setGroups([]);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load your groups right now."
+        );
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
-    loadGroups();
-    
-    return () => clearTimeout(loadingTimeout);
-  }, [user]); // Remove currentUserId from dependencies to prevent infinite loop
+    bootstrap();
 
-  // Filter groups based on search and role filter
-  useEffect(() => {
-    let filtered = groups;
+    const { data } = authService.onAuthStateChange(async (_event, session) => {
+      if (!active) return;
 
-    if (searchTerm) {
-      filtered = filtered.filter(group =>
-        group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      if (!session?.user) {
+        setUser(null);
+        setCurrentUserId(null);
+        setGroups([]);
+        router.push("/login");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        setUser(session.user);
+        let internalId = authService.getCurrentInternalUserId();
+        if (!internalId) {
+          internalId = await authService.refreshInternalUserId();
+        }
+        if (!internalId) {
+          internalId = 0;
+        }
+        if (!active) return;
+        setCurrentUserId(internalId);
+        await loadGroups(internalId);
+      } catch (err) {
+        console.error("Failed to refresh groups after auth change:", err);
+        if (!active) return;
+        setGroups([]);
+        setError("We couldn’t reload your groups after signing in.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    });
+
+    subscription = data.subscription;
+
+    return () => {
+      active = false;
+      subscription?.unsubscribe();
+    };
+  }, [loadGroups, router]);
+
+  const handleLeaveGroup = useCallback(
+    async (groupId: number) => {
+      if (!currentUserId) return;
+      const group = groups.find(
+        (entry) => (entry.group_id || entry.id) === groupId
       );
-    }
+      if (!group) return;
 
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(group => group.user_role === roleFilter);
-    }
+      const confirmed = window.confirm(
+        `Leave “${group.name}”? You can rejoin with a fresh invite.`
+      );
+      if (!confirmed) return;
 
-    setFilteredGroups(filtered);
-  }, [groups, searchTerm, roleFilter]);
+      try {
+        setLeavingGroupId(groupId);
+        await groupService.leaveGroup(groupId, currentUserId);
+        setGroups((prev) => prev.filter((entry) => (entry.group_id || entry.id) !== groupId));
+      } catch (err) {
+        console.error("Failed to leave group:", err);
+        alert("We couldn’t remove you from that group. Please try again.");
+      } finally {
+        setLeavingGroupId(null);
+      }
+    },
+    [currentUserId, groups]
+  );
 
-    const handleLeaveGroup = async (groupId: number) => {
-    const group = groups.find(g => (g.group_id || g.id) === groupId);
-    if (!group || !currentUserId) return;
+  const handleViewGroup = useCallback(
+    (groupId: number) => {
+      router.push(`/groups/${groupId}`);
+    },
+    [router]
+  );
 
-    const confirmed = confirm(`Are you sure you want to leave "${group.name}"?`);
-    if (!confirmed) return;
-
-    try {
-      await groupService.leaveGroup(groupId, currentUserId);
-      setGroups(groups.filter(g => (g.group_id || g.id) !== groupId));
-    } catch (error) {
-      console.error('Failed to leave group:', error);
-      alert('Failed to leave group. Please try again.');
-    }
-  };
-
-  const handleViewGroup = (groupId: number) => {
-    router.push(`/groups/${groupId}`);
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + GROUPS_STEP);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading your groups...</p>
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface text-white">
+        <div
+          className="pointer-events-none absolute inset-0 bg-glow-iris opacity-70 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative z-10 flex flex-col items-center gap-4 text-center">
+          <div className="h-16 w-16 animate-spin rounded-full border-2 border-white/20 border-t-transparent" />
+          <p className="text-sm text-white/70">Loading your research collectives…</p>
         </div>
-      </div>
+      </main>
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-950 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">My Groups</h1>
-              <p className="text-gray-400">
-                Manage your research groups and collaborate with others
+    <main className="relative min-h-screen overflow-hidden bg-surface text-white">
+      <div
+        className="pointer-events-none absolute inset-0 bg-glow-iris opacity-75 blur-3xl"
+        aria-hidden
+      />
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col gap-14 px-6 pb-24 pt-20 sm:px-10 lg:px-16">
+        <header className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-6">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-4 py-1 text-xs uppercase tracking-[0.35em] text-white/60">
+              Collaboration graph
+            </span>
+            <div className="space-y-4">
+              <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
+                Curate your lab’s shared intelligence and keep every member in sync.
+              </h1>
+              <p className="max-w-xl text-sm leading-relaxed text-white/70">
+                Groups collect experiments, transcripts, and paper highlights into one living workspace. Spin up public cohorts, invite-only taskforces, or analytical guilds that stay razor-focused.
               </p>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
+              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 uppercase tracking-[0.3em]">
+                <UserGroupIcon className="h-4 w-4" />
+                Shared context memory
+              </span>
+              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 uppercase tracking-[0.3em]">
+                <AdjustmentsHorizontalIcon className="h-4 w-4" />
+                Fine-grained roles
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 shadow-soft backdrop-blur-2xl">
+            <p className="text-xs uppercase tracking-[0.3em] text-white/50">Quick stats</p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <p className="text-xs uppercase tracking-[0.25em] text-white/50">Active groups</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{groups.length}</p>
+                <p className="text-xs text-white/60">Connected teams with assistant support.</p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <p className="text-xs uppercase tracking-[0.25em] text-white/50">Visible today</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{displayedGroups.length}</p>
+                <p className="text-xs text-white/60">Filtered by search & role preferences.</p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/groups/join"
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
               >
-                <MagnifyingGlassIcon className="h-5 w-5" />
-                <span>Join Group</span>
+                <MagnifyingGlassIcon className="h-4 w-4" />
+                Join group
               </Link>
               {currentUserId !== null && currentUserId >= 2 ? (
                 <Link
                   href="/groups/create"
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent via-accent-soft to-rose-500 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] shadow-soft transition hover:shadow-floating"
                 >
-                  <PlusIcon className="h-5 w-5" />
-                  <span>Create Group</span>
+                  <PlusIcon className="h-4 w-4" />
+                  Create group
                 </Link>
               ) : (
-                <div className="relative group">
-                  <button
-                    disabled
-                    className="flex items-center space-x-2 px-4 py-2 bg-gray-600 cursor-not-allowed text-gray-400 rounded-lg"
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                    <span>Create Group</span>
-                  </button>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    Guest users cannot create groups
-                  </div>
-                </div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/40">
+                  Guest accounts can’t create groups yet
+                </span>
               )}
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Search and Filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search groups..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-blue-500"
-            />
+        {error ? (
+          <div className="flex items-center gap-3 rounded-3xl border border-rose-400/40 bg-rose-500/15 px-4 py-3 text-sm text-rose-100">
+            <ArrowPathIcon className="h-5 w-5" />
+            <span>{error}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <FunnelIcon className="h-5 w-5 text-gray-400" />
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-            >
-              <option value="all">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="mentor">Mentor</option>
-              <option value="member">Member</option>
-            </select>
-          </div>
-        </div>
+        ) : null}
 
-        {/* Error State */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-            <p className="text-red-400">{error}</p>
-          </div>
-        )}
-
-        {/* Groups Grid */}
-        {filteredGroups.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredGroups.map((group) => (
-              <GroupCard
-                key={group.group_id}
-                group={group}
-                onLeave={handleLeaveGroup}
-                onView={handleViewGroup}
+        <section className="space-y-6 rounded-[40px] border border-white/10 bg-white/7 p-8 shadow-soft backdrop-blur-3xl">
+          <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+            <label className="group flex flex-col gap-2 rounded-3xl border border-white/12 bg-white/6 px-6 py-5 text-sm shadow-soft transition">
+              <span className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-white/60">
+                <MagnifyingGlassIcon className="h-4 w-4" />
+                Search groups
+              </span>
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search by name, purpose, or description"
+                className="w-full border-none bg-transparent text-base text-white placeholder:text-white/30 focus:outline-none"
               />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <UserGroupIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-400 mb-2">
-              {groups.length === 0 ? 'No groups yet' : 'No groups found'}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {groups.length === 0 
-                ? 'Create your first group or join an existing one to get started'
-                : 'Try adjusting your search or filter criteria'
-              }
-            </p>
-            {groups.length === 0 && (
-              <div className="flex justify-center space-x-3">
-                {currentUserId !== null && currentUserId >= 2 ? (
-                  <>
-                    <Link
-                      href="/groups/create"
-                      className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                    >
-                      <PlusIcon className="h-5 w-5" />
-                      <span>Create Your First Group</span>
-                    </Link>
-                    <Link
-                      href="/groups/join"
-                      className="flex items-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                    >
-                      <MagnifyingGlassIcon className="h-5 w-5" />
-                      <span>Join a Group</span>
-                    </Link>
-                  </>
-                ) : (
-                  <div className="text-center">
-                    <Link
-                      href="/groups/join"
-                      className="flex items-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                    >
-                      <MagnifyingGlassIcon className="h-5 w-5" />
-                      <span>Join a Group</span>
-                    </Link>
-                    <p className="text-gray-500 text-sm mt-3">
-                      Guest users can only join existing groups. Contact an administrator for group creation privileges.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+            </label>
 
-        {/* Stats Footer */}
-        {groups.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-gray-800">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-blue-400">{groups.length}</p>
-                <p className="text-gray-400 text-sm">Total Groups</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-400">
-                  {groups.filter(g => g.user_role === 'admin').length}
-                </p>
-                <p className="text-gray-400 text-sm">Groups You Admin</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-purple-400">
-                  {groups.reduce((sum, g) => sum + (g.member_count || 0), 0)}
-                </p>
-                <p className="text-gray-400 text-sm">Total Members</p>
+            <div className="rounded-3xl border border-white/12 bg-white/6 px-4 py-4 text-xs text-white/65 shadow-soft">
+              <p className="px-2 text-[11px] uppercase tracking-[0.3em] text-white/50">Role filter</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {ROLE_FILTERS.map((option) => {
+                  const isActive = option.value === roleFilter;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setRoleFilter(option.value)}
+                      className={`rounded-full border px-3 py-2 text-[11px] uppercase tracking-[0.3em] transition ${
+                        isActive
+                          ? "border-accent bg-accent/15 text-white"
+                          : "border-white/15 bg-white/5 text-white/60 hover:border-white/25 hover:text-white"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
-export default GroupsPage;
+          <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-4 text-xs text-white/60">
+            <p>
+              Tip: Pair groups with shared paper collections to keep every discussion backed by citations. Pinned contexts update live across members.
+            </p>
+          </div>
+        </section>
+
+        <section className="space-y-8">
+          {displayedGroups.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              {displayedGroups.map((group) => (
+                <GroupCard
+                  key={group.group_id || group.id}
+                  group={group}
+                  showActions
+                  onLeave={(groupId) => handleLeaveGroup(groupId)}
+                  onView={(groupId) => handleViewGroup(groupId)}
+                  leaving={leavingGroupId === (group.group_id || group.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[36px] border border-white/12 bg-white/6 p-10 text-center text-sm text-white/70">
+              {groups.length === 0 ? (
+                <p>Your workspace is quiet. Join or create a group to start collaborating.</p>
+              ) : (
+                <p>No groups match your filters. Try adjusting your search or role selection.</p>
+              )}
+            </div>
+          )}
+
+          {displayedGroups.length < filteredGroups.length ? (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
+              >
+                Load more groups
+              </button>
+            </div>
+          ) : null}
+        </section>
+      </div>
+    </main>
+  );
+}

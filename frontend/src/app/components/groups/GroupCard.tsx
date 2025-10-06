@@ -1,159 +1,172 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
 import {
-  UserGroupIcon,
-  LockClosedIcon,
-  GlobeAltIcon,
   CalendarIcon,
+  ClipboardDocumentCheckIcon,
+  EyeIcon,
+  GlobeAltIcon,
+  LockClosedIcon,
+  UserGroupIcon,
   UsersIcon,
-  EyeIcon
-} from '@heroicons/react/24/outline';
-import type { Group } from '../../types/types';
+} from "@heroicons/react/24/outline";
+import type { Group } from "../../types/types";
 
 interface GroupCardProps {
   group: Group;
   showActions?: boolean;
-  onLeave?: (groupId: number) => void;
-  onView?: (groupId: number) => void;
+  onLeave?: (groupId: number) => void | Promise<void>;
+  onView?: (groupId: number) => void | Promise<void>;
+  leaving?: boolean;
 }
 
-const GroupCard: React.FC<GroupCardProps> = ({ 
-  group, 
-  showActions = true, 
-  onLeave, 
-  onView 
-}) => {
+const roleBadgeClasses: Record<string, string> = {
+  admin: "border-rose-300/40 bg-rose-400/20 text-rose-100",
+  mentor: "border-sky-300/40 bg-sky-400/20 text-sky-100",
+  member: "border-emerald-300/40 bg-emerald-400/20 text-emerald-100",
+};
+
+export default function GroupCard({
+  group,
+  showActions = true,
+  onLeave,
+  onView,
+  leaving = false,
+}: GroupCardProps) {
   const groupId = group.group_id || group.id;
   const memberCount = group.member_count || 0;
-  const isPublic = group.is_public || false;
-  const inviteCode = group.invite_code || '';
+  const isPublic = Boolean(group.is_public);
+  const inviteCode = group.invite_code || "";
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  const formattedDate = group.created_at
+    ? new Date(group.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "";
 
-  const getRoleBadgeColor = (role?: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'mentor':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'member':
-        return 'bg-green-100 text-green-800 border-green-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+  const roleClass = roleBadgeClasses[group.user_role ?? ""] ?? "border-white/15 bg-white/5 text-white/70";
+
+  const handleCopyInvite = async () => {
+    if (!inviteCode) return;
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+    } catch (error) {
+      console.error("Failed to copy invite code:", error);
     }
   };
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-gray-600 transition-colors">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          {/* Group Header */}
-          <div className="flex items-center space-x-3 mb-2">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-              <UserGroupIcon className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">{group.name}</h3>
-              <div className="flex items-center space-x-2">
-                {isPublic ? (
-                  <div className="flex items-center space-x-1 text-xs text-green-400">
-                    <GlobeAltIcon className="h-3 w-3" />
-                    <span>Public</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-1 text-xs text-yellow-400">
-                    <LockClosedIcon className="h-3 w-3" />
-                    <span>Private</span>
-                  </div>
-                )}
-                {group.user_role && (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(group.user_role)}`}>
-                    {group.user_role}
-                  </span>
-                )}
+    <article className="group relative overflow-hidden rounded-[32px] border border-white/12 bg-white/5 p-6 shadow-soft transition hover:-translate-y-1">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-20"
+        style={{
+          background:
+            "radial-gradient(circle at top left, rgba(99,102,241,0.6), rgba(236,72,153,0.25) 45%, rgba(255,255,255,0))",
+        }}
+        aria-hidden
+      />
+
+      <div className="relative flex h-full flex-col gap-6 text-sm">
+        <header className="flex items-start justify-between gap-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10">
+                <UserGroupIcon className="h-5 w-5 text-white" />
+              </span>
+              <div>
+                <h3 className="text-lg font-semibold text-white">{group.name}</h3>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-white/60">
+                  {isPublic ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-1">
+                      <GlobeAltIcon className="h-3.5 w-3.5" />
+                      Public cohort
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-1">
+                      <LockClosedIcon className="h-3.5 w-3.5" />
+                      Private collective
+                    </span>
+                  )}
+                  {group.user_role ? (
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.3em] ${roleClass}`}>
+                      {group.user_role}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
+
+            {group.description ? (
+              <p className="max-w-lg text-sm leading-relaxed text-white/70">
+                {group.description}
+              </p>
+            ) : null}
           </div>
 
-          {/* Description */}
-          {group.description && (
-            <p className="text-gray-300 text-sm mb-3 line-clamp-2">
-              {group.description}
-            </p>
-          )}
-
-          {/* Group Stats */}
-          <div className="flex items-center space-x-4 text-sm text-gray-400 mb-4">
-            <div className="flex items-center space-x-1">
-              <UsersIcon className="h-4 w-4" />
-              <span>{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <CalendarIcon className="h-4 w-4" />
-              <span>Created {formatDate(group.created_at)}</span>
-            </div>
-          </div>
-
-          {/* Creator Info */}
-          {group.creator_name && (
-            <p className="text-xs text-gray-500">
-              Created by {group.creator_name}
-            </p>
-          )}
-        </div>
-
-        {/* Actions */}
-        {showActions && (
-          <div className="flex flex-col space-y-2 ml-4">
-            <button
-              onClick={() => onView?.(groupId)}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors"
-            >
-              <EyeIcon className="h-4 w-4" />
-              <span>View</span>
-            </button>
-            
-            {group.user_role !== 'admin' && (
+          {showActions ? (
+            <div className="flex flex-col gap-2 text-xs uppercase tracking-[0.3em]">
               <button
-                onClick={() => onLeave?.(groupId)}
-                className="flex items-center space-x-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-md transition-colors"
+                type="button"
+                onClick={() => onView?.(groupId)}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-white/75 transition hover:border-white/25 hover:text-white"
               >
-                <span>Leave</span>
+                <EyeIcon className="h-4 w-4" />
+                View
               </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Invite Code (for admins/mentors) */}
-      {(group.user_role === 'admin' || group.user_role === 'mentor') && inviteCode && (
-        <div className="mt-4 pt-4 border-t border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 mb-1">Invite Code</p>
-              <code className="text-sm font-mono text-blue-400 bg-gray-900 px-2 py-1 rounded">
-                {inviteCode}
-              </code>
+              {group.user_role !== "admin" ? (
+                <button
+                  type="button"
+                  onClick={() => onLeave?.(groupId)}
+                  disabled={leaving}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-rose-300/40 bg-rose-500/20 px-4 py-2 text-rose-100 transition hover:border-rose-300/60 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {leaving ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border border-white/20 border-t-transparent" />
+                  ) : null}
+                  Leave
+                </button>
+              ) : null}
             </div>
-            <button
-              onClick={() => navigator.clipboard.writeText(inviteCode)}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+          ) : null}
+        </header>
 
-export default GroupCard;
+        <div className="flex flex-wrap gap-4 text-xs text-white/60">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 py-2">
+            <UsersIcon className="h-4 w-4" />
+            {memberCount} {memberCount === 1 ? "member" : "members"}
+          </div>
+          {formattedDate ? (
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 py-2">
+              <CalendarIcon className="h-4 w-4" />
+              Created {formattedDate}
+            </div>
+          ) : null}
+          {group.creator_name ? (
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 py-2">
+              Founder
+              <span className="text-white/80">{group.creator_name}</span>
+            </div>
+          ) : null}
+        </div>
+
+        {(group.user_role === "admin" || group.user_role === "mentor") && inviteCode ? (
+          <div className="rounded-3xl border border-white/10 bg-white/6 p-4 text-xs text-white/70">
+            <p className="uppercase tracking-[0.3em] text-white/50">Invite code</p>
+            <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-white/12 bg-white/4 px-4 py-3">
+              <code className="text-sm text-white">{inviteCode}</code>
+              <button
+                type="button"
+                onClick={handleCopyInvite}
+                className="inline-flex items-center gap-1 rounded-full border border-white/15 px-3 py-1 text-[11px] uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
+              >
+                <ClipboardDocumentCheckIcon className="h-4 w-4" />
+                Copy
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </article>
+  );
+}

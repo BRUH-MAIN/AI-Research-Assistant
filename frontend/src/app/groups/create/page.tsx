@@ -1,190 +1,186 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeftIcon,
-  UserGroupIcon,
+  ClipboardDocumentCheckIcon,
   GlobeAltIcon,
+  InformationCircleIcon,
   LockClosedIcon,
-  InformationCircleIcon
-} from '@heroicons/react/24/outline';
-import { createClient } from '@supabase/supabase-js';
-import { groupService, CreateGroupData } from '../../services/groupService';
-import { authService } from '../../services/authService';
-import ScrollToTop from '../../components/ui/ScrollToTop';
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
+import type { CreateGroupData } from "../../services/groupService";
+import { groupService } from "../../services/groupService";
+import { authService, type User } from "../../services/authService";
 
-// Supabase Configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const MAX_NAME = 50;
+const MAX_DESCRIPTION = 500;
 
-interface User {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    full_name?: string;
-    name?: string;
-  };
-}
-
-const CreateGroupPage: React.FC = () => {
+export default function CreateGroupPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  
+  const [successInviteCode, setSuccessInviteCode] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateGroupData>({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     is_public: false,
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const [formErrors, setFormErrors] = useState<{
-    name?: string;
-    description?: string;
-  }>({});
+  const canCreate = useMemo(
+    () => currentUserId !== null && currentUserId >= 2,
+    [currentUserId]
+  );
 
-  // Real-time validation
-  const validateField = (name: string, value: string) => {
-    const errors: { [key: string]: string } = {};
-    
-    if (name === 'name') {
-      if (!value.trim()) {
-        errors.name = 'Group name is required';
-      } else if (value.trim().length < 3) {
-        errors.name = 'Group name must be at least 3 characters long';
-      } else if (value.trim().length > 50) {
-        errors.name = 'Group name must be less than 50 characters';
-      }
-    }
-    
-    if (name === 'description' && value && value.length > 500) {
-      errors.description = 'Description must be less than 500 characters';
-    }
-    
-    return errors;
-  };
-
-  // Check authentication
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
+    let active = true;
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    const bootstrap = async () => {
+      const session = await authService.initializeAuth();
+      if (!session) {
+        router.push("/login");
         return;
       }
-      setUser(user);
-      // Get internal user ID from auth service
-      const internalUserId = authService.getCurrentInternalUserId();
-      setCurrentUserId(internalUserId);
-      
-      // Check if user can create groups (ID must be >= 2)
-      if (internalUserId !== null && internalUserId < 2) {
-        setError('Guest users are not allowed to create groups. Please contact an administrator to create a proper user account.');
+
+      const currentUser = await authService.getCurrentUser();
+      if (!currentUser) {
+        router.push("/login");
+        return;
+      }
+
+      if (!active) return;
+      setUser(currentUser);
+
+      let internalId = authService.getCurrentInternalUserId();
+      if (!internalId) {
+        internalId = await authService.refreshInternalUserId();
+      }
+
+      if (!active) return;
+      setCurrentUserId(internalId);
+
+      if (internalId !== null && internalId < 2) {
+        setError(
+          "Guest accounts can’t create groups yet. Ask an admin to provision a full workspace seat."
+        );
       }
     };
 
-    checkAuth();
+    bootstrap();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!session?.user) {
-          router.push('/login');
-        } else {
-          setUser(session.user);
-        }
+    const { data } = authService.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        setUser(null);
+        setCurrentUserId(null);
+        router.push("/login");
+        return;
       }
-    );
+      setUser(session.user);
+    });
 
-    return () => subscription.unsubscribe();
+    subscription = data.subscription;
+
+    return () => {
+      active = false;
+      subscription?.unsubscribe();
+    };
   }, [router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({
-        ...prev,
-        [name]: checked
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-      
-      // Real-time validation
-      const fieldErrors = validateField(name, value);
-      setFormErrors(prev => ({
-        ...prev,
-        ...fieldErrors,
-        [name]: fieldErrors[name] || undefined
-      }));
+  const validateField = (field: string, value: string) => {
+    switch (field) {
+      case "name":
+        if (!value.trim()) return "Group name is required.";
+        if (value.trim().length < 3) return "Name needs at least 3 characters.";
+        if (value.trim().length > MAX_NAME)
+          return `Name must stay under ${MAX_NAME} characters.`;
+        return "";
+      case "description":
+        if (value && value.length > MAX_DESCRIPTION)
+          return `Description must stay under ${MAX_DESCRIPTION} characters.`;
+        return "";
+      default:
+        return "";
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate all fields
-    const nameErrors = validateField('name', formData.name);
-    const descErrors = validateField('description', formData.description || '');
-    const allErrors = { ...nameErrors, ...descErrors };
-    
-    setFormErrors(allErrors);
-    
-    // Check if there are any errors
-    if (Object.keys(allErrors).length > 0) {
-      setError('Please fix the errors above before submitting');
-      // Scroll to first error
-      const firstErrorElement = document.querySelector('.border-red-500');
-      if (firstErrorElement) {
-        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = event.target;
+    if (type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: (event.target as HTMLInputElement).checked,
+      }));
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setFormErrors((prev) => {
+      const next = { ...prev };
+      const message = validateField(name, value);
+      if (message) {
+        next[name] = message;
+      } else {
+        delete next[name];
       }
+      return next;
+    });
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    setSuccessInviteCode(null);
+
+    const nameError = validateField("name", formData.name);
+    const descriptionError = validateField("description", formData.description || "");
+
+    const nextErrors: Record<string, string> = {};
+    if (nameError) nextErrors.name = nameError;
+    if (descriptionError) nextErrors.description = descriptionError;
+    setFormErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setError("Fix the highlighted fields before publishing your group.");
       return;
     }
 
-    if (!user || !currentUserId) {
-      setError('You must be logged in to create a group');
-      return;
-    }
-
-    // Check if user can create groups
-    if (currentUserId < 2) {
-      setError('Guest users are not allowed to create groups. Please contact an administrator for a proper user account.');
+    if (!user || !canCreate || !currentUserId) {
+      setError("You need a full account to create a group.");
       return;
     }
 
     setLoading(true);
-    setError(null);
-
     try {
-      const groupData: CreateGroupData = {
+      const payload: CreateGroupData = {
         ...formData,
         name: formData.name.trim(),
-        description: formData.description?.trim() || '',
+        description: formData.description?.trim() || "",
         created_by: currentUserId,
       };
 
-      const newGroup = await groupService.createGroup(groupData);
-      
-      // Redirect to the new group page
+      const newGroup = await groupService.createGroup(payload);
       const groupId = newGroup.group_id || newGroup.id;
+      setSuccessInviteCode(newGroup.invite_code || null);
       router.push(`/groups/${groupId}`);
-    } catch (error: any) {
-      console.error('Failed to create group:', error);
-      setError(error.message || 'Failed to create group. Please try again.');
-      // Scroll to error message
-      setTimeout(() => {
-        const errorElement = document.querySelector('.bg-red-900\\/20');
-        if (errorElement) {
-          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
+    } catch (err) {
+      console.error("Failed to create group:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "We couldn’t create that group. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -192,221 +188,189 @@ const CreateGroupPage: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface text-white">
+        <div
+          className="pointer-events-none absolute inset-0 bg-glow-iris opacity-70 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative z-10 flex flex-col items-center gap-4 text-center">
+          <div className="h-16 w-16 animate-spin rounded-full border-2 border-white/20 border-t-transparent" />
+          <p className="text-sm text-white/70">Checking your workspace access…</p>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="bg-gray-950 min-h-screen">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
+    <main className="relative min-h-screen overflow-hidden bg-surface text-white">
+      <div
+        className="pointer-events-none absolute inset-0 bg-glow-iris opacity-80 blur-3xl"
+        aria-hidden
+      />
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-3xl flex-col gap-12 px-6 pb-24 pt-20 sm:px-10">
+        <header className="space-y-6">
           <Link
             href="/groups"
-            className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors mb-4"
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
           >
-            <ArrowLeftIcon className="h-5 w-5" />
-            <span>Back to Groups</span>
+            <ArrowLeftIcon className="h-4 w-4" />
+            Back to groups
           </Link>
-          
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-              <UserGroupIcon className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-white">Create New Group</h1>
-              <p className="text-gray-400">Start a new research group and invite collaborators</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Form Container with improved scrolling */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Group Name */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                Group Name *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter group name..."
-                className={`w-full px-4 py-2 bg-gray-700 border text-white rounded-lg focus:outline-none focus:ring-1 transition-colors ${
-                  formErrors.name
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-600 focus:border-blue-500 focus:ring-blue-500'
-                }`}
-                required
-                maxLength={50}
-              />
-              <div className="flex justify-between items-center mt-1">
-                <p className={`text-xs ${formErrors.name ? 'text-red-400' : 'text-gray-400'}`}>
-                  {formErrors.name || `${formData.name.length}/50 characters`}
-                </p>
+          <div className="rounded-[40px] border border-white/10 bg-white/6 p-8 shadow-soft backdrop-blur-3xl">
+            <div className="flex flex-col gap-4">
+              <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/12 px-4 py-1 text-xs uppercase tracking-[0.35em] text-white/60">
+                Launch a new collective
+              </span>
+              <h1 className="text-4xl font-semibold leading-tight">
+                Spin up a research hub tailor-made for your collaborators.
+              </h1>
+              <p className="text-sm leading-relaxed text-white/70">
+                Name the collective, decide who can discover it, and we’ll generate an invite code that routes members straight into the right workspace with the right permissions.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 uppercase tracking-[0.3em]">
+                  <UserGroupIcon className="h-4 w-4" />
+                  Instant role scaffolding
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 uppercase tracking-[0.3em]">
+                  <ClipboardDocumentCheckIcon className="h-4 w-4" />
+                  Auto-generated invite code
+                </span>
               </div>
             </div>
+          </div>
+        </header>
 
-            {/* Description with improved scrolling */}
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
-                Description (Optional)
+        <section className="rounded-[40px] border border-white/10 bg-white/7 p-8 shadow-soft backdrop-blur-3xl">
+          <form className="space-y-8" onSubmit={handleSubmit}>
+            <div className="grid gap-6">
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="text-xs uppercase tracking-[0.3em] text-white/60">
+                  Group name
+                </span>
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Lab synthesis guild"
+                  maxLength={MAX_NAME}
+                  className={`rounded-3xl border bg-white/6 px-5 py-3 text-base text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-accent ${
+                    formErrors.name ? "border-rose-400/50" : "border-white/15"
+                  }`}
+                />
+                <div className="flex items-center justify-between text-xs text-white/50">
+                  <span>{formErrors.name}</span>
+                  <span>{formData.name.length}/{MAX_NAME}</span>
+                </div>
               </label>
-              <div className="relative">
+
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="text-xs uppercase tracking-[0.3em] text-white/60">
+                  Description (optional)
+                </span>
                 <textarea
-                  id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Describe your group's purpose and goals..."
-                  rows={4}
-                  className={`w-full px-4 py-2 bg-gray-700 border text-white rounded-lg focus:outline-none focus:ring-1 resize-y min-h-[100px] max-h-[300px] transition-colors ${
-                    formErrors.description
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                      : 'border-gray-600 focus:border-blue-500 focus:ring-blue-500'
+                  placeholder="Outline the purpose, rituals, and cadence for this collective."
+                  rows={5}
+                  maxLength={MAX_DESCRIPTION}
+                  className={`min-h-[140px] rounded-3xl border bg-white/6 px-5 py-3 text-base text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-accent ${
+                    formErrors.description ? "border-rose-400/50" : "border-white/15"
                   }`}
-                  maxLength={500}
-                  style={{ 
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#4B5563 #374151'
-                  }}
                 />
-                <style jsx>{`
-                  textarea::-webkit-scrollbar {
-                    width: 8px;
-                  }
-                  textarea::-webkit-scrollbar-track {
-                    background: #374151;
-                    border-radius: 4px;
-                  }
-                  textarea::-webkit-scrollbar-thumb {
-                    background: #4B5563;
-                    border-radius: 4px;
-                  }
-                  textarea::-webkit-scrollbar-thumb:hover {
-                    background: #6B7280;
-                  }
-                `}</style>
-              </div>
-              <div className="flex justify-between items-center mt-1">
-                <p className={`text-xs ${formErrors.description ? 'text-red-400' : 'text-gray-400'}`}>
-                  {formErrors.description || `${(formData.description || '').length}/500 characters`}
-                </p>
-              </div>
-            </div>
-
-            {/* Privacy Settings */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Privacy Settings
+                <div className="flex items-center justify-between text-xs text-white/50">
+                  <span>{formErrors.description}</span>
+                  <span>{(formData.description || "").length}/{MAX_DESCRIPTION}</span>
+                </div>
               </label>
-              
-              <div className="space-y-3">
-                {/* Private Group (Default) */}
-                <label className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors">
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="private"
-                    checked={!formData.is_public}
-                    onChange={() => setFormData(prev => ({ ...prev, is_public: false }))}
-                    className="mt-1 h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <LockClosedIcon className="h-5 w-5 text-yellow-400" />
-                      <span className="text-white font-medium">Private Group</span>
-                    </div>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Only members with an invite code can join. You control who has access.
-                    </p>
-                  </div>
-                </label>
-
-                {/* Public Group */}
-                <label className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors">
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="public"
-                    checked={formData.is_public}
-                    onChange={() => setFormData(prev => ({ ...prev, is_public: true }))}
-                    className="mt-1 h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <GlobeAltIcon className="h-5 w-5 text-green-400" />
-                      <span className="text-white font-medium">Public Group</span>
-                    </div>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Anyone can discover and join this group. Great for open research projects.
-                    </p>
-                  </div>
-                </label>
-              </div>
             </div>
 
-            {/* Info Box with better mobile handling */}
-            <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
-              <div className="flex items-start space-x-2">
-                <InformationCircleIcon className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-blue-300">
-                  <p className="font-medium mb-2">What happens after creation:</p>
-                  <ul className="space-y-1 text-blue-200">
-                    <li>• You'll automatically become the group admin</li>
-                    <li>• A unique invite code will be generated</li>
-                    <li>• You can manage members and their roles</li>
-                    <li>• Start research sessions and collaborate</li>
+            <fieldset className="space-y-3 text-sm">
+              <legend className="text-xs uppercase tracking-[0.3em] text-white/60">Visibility</legend>
+              <label className={`flex cursor-pointer flex-col gap-2 rounded-3xl border px-5 py-4 transition ${formData.is_public ? "border-white/12 bg-white/4" : "border-accent/50 bg-accent/10"}`}>
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                  <LockClosedIcon className="h-5 w-5 text-amber-300" />
+                  Private group
+                </span>
+                <span className="text-xs text-white/65">
+                  Invite-only. Members join with a code, perfect for sensitive experiments.
+                </span>
+                <input
+                  type="radio"
+                  name="privacy"
+                  value="private"
+                  checked={!formData.is_public}
+                  onChange={() => setFormData((prev) => ({ ...prev, is_public: false }))}
+                  className="hidden"
+                />
+              </label>
+              <label className={`flex cursor-pointer flex-col gap-2 rounded-3xl border px-5 py-4 transition ${formData.is_public ? "border-accent/50 bg-accent/10" : "border-white/12 bg-white/4"}`}>
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                  <GlobeAltIcon className="h-5 w-5 text-emerald-300" />
+                  Public group
+                </span>
+                <span className="text-xs text-white/65">
+                  Discoverable by your organisation. Great for open knowledge exchanges.
+                </span>
+                <input
+                  type="radio"
+                  name="privacy"
+                  value="public"
+                  checked={formData.is_public}
+                  onChange={() => setFormData((prev) => ({ ...prev, is_public: true }))}
+                  className="hidden"
+                />
+              </label>
+            </fieldset>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-xs text-white/70">
+              <div className="flex items-start gap-3">
+                <InformationCircleIcon className="h-5 w-5 text-accent" />
+                <div className="space-y-2">
+                  <p className="uppercase tracking-[0.3em] text-white/50">After launch</p>
+                  <ul className="space-y-2">
+                    <li>• You’ll start as admin and can delegate roles instantly.</li>
+                    <li>• A unique invite code unlocks read/write access for members.</li>
+                    <li>• Chat, paper, and workflow history syncs across every member.</li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-                <p className="text-red-400 text-sm">{error}</p>
+            {error ? (
+              <div className="rounded-3xl border border-rose-400/40 bg-rose-500/15 px-4 py-3 text-sm text-rose-100">
+                {error}
               </div>
-            )}
+            ) : null}
 
-            {/* Submit Button - Fixed positioning */}
-            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-700">
+            <div className="flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <Link
                 href="/groups"
-                className="w-full sm:w-auto text-center px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
-                disabled={loading || !formData.name.trim() || Object.keys(formErrors).some(key => formErrors[key as keyof typeof formErrors])}
-                className="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center space-x-2"
+                disabled={loading || !canCreate}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent via-accent-soft to-rose-500 px-6 py-3 text-sm font-semibold shadow-soft transition hover:shadow-floating disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading && (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                )}
-                <span>{loading ? 'Creating...' : 'Create Group'}</span>
+                {loading ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" />
+                ) : null}
+                <span>{loading ? "Creating…" : "Create group"}</span>
               </button>
             </div>
           </form>
-        </div>
-        
-        {/* Bottom spacing for better mobile experience */}
-        <div className="h-8"></div>
-      </div>
-      
-      {/* Scroll to Top Button */}
-      <ScrollToTop />
-    </div>
-  );
-};
+        </section>
 
-export default CreateGroupPage;
+        {successInviteCode ? (
+          <div className="rounded-[36px] border border-emerald-400/40 bg-emerald-500/10 p-6 text-sm text-emerald-100">
+            Invite code ready: <strong>{successInviteCode}</strong>
+          </div>
+        ) : null}
+      </div>
+    </main>
+  );
+}

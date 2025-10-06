@@ -1,184 +1,339 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-import type { User } from '@supabase/supabase-js';
-import { profileService } from '@/app/services/profileService';
-import { debugAuth } from '@/app/services/authDebug';
-import type { 
-  UserProfile as ApiUserProfile, 
-  ProfileUpdateData as ApiProfileUpdateData 
-} from '@/app/types/types';
-import { 
-  UserIcon, 
-  EnvelopeIcon, 
-  PhoneIcon, 
-  MapPinIcon,
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+import { useRouter } from "next/navigation";
+import { createClient, type Session, type User } from "@supabase/supabase-js";
+import {
+  CameraIcon,
   CheckCircleIcon,
+  EnvelopeIcon,
   ExclamationCircleIcon,
-  CameraIcon
-} from '@heroicons/react/24/outline';
+  PhoneIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
+import { profileService } from "@/app/services/profileService";
+import { debugAuth } from "@/app/services/authDebug";
+import type { ProfileUpdateData, UserProfile } from "@/app/types/types";
+import { cn } from "@/lib/utils";
 
-// Supabase Configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// Create Supabase client
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-interface UserProfile {
-  user_id: number;
-  auth_user_id: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  profile_picture_url?: string;
-  bio?: string;
-  phone_number?: string;
-  availability: 'available' | 'busy' | 'offline';
-  created_at: string;
-  updated_at?: string;
-}
+type Availability = UserProfile["availability"];
+type Message = { type: "success" | "error"; text: string };
 
-interface ProfileFormData {
+type ProfileFormData = {
   first_name: string;
   last_name: string;
   bio: string;
   phone_number: string;
-  availability: 'available' | 'busy' | 'offline';
-}
+  availability: Availability;
+};
 
-const ProfileSettings = () => {
+const initialFormState: ProfileFormData = {
+  first_name: "",
+  last_name: "",
+  bio: "",
+  phone_number: "",
+  availability: "available",
+};
+
+const availabilityTokens: Record<
+  Availability,
+  { dot: string; label: string; badge: string; descriptor: string }
+> = {
+  available: {
+    dot: "bg-emerald-400",
+    label: "Available",
+    badge: "border border-emerald-300/40 bg-emerald-500/10 text-emerald-200",
+    descriptor: "Open for collaborations and synchronous sessions.",
+  },
+  busy: {
+    dot: "bg-amber-400",
+    label: "Busy",
+    badge: "border border-amber-300/40 bg-amber-500/10 text-amber-200",
+    descriptor: "Heads-down—ping for async updates only.",
+  },
+  offline: {
+    dot: "bg-white/30",
+    label: "Offline",
+    badge: "border border-white/20 bg-white/5 text-white/70",
+    descriptor: "Offline—expect a response when back in the lab.",
+  },
+};
+
+const personalFieldConfig: Array<{
+  id: keyof ProfileFormData;
+  label: string;
+  placeholder: string;
+  type?: "text" | "tel";
+  autoComplete?: string;
+}> = [
+  {
+    id: "first_name",
+    label: "First name",
+    placeholder: "Jordan",
+    autoComplete: "given-name",
+  },
+  {
+    id: "last_name",
+    label: "Last name",
+    placeholder: "Nguyen",
+    autoComplete: "family-name",
+  },
+  {
+    id: "phone_number",
+    label: "Phone number",
+    placeholder: "+1 (555) 123-4567",
+    type: "tel",
+    autoComplete: "tel",
+  },
+];
+
+export default function ProfileSettings() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [formData, setFormData] = useState<ProfileFormData>({
-    first_name: '',
-    last_name: '',
-    bio: '',
-    phone_number: '',
-    availability: 'available'
-  });
+  const [formData, setFormData] = useState<ProfileFormData>(initialFormState);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const router = useRouter();
+  const [message, setMessage] = useState<Message | null>(null);
+
+  const hydrateProfile = useCallback(async () => {
+    setLoading(true);
+    try {
+      await debugAuth().catch((error) =>
+        console.debug("Auth debug check failed", error)
+      );
+
+      await profileService.syncProfile();
+      const profileData = await profileService.getProfile();
+      setProfile(profileData);
+      setFormData({
+        first_name: profileData.first_name ?? "",
+        last_name: profileData.last_name ?? "",
+        bio: profileData.bio ?? "",
+        phone_number: profileData.phone_number ?? "",
+        availability: profileData.availability ?? "available",
+      });
+    } catch (error) {
+      console.error("Failed to load profile:", error);
+      setMessage({
+        type: "error",
+        text: "We couldn’t load your profile. Refresh and try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const checkAuthAndLoadProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+    const bootstrap = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        router.push('/login');
+        setLoading(false);
+        router.push("/login");
         return;
       }
 
       setUser(user);
-      await loadUserProfile();
-      setLoading(false);
+      await hydrateProfile();
     };
 
-    checkAuthAndLoadProfile();
-  }, [router]);
+    bootstrap();
 
-  const loadUserProfile = async () => {
-    try {
-      // Debug authentication state
-      const authDebugInfo = await debugAuth();
-      console.log('Auth debug info:', authDebugInfo);
-      
-      // First sync profile to ensure it exists
-      await profileService.syncProfile();
-      
-      // Then load the profile
-      const profileData = await profileService.getProfile();
-      setProfile(profileData);
-      
-      // Update form data with profile data
-      setFormData({
-        first_name: profileData.first_name || '',
-        last_name: profileData.last_name || '',
-        bio: profileData.bio || '',
-        phone_number: profileData.phone_number || '',
-        availability: profileData.availability || 'available'
-      });
-    } catch (error) {
-      console.error('Failed to load profile:', error);
-      
-      // Additional debug info on error
-      const authDebugInfo = await debugAuth();
-      console.log('Auth debug info on error:', authDebugInfo);
-      
-      setMessage({ type: 'error', text: 'Failed to load profile data' });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+      if (!session?.user) {
+        router.push("/login");
+        return;
+      }
+      setUser(session.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router, hydrateProfile]);
+
+  const fullName = useMemo(() => {
+    const fallback = user?.email?.split("@")[0] ?? "Researcher";
+    const first = formData.first_name || profile?.first_name;
+    const last = formData.last_name || profile?.last_name;
+
+    if (!first && !last) {
+      return fallback;
     }
-  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    return `${first ?? ""} ${last ?? ""}`.trim();
+  }, [formData.first_name, formData.last_name, profile?.first_name, profile?.last_name, user?.email]);
+
+  const joinedLabel = useMemo(() => {
+    if (!profile?.created_at) {
+      return "—";
+    }
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(profile.created_at));
+  }, [profile?.created_at]);
+
+  const updatedLabel = useMemo(() => {
+    if (!profile?.updated_at) {
+      return "Just now";
+    }
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(profile.updated_at));
+  }, [profile?.updated_at]);
+
+  const availabilityInfo = availabilityTokens[formData.availability];
+  const bioLength = formData.bio.length;
+
+  const contactEntries = useMemo(
+    () => [
+      {
+        label: "Primary email",
+        value: user?.email ?? "—",
+        icon: EnvelopeIcon,
+        highlight: true,
+      },
+      {
+        label: "Phone",
+        value: formData.phone_number || "Add a phone number to help collaborators reach you.",
+        icon: PhoneIcon,
+        highlight: Boolean(formData.phone_number),
+      },
+    ],
+    [user?.email, formData.phone_number]
+  );
+
+  const handleInputChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name as keyof ProfileFormData]: value,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setSaving(true);
     setMessage(null);
 
     try {
-      const updatedProfile = await profileService.updateProfile(formData);
+      const payload: ProfileUpdateData = { ...formData };
+      const updatedProfile = await profileService.updateProfile(payload);
       setProfile(updatedProfile);
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setFormData({
+        first_name: updatedProfile.first_name ?? "",
+        last_name: updatedProfile.last_name ?? "",
+        bio: updatedProfile.bio ?? "",
+        phone_number: updatedProfile.phone_number ?? "",
+        availability: updatedProfile.availability ?? formData.availability,
+      });
+      setMessage({ type: "success", text: "Profile updated successfully." });
     } catch (error) {
-      console.error('Failed to update profile:', error);
-      setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
+      console.error("Failed to update profile:", error);
+      setMessage({
+        type: "error",
+        text: "We couldn’t save your changes. Please try again.",
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const getAvailabilityColor = (availability: string) => {
-    switch (availability) {
-      case 'available': return 'text-green-500';
-      case 'busy': return 'text-yellow-500';
-      case 'offline': return 'text-gray-500';
-      default: return 'text-gray-500';
-    }
-  };
-
-  const getAvailabilityBadgeColor = (availability: string) => {
-    switch (availability) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'busy': return 'bg-yellow-100 text-yellow-800';
-      case 'offline': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface text-white">
+        <div
+          className="pointer-events-none absolute inset-0 bg-glow-iris opacity-60 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative z-10 flex flex-col items-center gap-4 text-center">
+          <div className="h-16 w-16 animate-spin rounded-full border-2 border-white/20 border-t-transparent" />
+          <p className="text-sm text-white/70">Preparing your profile workspace…</p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
-          <p className="text-gray-400 mt-2">Manage your personal information and preferences</p>
-        </div>
+  if (!user) {
+    return null;
+  }
 
-        {/* Message Display */}
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-surface text-white">
+      <div
+        className="pointer-events-none absolute inset-0 bg-glow-iris opacity-70 blur-3xl"
+        aria-hidden
+      />
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col gap-12 px-6 py-16 sm:px-10 lg:px-16">
+        <header className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <p className="text-xs uppercase tracking-[0.35em] text-white/50">
+              Profile settings
+            </p>
+            <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+              Curate the presence your collaborators see across the studio.
+            </h1>
+            <p className="text-sm text-white/70">
+              Refine your biography, contact signals, and availability so the people working with you always know how to reach you and when you’re in flow.
+            </p>
+          </div>
+
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-soft">
+            <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+              Latest update
+            </p>
+            <div className="mt-4 space-y-3 text-sm text-white/80">
+              <div className="flex items-center justify-between">
+                <span>Profile refreshed</span>
+                <span className="text-white/60">{updatedLabel}</span>
+              </div>
+              <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 text-white/80">
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                <p className="text-sm text-white/75">
+                  Promote your latest projects or pin a lab focus in the bio so new collaborators land with context.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-white/60">
+                <p>
+                  Need custom onboarding? Email <strong className="text-white">people@airesearch.app</strong> for white-glove setup.
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
         {message && (
-          <div className={`mb-6 p-4 rounded-lg flex items-center space-x-3 ${
-            message.type === 'success' ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'
-          }`}>
-            {message.type === 'success' ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className={cn(
+              "flex items-center gap-3 rounded-3xl border px-4 py-3 text-sm shadow-soft",
+              message.type === "success"
+                ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                : "border-rose-400/30 bg-rose-500/10 text-rose-200"
+            )}
+          >
+            {message.type === "success" ? (
               <CheckCircleIcon className="h-5 w-5" />
             ) : (
               <ExclamationCircleIcon className="h-5 w-5" />
@@ -187,204 +342,262 @@ const ProfileSettings = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Summary Card */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <div className="text-center">
-                {/* Profile Picture */}
-                <div className="relative mx-auto w-24 h-24 mb-4">
-                  {user?.user_metadata?.avatar_url ? (
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] xl:grid-cols-[0.8fr_1.2fr]">
+          <aside className="space-y-6">
+            <div className="rounded-[32px] border border-white/10 bg-white/6 p-8 shadow-soft">
+              <div className="flex flex-col items-center gap-5 text-center">
+                <div className="relative h-28 w-28">
+                  {profile?.profile_picture_url ? (
                     <img
-                      src={user.user_metadata.avatar_url}
+                      src={profile.profile_picture_url}
                       alt="Profile"
-                      className="w-24 h-24 rounded-full object-cover"
+                      className="h-28 w-28 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-soft">
                       <UserIcon className="h-12 w-12 text-white" />
                     </div>
                   )}
-                  <button className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 rounded-full p-2 transition-colors">
-                    <CameraIcon className="h-4 w-4 text-white" />
+                  <button
+                    type="button"
+                    aria-label="Update profile picture"
+                    className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/15 text-white transition hover:bg-white/25"
+                  >
+                    <CameraIcon className="h-4 w-4" />
                   </button>
                 </div>
 
-                {/* Basic Info */}
-                <h3 className="text-xl font-semibold text-white mb-1">
-                  {profile?.first_name && profile?.last_name 
-                    ? `${profile.first_name} ${profile.last_name}` 
-                    : user?.email?.split('@')[0] || 'User'}
-                </h3>
-                <p className="text-gray-400 text-sm mb-3">{user?.email}</p>
-                
-                {/* Availability Status */}
-                <div className="flex items-center justify-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    profile?.availability === 'available' ? 'bg-green-500' :
-                    profile?.availability === 'busy' ? 'bg-yellow-500' : 'bg-gray-500'
-                  }`}></div>
-                  <span className={`text-sm font-medium ${getAvailabilityColor(profile?.availability || 'offline')}`}>
-                    {profile?.availability ? profile.availability.charAt(0).toUpperCase() + profile.availability.slice(1) : 'Offline'}
-                  </span>
+                <div className="space-y-1">
+                  <p className="text-xl font-semibold text-white">{fullName}</p>
+                  <p className="text-sm text-white/60">{user.email}</p>
                 </div>
 
-                {/* Account Info */}
-                <div className="mt-6 pt-6 border-t border-gray-700 text-left">
-                  <h4 className="text-white font-medium mb-3">Account Information</h4>
-                  <div className="space-y-2 text-sm text-gray-400">
-                    <div className="flex items-center space-x-2">
-                      <EnvelopeIcon className="h-4 w-4" />
-                      <span>Email verified</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <UserIcon className="h-4 w-4" />
-                      <span>Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Unknown'}</span>
-                    </div>
-                  </div>
+                <div className="flex flex-col items-center gap-2 text-sm text-white/70">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs uppercase tracking-[0.25em]",
+                      availabilityInfo.badge
+                    )}
+                  >
+                    <span
+                      className={cn("h-1.5 w-1.5 rounded-full", availabilityInfo.dot)}
+                      aria-hidden
+                    />
+                    {availabilityInfo.label}
+                  </span>
+                  <p className="max-w-xs text-center text-white/70">
+                    {availabilityInfo.descriptor}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-3 text-sm text-white/70">
+                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <span className="text-white/60">Member since</span>
+                  <span className="text-white/85">{joinedLabel}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <span className="text-white/60">Last profile refresh</span>
+                  <span className="text-white/85">{updatedLabel}</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Profile Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h2 className="text-xl font-semibold text-white mb-6">Personal Information</h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Name Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="first_name" className="block text-sm font-medium text-gray-300 mb-2">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      id="first_name"
-                      name="first_name"
-                      value={formData.first_name}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter your first name"
-                    />
+            <div className="rounded-[32px] border border-white/10 bg-white/4 p-6 shadow-soft">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                Contact signals
+              </p>
+              <div className="mt-4 space-y-4">
+                {contactEntries.map(({ label, value, icon: Icon, highlight }) => (
+                  <div
+                    key={label}
+                    className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3"
+                  >
+                    <Icon className="h-5 w-5 text-white/60" />
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.25em] text-white/50">
+                        {label}
+                      </p>
+                      <p
+                        className={cn(
+                          "mt-1 text-sm",
+                          highlight ? "text-white/85" : "text-white/60"
+                        )}
+                      >
+                        {value}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <label htmlFor="last_name" className="block text-sm font-medium text-gray-300 mb-2">
-                      Last Name
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          <section className="rounded-[32px] border border-white/10 bg-white/7 p-8 shadow-soft backdrop-blur-2xl">
+            <form className="space-y-8" onSubmit={handleSubmit}>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                  Identity
+                </p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  {personalFieldConfig.slice(0, 2).map((field) => (
+                    <label
+                      key={field.id}
+                      className="flex flex-col gap-2 text-sm text-white/70"
+                    >
+                      <span className="text-xs uppercase tracking-[0.25em] text-white/50">
+                        {field.label}
+                      </span>
+                      <input
+                        id={field.id}
+                        name={field.id}
+                        type={field.type ?? "text"}
+                        autoComplete={field.autoComplete}
+                        value={formData[field.id]}
+                        onChange={handleInputChange}
+                        placeholder={field.placeholder}
+                        className="rounded-2xl border border-white/15 bg-white/8 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
+                      />
                     </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                  Contact
+                </p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                  <label className="flex flex-col gap-2 text-sm text-white/70">
+                    <span className="text-xs uppercase tracking-[0.25em] text-white/50">
+                      Email address
+                    </span>
                     <input
-                      type="text"
-                      id="last_name"
-                      name="last_name"
-                      value={formData.last_name}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter your last name"
+                      id="email"
+                      name="email"
+                      type="email"
+                      readOnly
+                      value={user.email ?? ""}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70 placeholder:text-white/30"
                     />
-                  </div>
-                </div>
-
-                {/* Email (Read-only) */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                    Email Address
                   </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 cursor-not-allowed"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
-                </div>
 
-                {/* Phone Number */}
-                <div>
-                  <label htmlFor="phone_number" className="block text-sm font-medium text-gray-300 mb-2">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <PhoneIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <label className="flex flex-col gap-2 text-sm text-white/70">
+                    <span className="text-xs uppercase tracking-[0.25em] text-white/50">
+                      {personalFieldConfig[2].label}
+                    </span>
                     <input
-                      type="tel"
-                      id="phone_number"
-                      name="phone_number"
+                      id={personalFieldConfig[2].id}
+                      name={personalFieldConfig[2].id}
+                      type={personalFieldConfig[2].type ?? "text"}
+                      autoComplete={personalFieldConfig[2].autoComplete}
                       value={formData.phone_number}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+1 (555) 123-4567"
+                      placeholder={personalFieldConfig[2].placeholder}
+                      className="rounded-2xl border border-white/15 bg-white/8 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
                     />
-                  </div>
-                </div>
-
-                {/* Bio */}
-                <div>
-                  <label htmlFor="bio" className="block text-sm font-medium text-gray-300 mb-2">
-                    Bio
                   </label>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                  Biography
+                </p>
+                <div className="mt-4 space-y-2">
                   <textarea
                     id="bio"
                     name="bio"
-                    rows={4}
                     value={formData.bio}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    placeholder="Tell us about yourself..."
+                    placeholder="Summarise your current research focus, favourite methodologies, or collaboration wishlist."
+                    maxLength={500}
+                    rows={5}
+                    className="w-full rounded-3xl border border-white/15 bg-white/8 px-4 py-4 text-sm text-white placeholder:text-white/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Max 500 characters</p>
+                  <div className="flex items-center justify-between text-xs text-white/50">
+                    <span>500 characters max</span>
+                    <span>{bioLength}/500</span>
+                  </div>
                 </div>
+              </div>
 
-                {/* Availability Status */}
-                <div>
-                  <label htmlFor="availability" className="block text-sm font-medium text-gray-300 mb-2">
-                    Availability Status
-                  </label>
-                  <select
-                    id="availability"
-                    name="availability"
-                    value={formData.availability}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="available">Available</option>
-                    <option value="busy">Busy</option>
-                    <option value="offline">Offline</option>
-                  </select>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                  Availability
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  {(Object.keys(availabilityTokens) as Availability[]).map((option) => {
+                    const meta = availabilityTokens[option];
+                    const isActive = formData.availability === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            availability: option,
+                          }))
+                        }
+                        className={cn(
+                          "flex h-full flex-col items-start gap-2 rounded-3xl border px-4 py-4 text-left text-sm transition",
+                          isActive
+                            ? "border-accent bg-accent/10 text-white"
+                            : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                        )}
+                      >
+                        <span className="flex items-center gap-2 text-xs uppercase tracking-[0.25em]">
+                          <span
+                            className={cn("h-1.5 w-1.5 rounded-full", meta.dot)}
+                            aria-hidden
+                          />
+                          {meta.label}
+                        </span>
+                        <span className="text-xs text-white/60">{meta.descriptor}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
 
-                {/* Submit Button */}
-                <div className="flex justify-end space-x-4 pt-6">
+              <div className="flex flex-col gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="rounded-full border border-white/15 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => router.back()}
-                    className="px-6 py-2 border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded-lg transition-colors"
+                    onClick={() => hydrateProfile()}
+                    className="rounded-full border border-white/15 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition hover:border-white/25 hover:text-white"
                   >
-                    Cancel
+                    Reset changes
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center space-x-2"
+                    aria-busy={saving}
+                    className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent via-accent-soft to-rose-500 px-6 py-3 text-sm font-semibold shadow-soft transition hover:shadow-floating disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Saving...</span>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" />
+                        <span>Saving…</span>
                       </>
                     ) : (
-                      <span>Save Changes</span>
+                      <span>Save profile</span>
                     )}
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
+              </div>
+            </form>
+          </section>
         </div>
       </div>
     </div>
   );
-};
-
-export default ProfileSettings;
+}
