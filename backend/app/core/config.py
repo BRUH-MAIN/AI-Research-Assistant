@@ -6,8 +6,9 @@ from typing import List
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Load environment variables from .env file
-env_path = Path(__file__).parent.parent / ".env"
+# Load environment variables from root .env file
+# Look for .env in the project root (parent of backend directory)
+env_path = Path(__file__).parent.parent.parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 

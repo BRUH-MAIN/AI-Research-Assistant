@@ -39,8 +39,14 @@ from pinecone_text.sparse import BM25Encoder
 
 # Environment variables
 from dotenv import load_dotenv
+import os
 
-load_dotenv()
+# Try to load from root .env first (when integrated), then fallback to local .env
+root_env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+if os.path.exists(root_env_path):
+    load_dotenv(root_env_path)
+else:
+    load_dotenv()  # Load from current directory
 
 # Configuration constants
 INPUT_FOLDER = "input"
