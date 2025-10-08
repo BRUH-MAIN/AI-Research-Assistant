@@ -59,7 +59,7 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
       - ./backend:/app
-      - fastapi-venv:/app/.venv  # Use named volume for virtual environment
+      - fastapi-venv:/home/aiuser/.venv  # Use named volume for virtual environment in user home
       - ./data:/app/data
       - ai-models:/app/models
     depends_on:

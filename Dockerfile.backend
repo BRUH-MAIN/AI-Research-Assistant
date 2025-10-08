@@ -33,7 +33,7 @@ USER aiuser
 
 # Set environment variables for uv to use user-owned directories
 ENV UV_CACHE_DIR=/home/aiuser/.cache/uv
-ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+ENV UV_PROJECT_ENVIRONMENT=/home/aiuser/.venv
 
 # Copy dependency definitions
 COPY --chown=aiuser:aiuser pyproject.toml uv.lock* ./
