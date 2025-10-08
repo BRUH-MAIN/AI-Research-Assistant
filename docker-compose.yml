@@ -59,7 +59,7 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
       - ./backend:/app
-      - fastapi-venv:/home/aiuser/.venv  # Use named volume for virtual environment in user home
+      # Removed fastapi-venv volume mount - let .venv be created in /app/.venv
       - ./data:/app/data
       - ai-models:/app/models
     depends_on:
@@ -128,8 +128,7 @@ services:
 volumes:
   ai-models:
     driver: local
-  fastapi-venv:
-    driver: local
+  # Removed fastapi-venv volume - using /app/.venv directly in container
 
 networks:
   app-network:
