@@ -1,0 +1,30 @@
+# ngrok configuration for AI Research Assistant
+version: "2"
+
+# Web interface configuration
+web_addr: localhost:4040
+
+tunnels:
+  # Frontend tunnel - main application
+  frontend:
+    addr: 3000
+    proto: http
+    schemes: ["https"]
+    host_header: rewrite
+    
+  # Express DB server tunnel - for API calls
+  express-db:
+    addr: 3001
+    proto: http
+    schemes: ["https"]
+    host_header: rewrite
+    
+  # Supabase API tunnel for auth callbacks
+  supabase:
+    addr: 54321
+    proto: http
+    schemes: ["https"]
+    host_header: rewrite
+
+# Update check configuration
+update_check: false

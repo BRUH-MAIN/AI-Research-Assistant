@@ -1,0 +1,115 @@
+services:
+  # Express.js Database Server
+  express-db-server:
+    build:
+      context: ./express-db-server
+      dockerfile: Dockerfile
+    container_name: express-db-server
+    # Expose to host for direct access during development
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    volumes:
+      - ./express-db-server:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - app-network
+      - supabase_network_Ai-Research-Assistant-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # FastAPI AI/ML Server
+  fastapi-ai-server:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: fastapi-ai-server
+    # We'll expose to nginx only within the network
+    expose:
+      - "8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - EXPRESS_DB_URL=http://express-db-server:3001
+      - DATA_DIR=/app/data
+    volumes:
+      - ./backend:/app
+      - /app/.venv  # Exclude the virtual environment from the mount
+      - ./data:/app/data
+      - ai-models:/app/models
+    depends_on:
+      - express-db-server
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    container_name: react-frontend
+    # We'll expose to nginx only within the network
+    expose:
+      - "3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - express-db-server
+      - fastapi-ai-server
+    restart: unless-stopped
+    networks:
+      - app-network
+      
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # For SSL certificates if needed
+    depends_on:
+      - frontend
+      - express-db-server
+      - fastapi-ai-server
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  ai-models:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
+  supabase_network_Ai-Research-Assistant-local:
+    external: true

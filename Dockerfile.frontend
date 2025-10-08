@@ -1,0 +1,18 @@
+FROM node:20
+
+WORKDIR /app
+
+# Copy package.json and lock first (cache layer)
+COPY package*.json ./
+
+# Install dependencies using npm ci for reproducible builds
+RUN npm ci
+
+# Copy frontend source code
+COPY . .
+
+# Expose Next.js dev port
+EXPOSE 3000
+
+# Run Next.js dev server
+CMD ["npm", "run", "dev"]

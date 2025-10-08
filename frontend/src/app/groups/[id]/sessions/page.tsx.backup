@@ -1,0 +1,423 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { PlusIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import SessionMenu from '../../../components/sessions/SessionMenu';
+import { Session, Group, CreateSessionRequest, GroupMember } from '../../../types/types';
+import { sessionService } from '../../../services/sessionService';
+import { groupService } from '../../../services/groupService';
+import { useUser } from '../../../contexts';
+
+interface CreateSessionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: { title: string; description?: string }) => void;
+  loading: boolean;
+}
+
+const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  loading
+}) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (title.trim()) {
+      onSubmit({
+        title: title.trim(),
+        description: description.trim() || undefined
+      });
+    }
+  };
+
+  const handleClose = () => {
+    setTitle('');
+    setDescription('');
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold text-white mb-4">Create New Session</h2>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
+              Session Title *
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter session title"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter session description"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              disabled={loading || !title.trim()}
+            >
+              {loading ? 'Creating...' : 'Create Session'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const GroupSessionsPage: React.FC = () => {
+  const router = useRouter();
+  const params = useParams();
+  const groupId = parseInt(params.id as string);
+  
+  // Use global user context
+  const { user, internalUserId, isAuthenticated, isLoading: userLoading, error: userError } = useUser();
+
+  const [group, setGroup] = useState<Group | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('member');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get current user from auth service and ensure internal ID mapping
+        const currentUser = await authService.getCurrentUser();
+        if (!currentUser) {
+          setError('Please log in to view sessions');
+          return;
+        }
+
+        console.log('Current authenticated user:', currentUser);
+        
+        // Add debugging for user lookup
+        try {
+          const apiBaseUrl = process.env.NEXT_PUBLIC_EXPRESS_DB_URL || 'http://localhost:3001';
+          const usersResponse = await fetch(`${apiBaseUrl}/api/users/`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            }
+          });
+          const allUsers = await usersResponse.json();
+          console.log('All users in database:', allUsers);
+          console.log('Looking for user with auth_user_id:', currentUser.id);
+          console.log('Looking for user with email:', currentUser.email);
+          
+          const userByAuthId = allUsers.find((u: any) => u.auth_user_id === currentUser.id);
+          const userByEmail = allUsers.find((u: any) => u.email === currentUser.email);
+          console.log('User found by auth_user_id:', userByAuthId);
+          console.log('User found by email:', userByEmail);
+        } catch (debugError) {
+          console.error('Debug user lookup failed:', debugError);
+        }
+        
+        // Wait a moment for internal user ID to be set, then get it
+        await new Promise(resolve => setTimeout(resolve, 200));
+        let internalUserId = authService.getCurrentInternalUserId();
+        
+        // If still null or 0, try to sync profile
+        if (internalUserId === null || internalUserId === 0) {
+          console.log('Internal user ID not found, attempting to sync profile...');
+          try {
+            // Try to sync profile using the proper API base URL
+            const apiBaseUrl = process.env.NEXT_PUBLIC_EXPRESS_DB_URL || 'http://localhost:3001';
+            const response = await fetch(`${apiBaseUrl}/api/auth/sync-profile`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+              }
+            });
+            
+            const syncResult = await response.json();
+            console.log('Profile sync response:', syncResult);
+            
+            if (!response.ok) {
+              console.error('Profile sync failed:', syncResult);
+            }
+            
+            // Reinitialize auth after sync
+            await authService.initializeAuth();
+            await new Promise(resolve => setTimeout(resolve, 200));
+            internalUserId = authService.getCurrentInternalUserId();
+            console.log('After profile sync, internal user ID:', internalUserId);
+          } catch (syncError) {
+            console.error('Failed to sync profile:', syncError);
+          }
+        }
+        
+        if (internalUserId === null || internalUserId === 0) {
+          console.error('Internal user ID still not found after sync attempt. Current user:', currentUser);
+          console.error('Internal user ID value:', internalUserId);
+          
+          // Check if this is a development environment issue
+          if (process.env.NODE_ENV === 'development' && currentUser.email === 'dev@test.com') {
+            console.log('DEVELOPMENT: Attempting to find user by email in database...');
+            try {
+              const apiBaseUrl = process.env.NEXT_PUBLIC_EXPRESS_DB_URL || 'http://localhost:3001';
+              const usersResponse = await fetch(`${apiBaseUrl}/api/users/`, {
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                }
+              });
+              const allUsers = await usersResponse.json();
+              const userByEmail = allUsers.find((u: any) => u.email === currentUser.email);
+              
+              if (userByEmail && userByEmail.id && typeof userByEmail.id === 'number') {
+                console.log('DEVELOPMENT: Found user by email, using ID:', userByEmail.id);
+                internalUserId = userByEmail.id;
+                // Update the auth service mapping
+                authService.setInternalUserId(currentUser.id, userByEmail.id);
+                setUser(currentUser);
+                setCurrentUserId(internalUserId);
+              } else {
+                setError(`User with email ${currentUser.email} not found in database. Available users: ${allUsers.map((u: any) => u.email).join(', ')}`);
+                return;
+              }
+            } catch (err) {
+              console.error('Failed to lookup user by email:', err);
+              setError('Unable to get user information. Database lookup failed.');
+              return;
+            }
+          } else {
+            setError('Unable to get user information. This might be a profile sync issue. Please try refreshing the page or contact support if the problem persists.');
+            return;
+          }
+        } else {
+          console.log('Successfully got internal user ID:', internalUserId);
+          setUser(currentUser);
+          setCurrentUserId(internalUserId);
+        }
+
+        // Load group data
+        const groupData = await groupService.getGroup(groupId);
+        setGroup(groupData);
+
+        // Get group members to determine user role and verify user is in group
+        const members = await groupService.getGroupMembers(groupId);
+        const currentMember = members.find((member: GroupMember) => member.user_id === internalUserId);
+        
+        if (!currentMember) {
+          setError('You are not a member of this group. Please join the group first.');
+          return;
+        }
+        
+        setCurrentUserRole(currentMember.role);
+
+        // Load sessions (filter by group_id on frontend for now)
+        const allSessions = await sessionService.getSessions();
+        const groupSessions = allSessions.filter((session: Session) => session.group_id === groupId);
+        setSessions(groupSessions);
+
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load sessions. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (groupId) {
+      loadData();
+    }
+  }, [groupId]);
+
+  const handleCreateSession = async (data: { title: string; description?: string }) => {
+    if (!currentUserId) return;
+
+    try {
+      setCreateLoading(true);
+      
+      const sessionData: CreateSessionRequest = {
+        title: data.title,
+        description: data.description,
+        created_by: currentUserId,
+        group_id: groupId,
+        status: 'offline' // Start as offline, will become active when someone joins
+      };
+
+      const newSession = await sessionService.createSession(sessionData);
+      setSessions(prev => [newSession, ...prev]);
+      setShowCreateModal(false);
+    } catch (err) {
+      console.error('Error creating session:', err);
+      setError('Failed to create session. Please try again.');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleSessionUpdate = async () => {
+      // Reload sessions to get updated data
+      try {
+        const allSessions = await sessionService.getSessions();
+        const groupSessions = allSessions.filter((session: Session) => session.group_id === groupId);
+        setSessions(groupSessions);
+      } catch (err) {
+        console.error('Error reloading sessions:', err);
+      }
+    };  const handleBack = () => {
+    router.push(`/groups/${groupId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading sessions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !group) {
+    return (
+      <div className="bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <p className="text-red-400 mb-4">{error}</p>
+          <div className="space-y-2">
+            {error.includes('Unable to get user information') && (
+              <button
+                onClick={() => {
+                  setError(null);
+                  window.location.reload();
+                }}
+                className="block w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                Retry / Refresh Page
+              </button>
+            )}
+            {error.includes('not a member of this group') && (
+              <button
+                onClick={() => router.push(`/groups/${groupId}`)}
+                className="block w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                Go to Group Page
+              </button>
+            )}
+            <button
+              onClick={() => router.push('/groups')}
+              className="block w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Back to Groups
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="bg-gray-900 min-h-screen">
+        {/* Header */}
+        <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+          <div className="max-w-6xl mx-auto flex items-center space-x-4">
+            <button
+              onClick={handleBack}
+              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <ArrowLeftIcon className="h-5 w-5" />
+              <span>Back to Group</span>
+            </button>
+            
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-white">
+                {group?.name} - Sessions
+              </h1>
+              <p className="text-gray-400 text-sm">
+                Manage and participate in research sessions
+              </p>
+            </div>
+
+            {(currentUserRole === 'admin' || currentUserRole === 'mentor') && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span>New Session</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="max-w-6xl mx-auto px-6 pt-6">
+            <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          </div>
+        )}
+
+        {/* Sessions */}
+        {currentUserId && (
+          <SessionMenu
+            groupId={groupId}
+            sessions={sessions}
+            currentUserId={currentUserId}
+            currentUserRole={currentUserRole}
+            onSessionCreate={() => setShowCreateModal(true)}
+            onSessionUpdate={handleSessionUpdate}
+          />
+        )}
+      </div>
+
+      {/* Create Session Modal */}
+      <CreateSessionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateSession}
+        loading={createLoading}
+      />
+    </>
+  );
+};
+
+export default GroupSessionsPage;
