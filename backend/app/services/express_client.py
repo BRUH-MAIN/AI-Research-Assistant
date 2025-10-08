@@ -47,6 +47,13 @@ class ExpressDBClient:
                 return None
             response.raise_for_status()
             return response.json()
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                logger.debug(f"Resource not found: {method} {endpoint} - {e}")
+                return None
+            else:
+                logger.error(f"HTTP request failed: {method} {endpoint} - {e}")
+                return None
         except httpx.HTTPError as e:
             logger.error(f"HTTP request failed: {method} {endpoint} - {e}")
             return None

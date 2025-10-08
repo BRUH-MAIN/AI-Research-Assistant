@@ -38,6 +38,9 @@ services:
     build:
       context: ./backend
       dockerfile: ../Dockerfile.backend
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
     container_name: fastapi-ai-server
     # Expose to host for direct access during development
     ports:
@@ -64,6 +67,10 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

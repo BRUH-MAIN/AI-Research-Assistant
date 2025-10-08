@@ -1,18 +1,28 @@
 FROM python:3.12-slim-trixie
 
+# Accept build arguments for user/group IDs to match host user
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+# Configure DNS for better package resolution
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
+    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+
 # Install system dependencies for AI/ML operations
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl gcc g++ make ca-certificates \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libpq-dev dnsutils iputils-ping \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Install uv
+# Install uv with retry mechanism
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 WORKDIR /app
 
-# Create non-root user for security with home directory first
-RUN groupadd -r aiuser && useradd -r -g aiuser -m aiuser
+# Create non-root user for security with matching host user ID
+RUN groupadd -g $GROUP_ID aiuser && useradd -u $USER_ID -g $GROUP_ID -m aiuser
 
 # Create and set permissions for directories
 RUN mkdir -p /app/data /app/models /app/temp /home/aiuser/.cache
@@ -28,8 +38,14 @@ ENV UV_PROJECT_ENVIRONMENT=/app/.venv
 # Copy dependency definitions
 COPY --chown=aiuser:aiuser pyproject.toml uv.lock* ./
 
-# Install dependencies using uv as non-root user
-RUN uv sync --frozen --no-dev
+# Install dependencies using uv as non-root user with retry mechanism
+RUN for i in {1..3}; do \
+    echo "Attempt $i: Installing dependencies..." && \
+    uv sync --frozen --no-dev && break || \
+    (echo "Attempt $i failed, retrying in 5 seconds..." && sleep 5); \
+    done || \
+    (echo "All attempts failed, trying without lock file..." && \
+    rm -f uv.lock && uv sync --no-dev)
 
 # Copy backend source code (AI/ML focused)
 COPY --chown=aiuser:aiuser . .
