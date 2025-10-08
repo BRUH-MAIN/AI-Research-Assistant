@@ -32,7 +32,7 @@ class AIService:
             try:
                 self.groq_llm = ChatGroq(
                     groq_api_key=self.groq_api_key,
-                    model_name="llama3-3.3-70b-versatile",  # Updated to working Groq model
+                    model_name="llama-3.3-70b-versatile",  # Updated to working Groq model
                     temperature=0.7,
                     max_tokens=1024,
                     timeout=60,
