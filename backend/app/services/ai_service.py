@@ -32,7 +32,7 @@ class AIService:
             try:
                 self.groq_llm = ChatGroq(
                     groq_api_key=self.groq_api_key,
-                    model_name="llama-3.1-8b-instant",
+                    model_name="llama3-8b-8192",  # Updated to working Groq model
                     temperature=0.7,
                     max_tokens=1024,
                     timeout=60,
@@ -48,7 +48,7 @@ class AIService:
             try:
                 self.gemini_llm = ChatGoogleGenerativeAI(
                     google_api_key=self.gemini_api_key,
-                    model="gemini-1.5-flash",  # Use the latest stable model
+                    model="gemini-2.5-flash",  # Use stable Gemini model
                     temperature=0.7,
                     max_tokens=1024,
                     timeout=60,
